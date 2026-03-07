@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Completo do Sistema - DesejosMS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #8B0000;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            color: #333;
+            margin-top: 0;
+        }
+        .test-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .btn-primary { background: #8B0000; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: #000; }
+        .btn-info { background: #17a2b8; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn:hover { opacity: 0.8; transform: translateY(-2px); }
+        .results {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.warning { background: #fff3cd; color: #856404; }
+        .navigation {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .nav-btn {
+            padding: 10px 15px;
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .nav-btn:hover { background: #5a6268; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-cogs"></i> Teste Completo do Sistema DesejosMS</h1>
+        
+        <div class="navigation">
+            <a href="index.html" class="nav-btn"><i class="fas fa-home"></i> Página Principal</a>
+            <a href="painel-anunciante.html" class="nav-btn"><i class="fas fa-user"></i> Painel Anunciante</a>
+            <a href="admin-panel.html" class="nav-btn"><i class="fas fa-cog"></i> Painel Admin</a>
+            <a href="verificacoes.html" class="nav-btn"><i class="fas fa-id-card"></i> Verificações</a>
+        </div>
+
+        <!-- Teste 1: Sistema de Verificação -->
+        <div class="test-section">
+            <h3><i class="fas fa-id-card"></i> Teste 1: Sistema de Verificação</h3>
+            <p>Testa o fluxo completo de envio e aprovação de documentos</p>
+            
+            <div class="test-buttons">
+                <button class="btn btn-primary" onclick="testVerificationFlow()">
+                    <i class="fas fa-play"></i> Testar Fluxo Completo
+                </button>
+                <button class="btn btn-warning" onclick="simulateDocumentUpload()">
+                    <i class="fas fa-upload"></i> Simular Upload
+                </button>
+                <button class="btn btn-info" onclick="checkVerificationStatus()">
+                    <i class="fas fa-search"></i> Verificar Status
+                </button>
+                <button class="btn btn-danger" onclick="clearVerificationData()">
+                    <i class="fas fa-trash"></i> Limpar Dados
+                </button>
+            </div>
+            
+            <div id="verificationResults" class="results"></div>
+        </div>
+
+        <!-- Teste 2: Sistema de Anúncios -->
+        <div class="test-section">
+            <h3><i class="fas fa-ad"></i> Teste 2: Sistema de Anúncios</h3>
+            <p>Testa criação, edição e gerenciamento de anúncios</p>
+            
+            <div class="test-buttons">
+                <button class="btn btn-primary" onclick="testAnnouncementFlow()">
+                    <i class="fas fa-play"></i> Testar Fluxo Completo
+                </button>
+                <button class="btn btn-success" onclick="createTestAnnouncement()">
+                    <i class="fas fa-plus"></i> Criar Anúncio Teste
+                </button>
+                <button class="btn btn-warning" onclick="checkAnnouncements()">
+                    <i class="fas fa-list"></i> Listar Anúncios
+                </button>
+                <button class="btn btn-danger" onclick="clearAnnouncementData()">
+                    <i class="fas fa-trash"></i> Limpar Anúncios
+                </button>
+            </div>
+            
+            <div id="announcementResults" class="results"></div>
+        </div>
+
+        <!-- Teste 3: Sistema de Usuários -->
+        <div class="test-section">
+            <h3><i class="fas fa-users"></i> Teste 3: Sistema de Usuários</h3>
+            <p>Testa criação e gerenciamento de usuários</p>
+            
+            <div class="test-buttons">
+                <button class="btn btn-primary" onclick="testUserFlow()">
+                    <i class="fas fa-play"></i> Testar Fluxo Completo
+                </button>
+                <button class="btn btn-success" onclick="createTestUser()">
+                    <i class="fas fa-user-plus"></i> Criar Usuário Teste
+                </button>
+                <button class="btn btn-warning" onclick="checkUsers()">
+                    <i class="fas fa-users"></i> Listar Usuários
+                </button>
+                <button class="btn btn-info" onclick="testUserBlocking()">
+                    <i class="fas fa-ban"></i> Testar Bloqueio
+                </button>
+            </div>
+            
+            <div id="userResults" class="results"></div>
+        </div>
+
+        <!-- Teste 4: Sistema de Planos -->
+        <div class="test-section">
+            <h3><i class="fas fa-crown"></i> Teste 4: Sistema de Planos</h3>
+            <p>Testa configuração e aplicação de planos premium</p>
+            
+            <div class="test-buttons">
+                <button class="btn btn-primary" onclick="testPlanFlow()">
+                    <i class="fas fa-play"></i> Testar Fluxo Completo
+                </button>
+                <button class="btn btn-success" onclick="checkPlans()">
+                    <i class="fas fa-list"></i> Verificar Planos
+                </button>
+                <button class="btn btn-warning" onclick="testPlanUpgrade()">
+                    <i class="fas fa-arrow-up"></i> Testar Upgrade
+                </button>
+                <button class="btn btn-info" onclick="testPlanOrdering()">
+                    <i class="fas fa-sort"></i> Testar Ordenação
+                </button>
+            </div>
+            
+            <div id="planResults" class="results"></div>
+        </div>
+
+        <!-- Teste 5: Diagnóstico Geral -->
+        <div class="test-section">
+            <h3><i class="fas fa-stethoscope"></i> Teste 5: Diagnóstico Geral</h3>
+            <p>Executa diagnóstico completo do sistema</p>
+            
+            <div class="test-buttons">
+                <button class="btn btn-primary" onclick="runFullDiagnostic()">
+                    <i class="fas fa-search"></i> Diagnóstico Completo
+                </button>
+                <button class="btn btn-warning" onclick="checkLocalStorage()">
+                    <i class="fas fa-database"></i> Verificar localStorage
+                </button>
+                <button class="btn btn-info" onclick="exportSystemData()">
+                    <i class="fas fa-download"></i> Exportar Dados
+                </button>
+                <button class="btn btn-danger" onclick="resetSystem()">
+                    <i class="fas fa-redo"></i> Reset Sistema
+                </button>
+            </div>
+            
+            <div id="diagnosticResults" class="results"></div>
+        </div>
+    </div>
+
+    <script>
+        // Funções de teste do sistema de verificação
+        function testVerificationFlow() {
+            const results = document.getElementById('verificationResults');
+            results.innerHTML = '=== TESTE DE VERIFICAÇÃO ===\n';
+            
+            try {
+                // 1. Criar usuário de teste
+                const testUser = {
+                    id: Date.now(),
+                    email: 'teste@desejosms.com',
+                    name: 'Usuário Teste',
+                    verified: false,
+                    blocked: false
+                };
+                
+                let users = JSON.parse(localStorage.getItem('users') || '[]');
+                users = users.filter(u => u.email !== testUser.email);
+                users.push(testUser);
+                localStorage.setItem('users', JSON.stringify(users));
+                
+                results.innerHTML += '✅ Usuário de teste criado\n';
+                
+                // 2. Simular upload de documentos
+                const mockDocs = [
+                    { userEmail: testUser.email, type: 'documento', url: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=', submittedAt: new Date().toISOString(), status: 'pending' },
+                    { userEmail: testUser.email, type: 'foto-codigo', url: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=', submittedAt: new Date().toISOString(), status: 'pending' },
+                    { userEmail: testUser.email, type: 'selfie', url: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=', submittedAt: new Date().toISOString(), status: 'pending' }
+                ];
+                
+                localStorage.setItem('pendingVerifications', JSON.stringify(mockDocs));
+                results.innerHTML += '✅ Documentos simulados enviados\n';
+                
+                // 3. Simular mesclagem (como faria a página de verificações)
+                const pendingDocs = JSON.parse(localStorage.getItem('pendingVerifications') || '[]');
+                const verifications = JSON.parse(localStorage.getItem('verifications') || '[]');
+                
+                const nameMap = {
+                    'documento': 'Documento de Identificação',
+                    'foto-codigo': 'Foto com Código',
+                    'selfie': 'Selfie'
+                };
+                
+                const grouped = {};
+                pendingDocs.forEach(d => {
+                    if (!grouped[d.userEmail]) grouped[d.userEmail] = [];
+                    grouped[d.userEmail].push(d);
+                });
+                
+                Object.entries(grouped).forEach(([email, docs]) => {
+                    const user = users.find(u => u.email === email) || { name: email };
+                    const documents = {};
+                    
+                    docs.forEach(dd => {
+                        documents[dd.type || 'documento'] = { 
+                            name: nameMap[dd.type] || 'Documento', 
+                            uploaded: true, 
+                            verified: false, 
+                            url: dd.url 
+                        };
+                    });
+                    
+                    const submittedAt = docs[0]?.submittedAt || new Date().toISOString();
+                    
+                    const existingIdx = verifications.findIndex(v => v.userEmail === email && v.status === 'pending');
+                    
+                    const verificationObj = {
+                        id: existingIdx !== -1 ? verifications[existingIdx].id : Date.now() + Math.floor(Math.random() * 1000),
+                        userId: user.id || null,
+                        userName: user.name || email,
+                        userEmail: email,
+                        status: 'pending',
+                        submittedAt,
+                        documents,
+                        notes: 'Documentos enviados pelo anunciante',
+                        adminNotes: ''
+                    };
+                    
+                    if (existingIdx !== -1) {
+                        verifications[existingIdx] = verificationObj;
+                    } else {
+                        verifications.push(verificationObj);
+                    }
+                });
+                
+                localStorage.setItem('verifications', JSON.stringify(verifications));
+                localStorage.removeItem('pendingVerifications');
+                
+                results.innerHTML += '✅ Mesclagem realizada com sucesso\n';
+                results.innerHTML += `📊 Total de verificações: ${verifications.length}\n`;
+                results.innerHTML += `📊 Verificações pendentes: ${verifications.filter(v => v.status === 'pending').length}\n`;
+                
+                results.innerHTML += '\n🎉 TESTE CONCLUÍDO COM SUCESSO!\n';
+                results.innerHTML += 'Agora você pode ir para a página de verificações e ver os documentos.';
+                
+            } catch (error) {
+                results.innerHTML += `❌ ERRO: ${error.message}\n`;
+            }
+        }
+
+        function simulateDocumentUpload() {
+            const results = document.getElementById('verificationResults');
+            results.innerHTML = '=== SIMULAÇÃO DE UPLOAD ===\n';
+            
+            const testEmail = 'teste@desejosms.com';
+            const mockDocs = [
+                { userEmail: testEmail, type: 'documento', url: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=', submittedAt: new Date().toISOString(), status: 'pending' }
+            ];
+            
+            const pending = JSON.parse(localStorage.getItem('pendingVerifications') || '[]');
+            const filtered = pending.filter(v => v.userEmail !== testEmail);
+            const newPendingDocs = [...filtered, ...mockDocs];
+            
+            localStorage.setItem('pendingVerifications', JSON.stringify(newPendingDocs));
+            
+            results.innerHTML += '✅ Documento simulado enviado\n';
+            results.innerHTML += `📊 Total de documentos pendentes: ${newPendingDocs.length}\n`;
+        }
+
+        function checkVerificationStatus() {
+            const results = document.getElementById('verificationResults');
+            results.innerHTML = '=== STATUS DAS VERIFICAÇÕES ===\n';
+            
+            const pendingDocs = JSON.parse(localStorage.getItem('pendingVerifications') || '[]');
+            const verifications = JSON.parse(localStorage.getItem('verifications') || '[]');
+            
+            results.innerHTML += `📄 Documentos pendentes: ${pendingDocs.length}\n`;
+            results.innerHTML += `✅ Verificações totais: ${verifications.length}\n`;
+            results.innerHTML += `⏳ Verificações pendentes: ${verifications.filter(v => v.status === 'pending').length}\n`;
+            results.innerHTML += `✅ Verificações aprovadas: ${verifications.filter(v => v.status === 'approved').length}\n`;
+            results.innerHTML += `❌ Verificações rejeitadas: ${verifications.filter(v => v.status === 'rejected').length}\n`;
+        }
+
+        function clearVerificationData() {
+            localStorage.removeItem('pendingVerifications');
+            localStorage.removeItem('verifications');
+            
+            const results = document.getElementById('verificationResults');
+            results.innerHTML = '🗑️ Dados de verificação limpos com sucesso!\n';
+        }
+
+        // Funções de teste do sistema de anúncios
+        function testAnnouncementFlow() {
+            const results = document.getElementById('announcementResults');
+            results.innerHTML = '=== TESTE DE ANÚNCIOS ===\n';
+            
+            try {
+                // Criar anúncio de teste
+                const testAnnouncement = {
+                    id: Date.now(),
+                    userEmail: 'teste@desejosms.com',
+                    name: 'Anúncio de Teste',
+                    age: 25,
+                    city: 'Campo Grande',
+                    description: 'Descrição de teste para verificar o sistema',
+                    price: '200',
+                    phone: '(67) 99999-9999',
+                    whatsapp: '(67) 99999-9999',
+                    category: 'mulher',
+                    services: ['massagem-relaxante', 'atendimento-vip'],
+                    status: 'active',
+                    planType: 'basic',
+                    paidAmount: 0,
+                    views: 0,
+                    rating: 0,
+                    createdAt: new Date().toISOString(),
+                    photos: ['https://via.placeholder.com/300x200/FFB6C1/FFFFFF?text=Teste']
+                };
+                
+                let announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
+                announcements = announcements.filter(a => a.userEmail !== testAnnouncement.userEmail);
+                announcements.push(testAnnouncement);
+                localStorage.setItem('announcements', JSON.stringify(announcements));
+                
+                results.innerHTML += '✅ Anúncio de teste criado\n';
+                results.innerHTML += `📊 Total de anúncios: ${announcements.length}\n`;
+                results.innerHTML += `📊 Anúncios ativos: ${announcements.filter(a => a.status === 'active').length}\n`;
+                
+            } catch (error) {
+                results.innerHTML += `❌ ERRO: ${error.message}\n`;
+            }
+        }
+
+        function createTestAnnouncement() {
+            const results = document.getElementById('announcementResults');
+            results.innerHTML = '=== CRIANDO ANÚNCIO DE TESTE ===\n';
+            
+            const testAnnouncement = {
+                id: Date.now(),
+                userEmail: 'teste@desejosms.com',
+                name: 'Anúncio de Teste ' + new Date().toLocaleTimeString(),
+                age: 25,
+                city: 'Campo Grande',
+                description: 'Anúncio criado automaticamente para teste',
+                price: '200',
+                phone: '(67) 99999-9999',
+                whatsapp: '(67) 99999-9999',
+                category: 'mulher',
+                services: ['massagem-relaxante'],
+                status: 'active',
+                planType: 'basic',
+                paidAmount: 0,
+                views: 0,
+                rating: 0,
+                createdAt: new Date().toISOString(),
+                photos: []
+            };
+            
+            let announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
+            announcements.push(testAnnouncement);
+            localStorage.setItem('announcements', JSON.stringify(announcements));
+            
+            results.innerHTML += '✅ Anúncio criado com sucesso!\n';
+            results.innerHTML += `📊 Total de anúncios: ${announcements.length}\n`;
+        }
+
+        function checkAnnouncements() {
+            const results = document.getElementById('announcementResults');
+            results.innerHTML = '=== LISTA DE ANÚNCIOS ===\n';
+            
+            const announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
+            
+            if (announcements.length === 0) {
+                results.innerHTML += '📭 Nenhum anúncio encontrado\n';
+                return;
+            }
+            
+            announcements.forEach((announcement, index) => {
+                results.innerHTML += `${index + 1}. ${announcement.name} (${announcement.category})\n`;
+                results.innerHTML += `   Status: ${announcement.status} | Plano: ${announcement.planType}\n`;
+                results.innerHTML += `   Cidade: ${announcement.city} | Preço: R$ ${announcement.price}\n\n`;
+            });
+        }
+
+        function clearAnnouncementData() {
+            localStorage.removeItem('announcements');
+            
+            const results = document.getElementById('announcementResults');
+            results.innerHTML = '🗑️ Anúncios limpos com sucesso!\n';
+        }
+
+        // Funções de teste do sistema de usuários
+        function testUserFlow() {
+            const results = document.getElementById('userResults');
+            results.innerHTML = '=== TESTE DE USUÁRIOS ===\n';
+            
+            try {
+                const testUser = {
+                    id: Date.now(),
+                    email: 'teste@desejosms.com',
+                    name: 'Usuário Teste',
+                    verified: false,
+                    blocked: false,
+                    createdAt: new Date().toISOString()
+                };
+                
+                let users = JSON.parse(localStorage.getItem('users') || '[]');
+                users = users.filter(u => u.email !== testUser.email);
+                users.push(testUser);
+                localStorage.setItem('users', JSON.stringify(users));
+                
+                results.innerHTML += '✅ Usuário de teste criado\n';
+                results.innerHTML += `📊 Total de usuários: ${users.length}\n`;
+                results.innerHTML += `📊 Usuários verificados: ${users.filter(u => u.verified).length}\n`;
+                results.innerHTML += `📊 Usuários bloqueados: ${users.filter(u => u.blocked).length}\n`;
+                
+            } catch (error) {
+                results.innerHTML += `❌ ERRO: ${error.message}\n`;
+            }
+        }
+
+        function createTestUser() {
+            const results = document.getElementById('userResults');
+            results.innerHTML = '=== CRIANDO USUÁRIO DE TESTE ===\n';
+            
+            const testUser = {
+                id: Date.now(),
+                email: 'teste' + Date.now() + '@desejosms.com',
+                name: 'Usuário Teste ' + new Date().toLocaleTimeString(),
+                verified: false,
+                blocked: false,
+                createdAt: new Date().toISOString()
+            };
+            
+            let users = JSON.parse(localStorage.getItem('users') || '[]');
+            users.push(testUser);
+            localStorage.setItem('users', JSON.stringify(users));
+            
+            results.innerHTML += '✅ Usuário criado com sucesso!\n';
+            results.innerHTML += `📧 Email: ${testUser.email}\n`;
+            results.innerHTML += `📊 Total de usuários: ${users.length}\n`;
+        }
+
+        function checkUsers() {
+            const results = document.getElementById('userResults');
+            results.innerHTML = '=== LISTA DE USUÁRIOS ===\n';
+            
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            
+            if (users.length === 0) {
+                results.innerHTML += '📭 Nenhum usuário encontrado\n';
+                return;
+            }
+            
+            users.forEach((user, index) => {
+                results.innerHTML += `${index + 1}. ${user.name} (${user.email})\n`;
+                results.innerHTML += `   Verificado: ${user.verified ? '✅' : '❌'} | Bloqueado: ${user.blocked ? '🚫' : '✅'}\n\n`;
+            });
+        }
+
+        function testUserBlocking() {
+            const results = document.getElementById('userResults');
+            results.innerHTML = '=== TESTE DE BLOQUEIO ===\n';
+            
+            let users = JSON.parse(localStorage.getItem('users') || '[]');
+            
+            if (users.length === 0) {
+                results.innerHTML += '❌ Nenhum usuário para testar bloqueio\n';
+                return;
+            }
+            
+            // Bloquear primeiro usuário
+            users[0].blocked = true;
+            localStorage.setItem('users', JSON.stringify(users));
+            
+            results.innerHTML += `🚫 Usuário ${users[0].name} bloqueado\n`;
+            results.innerHTML += `📊 Usuários bloqueados: ${users.filter(u => u.blocked).length}\n`;
+        }
+
+        // Funções de teste do sistema de planos
+        function testPlanFlow() {
+            const results = document.getElementById('planResults');
+            results.innerHTML = '=== TESTE DE PLANOS ===\n';
+            
+            try {
+                // Verificar se existe configuração de planos
+                const plansConfig = JSON.parse(localStorage.getItem('plansConfig') || '[]');
+                
+                if (plansConfig.length === 0) {
+                    // Criar planos padrão
+                    const defaultPlans = [
+                        { type: 'basic', name: 'Básico', price: 0, active: true },
+                        { type: 'top', name: 'Top', price: 50, active: true },
+                        { type: 'supervip', name: 'SuperVIP', price: 100, active: true }
+                    ];
+                    localStorage.setItem('plansConfig', JSON.stringify(defaultPlans));
+                    results.innerHTML += '✅ Planos padrão criados\n';
+                } else {
+                    results.innerHTML += '✅ Configuração de planos encontrada\n';
+                }
+                
+                results.innerHTML += `📊 Total de planos: ${plansConfig.length}\n`;
+                results.innerHTML += `📊 Planos ativos: ${plansConfig.filter(p => p.active).length}\n`;
+                
+            } catch (error) {
+                results.innerHTML += `❌ ERRO: ${error.message}\n`;
+            }
+        }
+
+        function checkPlans() {
+            const results = document.getElementById('planResults');
+            results.innerHTML = '=== CONFIGURAÇÃO DE PLANOS ===\n';
+            
+            const plansConfig = JSON.parse(localStorage.getItem('plansConfig') || '[]');
+            
+            if (plansConfig.length === 0) {
+                results.innerHTML += '📭 Nenhum plano configurado\n';
+                return;
+            }
+            
+            plansConfig.forEach((plan, index) => {
+                results.innerHTML += `${index + 1}. ${plan.name} (${plan.type})\n`;
+                results.innerHTML += `   Preço: R$ ${plan.price} | Ativo: ${plan.active ? '✅' : '❌'}\n\n`;
+            });
+        }
+
+        function testPlanUpgrade() {
+            const results = document.getElementById('planResults');
+            results.innerHTML = '=== TESTE DE UPGRADE ===\n';
+            
+            let announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
+            
+            if (announcements.length === 0) {
+                results.innerHTML += '❌ Nenhum anúncio para testar upgrade\n';
+                return;
+            }
+            
+            // Fazer upgrade do primeiro anúncio para TOP
+            announcements[0].planType = 'top';
+            announcements[0].paidAmount = 50;
+            localStorage.setItem('announcements', JSON.stringify(announcements));
+            
+            results.innerHTML += `⬆️ Anúncio "${announcements[0].name}" atualizado para TOP\n`;
+            results.innerHTML += `💰 Valor pago: R$ ${announcements[0].paidAmount}\n`;
+        }
+
+        function testPlanOrdering() {
+            const results = document.getElementById('planResults');
+            results.innerHTML = '=== TESTE DE ORDENAÇÃO ===\n';
+            
+            let announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
+            
+            if (announcements.length === 0) {
+                results.innerHTML += '❌ Nenhum anúncio para testar ordenação\n';
+                return;
+            }
+            
+            // Criar anúncios com diferentes planos para testar ordenação
+            const planOrder = { 'supervip': 3, 'top': 2, 'basic': 1 };
+            
+            announcements.sort((a, b) => {
+                return (planOrder[b.planType] || 0) - (planOrder[a.planType] || 0);
+            });
+            
+            localStorage.setItem('announcements', JSON.stringify(announcements));
+            
+            results.innerHTML += '🔄 Anúncios ordenados por plano (SuperVIP > TOP > Básico)\n';
+            announcements.forEach((announcement, index) => {
+                results.innerHTML += `${index + 1}. ${announcement.name} (${announcement.planType.toUpperCase()})\n`;
+            });
+        }
+
+        // Funções de diagnóstico geral
+        function runFullDiagnostic() {
+            const results = document.getElementById('diagnosticResults');
+            results.innerHTML = '=== DIAGNÓSTICO COMPLETO DO SISTEMA ===\n\n';
+            
+            try {
+                // Verificar localStorage
+                const keys = Object.keys(localStorage);
+                results.innerHTML += `📊 Total de chaves no localStorage: ${keys.length}\n\n`;
+                
+                // Verificar dados principais
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                const announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
+                const verifications = JSON.parse(localStorage.getItem('verifications') || '[]');
+                const pendingDocs = JSON.parse(localStorage.getItem('pendingVerifications') || '[]');
+                const plansConfig = JSON.parse(localStorage.getItem('plansConfig') || '[]');
+                
+                results.innerHTML += '📋 RESUMO DOS DADOS:\n';
+                results.innerHTML += `👥 Usuários: ${users.length}\n`;
+                results.innerHTML += `📢 Anúncios: ${announcements.length}\n`;
+                results.innerHTML += `✅ Verificações: ${verifications.length}\n`;
+                results.innerHTML += `📄 Documentos pendentes: ${pendingDocs.length}\n`;
+                results.innerHTML += `👑 Planos configurados: ${plansConfig.length}\n\n`;
+                
+                // Verificar integridade
+                results.innerHTML += '🔍 VERIFICAÇÃO DE INTEGRIDADE:\n';
+                
+                const activeAnnouncements = announcements.filter(a => a.status === 'active');
+                const pendingVerifications = verifications.filter(v => v.status === 'pending');
+                const verifiedUsers = users.filter(u => u.verified);
+                const blockedUsers = users.filter(u => u.blocked);
+                
+                results.innerHTML += `📢 Anúncios ativos: ${activeAnnouncements.length}\n`;
+                results.innerHTML += `⏳ Verificações pendentes: ${pendingVerifications.length}\n`;
+                results.innerHTML += `✅ Usuários verificados: ${verifiedUsers.length}\n`;
+                results.innerHTML += `🚫 Usuários bloqueados: ${blockedUsers.length}\n\n`;
+                
+                // Verificar problemas
+                results.innerHTML += '⚠️ POSSÍVEIS PROBLEMAS:\n';
+                
+                if (pendingDocs.length > 0) {
+                    results.innerHTML += `⚠️ ${pendingDocs.length} documentos pendentes não mesclados\n`;
+                }
+                
+                if (blockedUsers.length > 0) {
+                    const blockedAnnouncements = announcements.filter(a => 
+                        blockedUsers.some(u => u.email === a.userEmail && u.blocked)
+                    );
+                    if (blockedAnnouncements.length > 0) {
+                        results.innerHTML += `⚠️ ${blockedAnnouncements.length} anúncios de usuários bloqueados\n`;
+                    }
+                }
+                
+                if (announcements.length > 0 && plansConfig.length === 0) {
+                    results.innerHTML += `⚠️ Anúncios existem mas não há configuração de planos\n`;
+                }
+                
+                results.innerHTML += '\n🎉 DIAGNÓSTICO CONCLUÍDO!\n';
+                
+            } catch (error) {
+                results.innerHTML += `❌ ERRO NO DIAGNÓSTICO: ${error.message}\n`;
+            }
+        }
+
+        function checkLocalStorage() {
+            const results = document.getElementById('diagnosticResults');
+            results.innerHTML = '=== CONTEÚDO DO LOCALSTORAGE ===\n\n';
+            
+            const keys = Object.keys(localStorage);
+            
+            if (keys.length === 0) {
+                results.innerHTML += '📭 localStorage vazio\n';
+                return;
+            }
+            
+            keys.forEach(key => {
+                try {
+                    const value = localStorage.getItem(key);
+                    const parsed = JSON.parse(value);
+                    results.innerHTML += `🔑 ${key}: ${Array.isArray(parsed) ? parsed.length + ' itens' : typeof parsed}\n`;
+                } catch {
+                    results.innerHTML += `🔑 ${key}: string (${value.length} chars)\n`;
+                }
+            });
+        }
+
+        function exportSystemData() {
+            const results = document.getElementById('diagnosticResults');
+            results.innerHTML = '=== EXPORTANDO DADOS ===\n';
+            
+            try {
+                const exportData = {
+                    exportDate: new Date().toISOString(),
+                    users: JSON.parse(localStorage.getItem('users') || '[]'),
+                    announcements: JSON.parse(localStorage.getItem('announcements') || '[]'),
+                    verifications: JSON.parse(localStorage.getItem('verifications') || '[]'),
+                    pendingVerifications: JSON.parse(localStorage.getItem('pendingVerifications') || '[]'),
+                    plansConfig: JSON.parse(localStorage.getItem('plansConfig') || '[]')
+                };
+                
+                const dataStr = JSON.stringify(exportData, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = `desejosms_backup_${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                
+                results.innerHTML += '✅ Dados exportados com sucesso!\n';
+                results.innerHTML += `📊 Total de dados: ${Object.keys(exportData).length} seções\n`;
+                
+            } catch (error) {
+                results.innerHTML += `❌ ERRO NA EXPORTAÇÃO: ${error.message}\n`;
+            }
+        }
+
+        function resetSystem() {
+            if (confirm('Tem certeza que deseja resetar todo o sistema? Esta ação não pode ser desfeita.')) {
+                localStorage.clear();
+                
+                const results = document.getElementById('diagnosticResults');
+                results.innerHTML = '🔄 SISTEMA RESETADO!\n';
+                results.innerHTML += 'Todos os dados foram removidos do localStorage.\n';
+                results.innerHTML += 'Recarregue a página para começar do zero.';
+            }
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Página de teste carregada');
+            
+            // Verificar se o localStorage está funcionando
+            try {
+                localStorage.setItem('test', 'test');
+                localStorage.removeItem('test');
+                console.log('localStorage funcionando corretamente');
+            } catch (error) {
+                console.error('Erro no localStorage:', error);
+                alert('ERRO: localStorage não está funcionando! Verifique as configurações do navegador.');
+            }
+        });
+    </script>
+</body>
+</html>
+
+

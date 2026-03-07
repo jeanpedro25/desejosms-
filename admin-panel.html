@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DesejosMS Admin - Painel Administrativo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="admin-panel.css">
+    <link rel="stylesheet" href="notifications.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="plans-config.js"></script>
+    <script src="admin-panel.js" defer></script>
+</head>
+<body>
+    <!-- Age Verification Check -->
+    <script>
+        if (localStorage.getItem('ageVerified') !== 'true') {
+            window.location.href = 'age-verification.html';
+        }
+        
+        // Verificação de login admin
+        if (!localStorage.getItem('adminUser')) {
+            window.location.href = 'admin-access-denied.html';
+        }
+    </script>
+
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <svg class="logo-heart" viewBox="0 0 120 110" width="64" height="64" aria-hidden="true">
+                        <defs>
+                            <linearGradient id="heartGrad" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stop-color="#FF3B55"/>
+                                <stop offset="55%" stop-color="#E1062C"/>
+                                <stop offset="100%" stop-color="#8A0017"/>
+                            </linearGradient>
+                            <filter id="heartGlow" x="-40%" y="-40%" width="180%" height="180%">
+                                <feGaussianBlur stdDeviation="4" result="blur"/>
+                                <feMerge>
+                                    <feMergeNode in="blur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                        </defs>
+                        <!-- Glow suave vermelho -->
+                        <path fill="rgba(225,6,44,0.55)" d="M60 108c40-28 56-46 56-69C116 21 102 7 86 7c-9 0-18 5-26 15C52 12 43 7 34 7 18 7 4 21 4 39c0 23 16 41 56 69z"/>
+                        <!-- Coração principal -->
+                        <path filter="url(#heartGlow)" fill="url(#heartGrad)" d="M60 98c35-24 50-39 50-58 0-13-10-23-22-23-8 0-16 4-22 13-6-9-14-13-22-13C32 17 22 27 22 40c0 19 15 34 38 58z"/>
+                    </svg>
+
+                    <div class="logo-text">
+                        <span class="logo-title">DesejosMS</span>
+                        <span class="logo-slogan">Onde seus desejos ganham vida</span>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="nav-menu">
+                <div class="nav-item">
+                    <a href="#dashboard" class="nav-link active" data-section="dashboard">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Dashboard
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="#users" class="nav-link" data-section="users">
+                        <i class="fas fa-users"></i>
+                        Usuários
+                        <span class="notification-badge" id="usersBadge">3</span>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="#ads" class="nav-link" data-section="ads">
+                        <i class="fas fa-ad"></i>
+                        Anúncios
+                        <span class="notification-badge" id="adsBadge">0</span>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="verificacoes.html" class="nav-link">
+                        <i class="fas fa-id-card"></i>
+                        Verificações
+                        <span class="notification-badge" id="verificationsBadge">0</span>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="#payments" class="nav-link" data-section="payments">
+                        <i class="fas fa-credit-card"></i>
+                        Pagamentos
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="payment-config.html" class="nav-link">
+                        <i class="fas fa-cog"></i>
+                        Config. Pagamentos
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="#states" class="nav-link" data-section="states">
+                        <i class="fas fa-map-marked-alt"></i>
+                        Gestão de Estados
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a href="#brand" class="nav-link" data-section="brand">
+                        <i class="fas fa-palette"></i>
+                        Marca e Logo
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="#settings" class="nav-link" data-section="settings">
+                        <i class="fas fa-cog"></i>
+                        Configurações
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="#reports" class="nav-link" data-section="reports">
+                        <i class="fas fa-chart-bar"></i>
+                        Relatórios
+                    </a>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div class="header-left">
+                    <h1 id="sectionTitle">Dashboard Administrativo</h1>
+                    <p id="sectionSubtitle">Gerencie toda estrutura do seu site</p>
+                </div>
+                
+                <div class="header-right">
+                    <div class="admin-info">
+                        <span>Admin</span>
+                        <button class="btn btn-logout" onclick="logoutAdmin()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Sair
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Section -->
+            <div class="content-section active" id="dashboard-section">
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="totalUsers">3</h3>
+                            <p>Total Usuários</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-ad"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="activeAds">9</h3>
+                            <p>Anúncios Ativos</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="pendingAds">0</h3>
+                            <p>Pendentes</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="monthlyRevenue">R$ 149,9</h3>
+                            <p>Receita Mensal</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="quick-stats">
+                    <div class="stats-row">
+                        <div class="stat-item">
+                            <h4>Usuários Verificados</h4>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                            <span class="progress-text">3</span>
+                        </div>
+                        
+                        <div class="stat-item">
+                            <h4>Taxa de Aprovação</h4>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 32%"></div>
+                            </div>
+                            <span class="progress-text">32%</span>
+                        </div>
+                        
+                        <div class="stat-item">
+                            <h4>Pagamentos Concluídos</h4>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 85%"></div>
+                            </div>
+                            <span class="progress-text">85%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Necessary Actions -->
+                <div class="actions-section">
+                    <h3>Ações Necessárias</h3>
+                    <div class="actions-grid">
+                        <div class="action-card">
+                            <div class="action-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4 id="pendingAdsCount">0 anúncios pendentes</h4>
+                                <p>Aguardando moderação</p>
+                                <button class="btn btn-primary" onclick="showPendingAds()">
+                                    Ver Anúncios
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="action-card">
+                            <div class="action-icon">
+                                <i class="fas fa-id-card"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4 id="pendingVerifications">Verificações pendentes</h4>
+                                <p>Documentos para análise</p>
+                                <a href="verificacoes.html" class="btn btn-primary">
+                                    <i class="fas fa-eye"></i>
+                                    Verificar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Last Update -->
+                <div class="last-update">
+                    <p>Última atualização: <span id="lastUpdate">31/07/2025, 23:53</span></p>
+                </div>
+            </div>
+
+            <!-- Users Section -->
+            <div class="content-section" id="users-section">
+                <div class="section-header">
+                    <h2>Gerenciamento de Usuários</h2>
+                    <div class="section-actions" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                        <select id="userStatusFilter" onchange="onUsersFilterChange()">
+                            <option value="all">Todos</option>
+                            <option value="verified">Verificados</option>
+                            <option value="unverified">Não verificados</option>
+                            <option value="blocked">Bloqueados</option>
+                        </select>
+                        <input type="text" id="userSearchInput" placeholder="Buscar por nome/email" oninput="onUsersFilterChange()" style="min-width:240px;">
+                        <input type="date" id="userFromDate" onchange="onUsersFilterChange()">
+                        <input type="date" id="userToDate" onchange="onUsersFilterChange()">
+                        <button class="btn" style="background:#f1f3f5;color:#212529" onclick="clearUsersFilters()"><i class="fas fa-filter"></i> Limpar Filtros</button>
+                        <button class="btn btn-secondary" onclick="exportUsersCSV()"><i class="fas fa-file-export"></i> Exportar</button>
+                    </div>
+                </div>
+                
+                <div class="users-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Usuário</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Anúncios</th>
+                                <th>Último Acesso</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <!-- Usuários serão carregados aqui -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Modal de Documentos do Usuário -->
+                <div class="modal" id="userDocsModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>Documentos do Usuário</h2>
+                            <button class="close-btn" onclick="closeModal('userDocsModal')"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body" id="userDocsContent">
+                            <!-- Lista de documentos -->
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" onclick="closeModal('userDocsModal')">Fechar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confirm Deletion Modal -->
+            <div class="modal" id="confirmDeleteModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Confirmar Exclusão</h2>
+                        <button class="close-btn" onclick="closeModal('confirmDeleteModal')"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Tem certeza que deseja excluir este usuário e todos os seus anúncios? Esta ação não pode ser desfeita.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="closeModal('confirmDeleteModal')">Cancelar</button>
+                        <button class="btn btn-danger" onclick="confirmDeleteProceed()">Excluir</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ads Section -->
+            <div class="content-section" id="ads-section">
+                <div class="section-header">
+                    <h2>Gerenciamento de Anúncios</h2>
+                    <div class="section-actions" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                        <select id="adsFilter" onchange="onFilterChange()">
+                            <option value="all">Todos</option>
+                            <option value="pending">Pendentes</option>
+                            <option value="active">Ativos</option>
+                            <option value="rejected">Rejeitados</option>
+                        </select>
+                        <select id="planFilter" onchange="onFilterChange()">
+                            <option value="all">Plano: Todos</option>
+                            <option value="basic">Básico</option>
+                            <option value="top">Top</option>
+                            <option value="supervip">SuperVIP</option>
+                        </select>
+                        <input type="text" id="searchInput" placeholder="Buscar por nome/email/cidade" oninput="onFilterChange()" style="min-width:240px;">
+                        <input type="date" id="fromDate" onchange="onFilterChange()">
+                        <input type="date" id="toDate" onchange="onFilterChange()">
+                        <span id="selectedCount" style="margin-left:8px;color:#6c757d">0 selecionados</span>
+                        <button class="btn btn-secondary" onclick="selectAllFiltered()" title="Selecionar todos os filtrados"><i class="fas fa-check-square"></i> Selecionar Todos</button>
+                        <button class="btn btn-secondary" onclick="clearSelection()" title="Limpar seleção"><i class="fas fa-eraser"></i> Limpar Seleção</button>
+                        <button class="btn" style="background:#f1f3f5;color:#212529" onclick="clearFilters()" title="Limpar filtros"><i class="fas fa-filter"></i> Limpar Filtros</button>
+                        <button class="btn btn-primary" onclick="approveAllAds()">
+                            <i class="fas fa-check"></i>
+                            Aprovar Todos
+                        </button>
+                        <button class="btn btn-secondary" onclick="openBulkEmailModal()">
+                            <i class="fas fa-envelope"></i>
+                            Enviar Email em Massa
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="ads-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAllAds" onclick="toggleSelectAllAds(this)"></th>
+                                <th>Anúncio</th>
+                                <th>Anunciante</th>
+                                <th>Status</th>
+                                <th>Plano</th>
+                                <th>Criado em</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adsTableBody">
+                            <!-- Anúncios serão carregados aqui -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="section-actions" style="margin-top:10px; display:flex; gap:8px;">
+                    <button class="btn btn-secondary" onclick="exportAdsCSV()"><i class="fas fa-file-export"></i> Exportar</button>
+                </div>
+            </div>
+
+            <!-- Bulk Email Modal -->
+            <div class="modal" id="bulkEmailModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Enviar Email em Massa</h2>
+                        <button class="close-btn" onclick="closeModal('bulkEmailModal')"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Assunto</label>
+                            <input type="text" id="bulkEmailSubject" placeholder="Finalize seu anúncio no DesejosMS">
+                        </div>
+                        <div class="form-group">
+                            <label>Mensagem</label>
+                            <textarea id="bulkEmailBody" rows="6" placeholder="Olá! Você iniciou a criação de um anúncio e ele está pendente/rascunho. Clique para continuar e finalizar."></textarea>
+                        </div>
+                        <small style="color:#6c757d">Serão usados os emails salvos nos anúncios selecionados.</small>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="closeModal('bulkEmailModal')">Cancelar</button>
+                        <button class="btn btn-primary" onclick="sendBulkEmails()"><i class="fas fa-paper-plane"></i> Enviar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payments Section -->
+            <div class="content-section" id="payments-section">
+                <div class="section-header">
+                    <h2>Gerenciamento de Pagamentos</h2>
+                    <div class="section-actions">
+                        <button class="btn btn-primary" onclick="generatePaymentReport()">
+                            <i class="fas fa-download"></i>
+                            Relatório
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="payments-grid">
+                    <div class="payment-card">
+                        <h3>Pagamentos do Mês</h3>
+                        <div class="payment-stats">
+                            <div class="payment-stat">
+                                <span class="stat-number" id="monthlyPayments">12</span>
+                                <span class="stat-label">Total</span>
+                            </div>
+                            <div class="payment-stat">
+                                <span class="stat-number" id="monthlyRevenue">R$ 2.998,80</span>
+                                <span class="stat-label">Receita</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-card">
+                        <h3>Métodos de Pagamento</h3>
+                        <div class="payment-methods">
+                            <div class="method-item">
+                                <i class="fas fa-qrcode"></i>
+                                <span>PIX: 8 pagamentos</span>
+                            </div>
+                            <div class="method-item">
+                                <i class="fas fa-credit-card"></i>
+                                <span>Cartão: 4 pagamentos</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- States Management Section -->
+            <div class="content-section" id="states-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-map-marked-alt"></i> Gestão de Estados</h2>
+                    <p>Controle completo de estados e cidades para anunciantes</p>
+                </div>
+
+                <!-- Estatísticas Rápidas -->
+                <div class="states-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h4 id="totalStatesCount">0</h4>
+                            <p>Estados Totais</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h4 id="activeStatesCount">0</h4>
+                            <p>Estados Ativos</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-city"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h4 id="totalCitiesCount">0</h4>
+                            <p>Cidades Ativas</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h4 id="activeAdsCount">0</h4>
+                            <p>Anúncios Ativos</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controles de Ação -->
+                <div class="states-actions">
+                    <button class="btn btn-primary" onclick="openAddStateModal()">
+                        <i class="fas fa-plus"></i> Adicionar Estado
+                    </button>
+                    <button class="btn btn-success" onclick="openBulkCityModal()">
+                        <i class="fas fa-city"></i> Gerenciar Cidades
+                    </button>
+                    <button class="btn btn-info" onclick="exportStatesData()">
+                        <i class="fas fa-download"></i> Exportar Dados
+                    </button>
+                    <button class="btn btn-warning" onclick="syncWithConfig()">
+                        <i class="fas fa-sync"></i> Sincronizar Config
+                    </button>
+                </div>
+
+                <!-- Lista de Estados -->
+                <div class="states-management">
+                    <div class="states-grid" id="statesGrid">
+                        <!-- Estados serão carregados aqui -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Brand Section -->
+            <div class="content-section" id="brand-section">
+                <div class="section-header">
+                    <h2>Marca e Logo</h2>
+                    <p>Personalize a identidade visual do seu site</p>
+                </div>
+                
+                <div class="brand-grid">
+                    <!-- Logo Upload -->
+                    <div class="brand-card">
+                        <h3><i class="fas fa-image"></i> Logo do Site</h3>
+                        <p style="color: #6c757d; margin-bottom: 20px;">Faça upload da sua logo personalizada</p>
+                        
+                        <div class="logo-preview" id="logoPreview">
+                            <img id="currentLogo" src="" alt="Logo atual" style="max-width: 200px; max-height: 100px; display: none;">
+                            <div id="defaultLogo" style="display: flex; align-items: center; gap: 10px; color: #666;">
+                                <i class="fas fa-heart" style="font-size: 2rem; color: #FF0000;"></i>
+                                <span>DesejosMS</span>
+                            </div>
+                        </div>
+                        
+                        <div class="upload-area" id="uploadArea">
+                            <input type="file" id="logoUpload" accept="image/*" style="display: none;" onchange="previewLogo(this)">
+                            <button class="btn btn-secondary" onclick="document.getElementById('logoUpload').click()">
+                                <i class="fas fa-upload"></i>
+                                Escolher Imagem
+                            </button>
+                            <p style="font-size: 0.8rem; color: #666; margin-top: 10px;">
+                                Formatos: JPG, PNG, GIF, BMP, WEBP (Máx: 2MB)<br>
+                                <strong>Conversão automática para PNG</strong><br>
+                                Dimensões recomendadas: 800x400px
+                            </p>
+                        </div>
+                        
+                        <div class="logo-actions" style="margin-top: 20px;">
+                            <button class="btn btn-primary" onclick="saveLogo()" id="saveLogoBtn" style="display: none;">
+                                <i class="fas fa-save"></i>
+                                Salvar Logo
+                            </button>
+                            <button class="btn btn-danger" onclick="removeLogo()" id="removeLogoBtn" style="display: none;">
+                                <i class="fas fa-trash"></i>
+                                Remover Logo
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Brand Colors -->
+                    <div class="brand-card">
+                        <h3><i class="fas fa-palette"></i> Cores da Marca</h3>
+                        <p style="color: #6c757d; margin-bottom: 20px;">Personalize as cores principais do site</p>
+                        
+                        <div class="color-settings">
+                            <div class="color-item">
+                                <label>Cor Principal</label>
+                                <input type="color" id="primaryColor" value="#8B0000" onchange="previewColors()">
+                                <span class="color-value">#8B0000</span>
+                            </div>
+                            
+                            <div class="color-item">
+                                <label>Cor Secundária</label>
+                                <input type="color" id="secondaryColor" value="#FFD700" onchange="previewColors()">
+                                <span class="color-value">#FFD700</span>
+                            </div>
+                            
+                            <div class="color-item">
+                                <label>Cor de Destaque</label>
+                                <input type="color" id="accentColor" value="#FF4500" onchange="previewColors()">
+                                <span class="color-value">#FF4500</span>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="saveBrandColors()">
+                            <i class="fas fa-save"></i>
+                            Salvar Cores
+                        </button>
+                    </div>
+                    
+                    <!-- Site Information -->
+                    <div class="brand-card">
+                        <h3><i class="fas fa-info-circle"></i> Informações do Site</h3>
+                        <p style="color: #6c757d; margin-bottom: 20px;">Configure informações básicas da marca</p>
+                        
+                        <div class="site-info">
+                            <div class="form-group">
+                                <label>Nome do Site</label>
+                                <input type="text" id="siteName" value="DesejosMS" placeholder="Nome do seu site">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Tagline</label>
+                                <input type="text" id="siteTagline" value="ONDE O SEU DESEJO SE TRANSFORMA EM PRAZER" placeholder="Slogan da marca">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Email de Contato</label>
+                                <input type="email" id="siteEmail" value="contato@desejosms.com.br" placeholder="Email de contato">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Telefone</label>
+                                <input type="text" id="sitePhone" value="(67) 9999-0000" placeholder="Telefone de contato">
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="saveSiteInfo()">
+                            <i class="fas fa-save"></i>
+                            Salvar Informações
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div class="content-section" id="settings-section">
+                <div class="section-header">
+                    <h2>Configurações da Plataforma</h2>
+                </div>
+                
+                <div class="settings-grid">
+                    <!-- Removido: gerenciamento de planos aqui. Edição deve ser feita em Config. Pagamentos -->
+                    
+                    <!-- Redirecionamento para Gestão de Estados -->
+                    <div class="settings-card">
+                        <h3>Gerenciamento de Estados e Cidades</h3>
+                        <p style="color: #6c757d; margin-bottom: 20px;">Controle completo de estados e cidades para anunciantes</p>
+
+                        <div class="redirect-info">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                                <i class="fas fa-info-circle" style="color: #17a2b8;"></i>
+                                <span>Use a seção "Gestão de Estados" para controle unificado</span>
+                            </div>
+
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn btn-primary" onclick="showSection('states')">
+                                    <i class="fas fa-map-marked-alt"></i>
+                                    Gestão de Estados
+                                </button>
+                                <a href="cidades.html" class="btn btn-success">
+                                    <i class="fas fa-city"></i>
+                                    Gerenciar Cidades
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                                <!-- Discount Coupons -->
+                            <div class="settings-card">
+                                <h3>Cupons de Desconto</h3>
+                                <p style="color: #6c757d; margin-bottom: 20px;">Gerencie cupons promocionais e descontos</p>
+                                
+                                <a href="cupons.html" class="btn btn-primary">
+                                    <i class="fas fa-ticket-alt"></i>
+                                    Gerenciar Cupons
+                                </a>
+                            </div>
+                </div>
+            </div>
+
+            <!-- Reports Section -->
+            <div class="content-section" id="reports-section">
+                <div class="section-header">
+                    <h2>Relatórios Fundamentais</h2>
+                    <div class="section-actions">
+                        <button class="btn btn-primary" onclick="exportReport()">
+                            <i class="fas fa-download"></i>
+                            Exportar
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="reports-grid">
+                    <div class="report-card">
+                        <h3>Relatório de Anunciantes</h3>
+                        <div class="report-stats">
+                            <div class="report-stat">
+                                <span class="stat-number" id="activeAdvertisers">9</span>
+                                <span class="stat-label">Anunciantes Ativos</span>
+                            </div>
+                            <div class="report-stat">
+                                <span class="stat-number" id="pendingAdvertisers">0</span>
+                                <span class="stat-label">Anúncios Pendentes</span>
+                            </div>
+                            <div class="report-stat">
+                                <span class="stat-number" id="rejectedAdvertisers">0</span>
+                                <span class="stat-label">Anúncios Rejeitados</span>
+                            </div>
+                            <div class="report-stat">
+                                <span class="stat-number" id="testAdvertisers">0</span>
+                                <span class="stat-label">Anúncios em Teste</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="report-card">
+                        <h3>Relatório de Pagamentos</h3>
+                        <div class="report-stats">
+                            <div class="report-stat">
+                                <span class="stat-number" id="monthlyBilling">R$ 2.998,80</span>
+                                <span class="stat-label">Faturamento Mensal</span>
+                            </div>
+                            <div class="report-stat">
+                                <span class="stat-number" id="premiumAds">3</span>
+                                <span class="stat-label">Anúncios Premium</span>
+                            </div>
+                            <div class="report-stat">
+                                <span class="stat-number" id="vipAds">1</span>
+                                <span class="stat-label">Anúncios VIP</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Ad Details Modal -->
+    <div class="modal" id="adDetailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Detalhes do Anúncio</h2>
+                <button class="close-btn" onclick="closeModal('adDetailsModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="adDetailsContent">
+                    <!-- Detalhes do anúncio serão carregados aqui -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('adDetailsModal')">Fechar</button>
+                <button class="btn btn-success" onclick="approveAd()">Aprovar</button>
+                <button class="btn btn-danger" onclick="rejectAd()">Rejeitar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Details Modal -->
+    <div class="modal" id="userDetailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Detalhes do Usuário</h2>
+                <button class="close-btn" onclick="closeModal('userDetailsModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="userDetailsContent">
+                    <!-- Detalhes do usuário serão carregados aqui -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('userDetailsModal')">Fechar</button>
+                <button class="btn btn-success" onclick="verifyUser()">Verificar</button>
+                <button class="btn btn-danger" onclick="blockUser()">Bloquear</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verification Documents Modal -->
+    <div class="modal" id="verificationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Documentos de Verificação</h2>
+                <button class="close-btn" onclick="closeModal('verificationModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="verificationContent">
+                    <!-- Documentos serão carregados aqui -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('verificationModal')">Fechar</button>
+                <button class="btn btn-success" onclick="approveVerification()">Aprovar</button>
+                <button class="btn btn-danger" onclick="rejectVerification()">Rejeitar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="states-config.js"></script>
+    <script src="notifications.js"></script>
+    <script:parameter name="admin-panel.js"></script>
+    
+    <script>
+        // Função de logout do painel admin
+        function logoutAdmin() {
+            if (confirm('Tem certeza que deseja sair do painel administrativo?')) {
+                localStorage.removeItem('adminUser');
+                alert('Logout realizado com sucesso!');
+                window.location.href = 'admin-login.html';
+            }
+        }
+        
+        // Exibir informações do admin logado
+        function displayAdminInfo() {
+            const adminUser = JSON.parse(localStorage.getItem('adminUser') || '{}');
+            const adminInfo = document.querySelector('.admin-info span');
+            if (adminInfo && adminUser.name) {
+                adminInfo.textContent = adminUser.name;
+            }
+        }
+        
+        // Executar quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            displayAdminInfo();
+        });
+    </script>
+
+    <!-- Modal para Adicionar/Editar Estado -->
+    <div class="modal" id="stateModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 id="stateModalTitle">Adicionar Estado</h2>
+                <button class="close-btn" onclick="closeStateModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <form id="stateForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="stateCode">Código do Estado *</label>
+                            <input type="text" id="stateCode" placeholder="Ex: SP" maxlength="2" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="stateName">Nome do Estado *</label>
+                            <input type="text" id="stateName" placeholder="Ex: São Paulo" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="stateBrand">Marca *</label>
+                            <input type="text" id="stateBrand" placeholder="Ex: DesejosSP" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="stateDomain">Domínio</label>
+                            <input type="text" id="stateDomain" placeholder="Ex: desejossp.com.br">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="stateColor">Cor do Tema *</label>
+                            <input type="color" id="stateColor" value="#8B0000" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="stateStatus">Status</label>
+                            <select id="stateStatus" required>
+                                <option value="true">Ativo</option>
+                                <option value="false">Inativo</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="stateCities">Cidades (separadas por vírgula)</label>
+                        <textarea id="stateCities" rows="4" placeholder="Ex: São Paulo, Campinas, Santos, Ribeirão Preto..."></textarea>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeStateModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveState()">Salvar Estado</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Gerenciamento de Cidades em Massa -->
+    <div class="modal" id="bulkCityModal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>Gerenciamento de Cidades</h2>
+                <button class="close-btn" onclick="closeBulkCityModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="bulk-city-controls">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="bulkStateSelect">Estado</label>
+                            <select id="bulkStateSelect" onchange="loadStateCities()">
+                                <option value="">Selecione um estado</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-success" onclick="addNewCity()">
+                                <i class="fas fa-plus"></i> Nova Cidade
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cities-list" id="citiesList">
+                    <!-- Lista de cidades será carregada aqui -->
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeBulkCityModal()">Fechar</button>
+                <button class="btn btn-primary" onclick="saveBulkCities()">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="states-config.js"></script>
+    <script src="admin-panel.js"></script>
+</body>
+</html>

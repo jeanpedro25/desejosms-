@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Anunciante - DesejosMS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="painel-anunciante.css">
+    <link rel="stylesheet" href="notifications.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <script src="plans-config.js"></script>
+</head>
+
+<body>
+    <!-- Age Verification Check -->
+    <script>
+        if (localStorage.getItem('ageVerified') !== 'true') {
+            window.location.href = 'age-verification.html';
+        }
+        // Login Requirement Check
+        if (!localStorage.getItem('userEmail')) {
+            window.location.href = 'login.html';
+        }
+    </script>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <svg class="logo-heart" viewBox="0 0 120 110" width="64" height="64" aria-hidden="true">
+                        <defs>
+                            <linearGradient id="heartGrad" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stop-color="#FF3B55" />
+                                <stop offset="55%" stop-color="#E1062C" />
+                                <stop offset="100%" stop-color="#8A0017" />
+                            </linearGradient>
+                            <filter id="heartGlow" x="-40%" y="-40%" width="180%" height="180%">
+                                <feGaussianBlur stdDeviation="4" result="blur" />
+                                <feMerge>
+                                    <feMergeNode in="blur" />
+                                    <feMergeNode in="SourceGraphic" />
+                                </feMerge>
+                            </filter>
+                        </defs>
+                        <!-- Glow suave vermelho -->
+                        <path fill="rgba(225,6,44,0.55)"
+                            d="M60 108c40-28 56-46 56-69C116 21 102 7 86 7c-9 0-18 5-26 15C52 12 43 7 34 7 18 7 4 21 4 39c0 23 16 41 56 69z" />
+                        <!-- Coração principal -->
+                        <path filter="url(#heartGlow)" fill="url(#heartGrad)"
+                            d="M60 98c35-24 50-39 50-58 0-13-10-23-22-23-8 0-16 4-22 13-6-9-14-13-22-13C32 17 22 27 22 40c0 19 15 34 38 58z" />
+                    </svg>
+
+                    <div class="logo-text">
+                        <span class="logo-title">DesejosMS</span>
+                        <span class="logo-slogan">Onde seus desejos ganham vida</span>
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <div id="notifBell" class="btn btn-secondary" style="position: relative; background:#8B0000;"
+                        onclick="toggleNotifications()">
+                        <i class="fas fa-bell"></i>
+                        <span id="notifCount"
+                            style="position:absolute; top:-6px; right:-6px; background:#dc3545; color:#fff; border-radius:10px; padding:2px 6px; font-size:10px; display:none;">0</span>
+                    </div>
+                    <div id="notifDropdown"
+                        style="display:none; position:absolute; right:10px; top:60px; background:#fff; color:#333; width:300px; max-height:380px; overflow:auto; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,.2); z-index:9999;">
+                        <div style="padding:10px; font-weight:700; border-bottom:1px solid #eee;">Notificações</div>
+                        <div id="notifList" style="padding:8px;"></div>
+                    </div>
+                    <a href="index.html" class="btn btn-secondary">
+                        <i class="fas fa-home"></i>
+                        Voltar ao Site
+                    </a>
+                    <button class="btn btn-primary" onclick="showCreateAdModal()">
+                        <i class="fas fa-plus"></i>
+                        Criar Novo Anúncio
+                    </button>
+                    <button class="btn btn-secondary" onclick="logoutUser()" style="background:#444;">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Sair
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Botões de debug (remover depois) -->
+        <div
+            style="position: fixed; top: 10px; right: 10px; z-index: 9999; display: flex; flex-direction: column; gap: 5px;">
+            <button onclick="checkFormData()"
+                style="background: blue; color: white; padding: 8px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
+                🔍 Verificar Formulário
+            </button>
+            <button onclick="checkAnnouncements()"
+                style="background: green; color: white; padding: 8px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
+                📊 Verificar Anúncios
+            </button>
+            <button onclick="testVerification()"
+                style="background: orange; color: white; padding: 8px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
+                🔄 Testar Verificação
+            </button>
+            <button onclick="forceCreateAd()"
+                style="background: purple; color: white; padding: 8px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
+                ⚡ Forçar Criação
+            </button>
+            <button onclick="checkDescriptionField()"
+                style="background: brown; color: white; padding: 8px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
+                📝 Testar Descrição
+            </button>
+            <button onclick="checkAvailableCities()"
+                style="background: teal; color: white; padding: 8px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
+                🏙️ Ver Cidades
+            </button>
+        </div>
+
+        <div class="container">
+            <!-- Dashboard Stats -->
+            <div class="dashboard-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="totalViews">0</div>
+                        <div class="stat-label">Total de Visualizações</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="activeAds">0</div>
+                        <div class="stat-label">Anúncios Ativos</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="pendingAds">0</div>
+                        <div class="stat-label">Pendentes</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="accountStatus">Não Verificada</div>
+                        <div class="stat-label">Status da Conta</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <div class="nav-tabs">
+                <button class="tab-btn active" data-tab="ads">
+                    <i class="fas fa-list"></i>
+                    Meus Anúncios
+                </button>
+                <button class="tab-btn" data-tab="profile">
+                    <i class="fas fa-user"></i>
+                    Perfil
+                </button>
+                <button class="tab-btn" data-tab="stats">
+                    <i class="fas fa-chart-bar"></i>
+                    Estatísticas
+                </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- Meus Anúncios Tab -->
+                <div class="tab-pane active" id="ads-tab">
+                    <div class="ads-container">
+                        <div class="ads-header">
+                            <h2>Meus Anúncios</h2>
+                            <button class="btn btn-primary" onclick="showCreateAdModal()">
+                                <i class="fas fa-plus"></i>
+                                Criar Anúncio
+                            </button>
+                        </div>
+
+                        <div class="ads-table" id="adsTable">
+                            <!-- Anúncios serão carregados aqui -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Perfil Tab -->
+                <div class="tab-pane" id="profile-tab">
+                    <div class="profile-container">
+                        <h2>Informações do Perfil</h2>
+
+                        <div class="profile-info" id="profileInfo">
+                            <div class="info-group">
+                                <label>Nome Completo:</label>
+                                <span id="userName">João Silva</span>
+                            </div>
+
+                            <div class="info-group">
+                                <label>Telefone:</label>
+                                <span id="userPhone">Não informado</span>
+                            </div>
+
+                            <div class="info-group">
+                                <label>Idade:</label>
+                                <span id="userAge">Não informada</span>
+                            </div>
+
+                            <div class="info-group">
+                                <label>Email:</label>
+                                <span id="userEmail">teste@desejosms.com</span>
+                            </div>
+
+                            <div class="info-group">
+                                <label>Categoria:</label>
+                                <span id="userCategory">Não informada</span>
+                            </div>
+
+                            <div class="info-group">
+                                <label>Status de Verificação:</label>
+                                <span id="verificationStatus" class="status-not-verified">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    Não Verificada
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="verification-section">
+                            <div id="verificationCard"
+                                style="background:#fff3cd; border:1px solid #ffeeba; color:#856404; padding:16px; border-radius:8px;">
+                                <h3 style="margin:0 0 8px;">Verificação de Conta</h3>
+                                <p id="verificationCardMsg" style="margin:0 0 10px;">Para criar anúncios, você precisa
+                                    verificar sua conta enviando documentos de identificação.</p>
+                                <div id="verificationCardActions">
+                                    <button class="btn btn-primary" onclick="showVerificationModal()">
+                                        <i class="fas fa-id-card"></i>
+                                        Verificar Conta
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Estatísticas Tab -->
+                <div class="tab-pane" id="stats-tab">
+                    <div class="stats-container">
+                        <h2>Estatísticas</h2>
+                        <div class="stats-grid" id="statsGrid">
+                            <!-- Estatísticas serão carregadas aqui -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Create Ad Modal -->
+    <div class="modal" id="createAdModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Criar Novo Anúncio</h2>
+                <button class="close-btn" onclick="closeModal('createAdModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Progress Bar -->
+                <div class="progress-bar">
+                    <div class="progress-step active" data-step="1">
+                        <span class="step-number">1</span>
+                        <span class="step-label">Plano</span>
+                    </div>
+                    <div class="progress-step" data-step="2">
+                        <span class="step-number">2</span>
+                        <span class="step-label">Informações</span>
+                    </div>
+                    <div class="progress-step" data-step="3">
+                        <span class="step-number">3</span>
+                        <span class="step-label">Fotos</span>
+                    </div>
+                    <div class="progress-step" data-step="4">
+                        <span class="step-number">4</span>
+                        <span class="step-label">Detalhes</span>
+                    </div>
+                </div>
+
+                <!-- Step 1: Plan Selection -->
+                <div class="step-content active" id="step1">
+                    <h3>Escolha seu Plano</h3>
+                    <p>Selecione o plano que melhor se adequa às suas necessidades</p>
+
+                    <div class="plans-container">
+                        <div class="plan-card" data-plan="basic" onclick="selectPlan(this)">
+                            <div class="plan-header">
+                                <i class="fas fa-shield-alt"></i>
+                                <h4>Básico</h4>
+                            </div>
+                            <div class="plan-price">
+                                <span class="price">R$ 99,99</span>
+                                <span class="period">por 30 dias</span>
+                            </div>
+                            <div class="plan-features">
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Anúncio por 30 dias</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Até 3 fotos</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Suporte básico</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="plan-card" data-plan="top" onclick="selectPlan(this)">
+                            <div class="plan-header">
+                                <i class="fas fa-star"></i>
+                                <h4>TOP</h4>
+                            </div>
+                            <div class="plan-price">
+                                <span class="price">R$ 149,99</span>
+                                <span class="period">por 30 dias</span>
+                            </div>
+                            <div class="plan-features">
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Anúncio por 30 dias</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Até 6 fotos</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Destaque na busca</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Suporte prioritário</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="plan-card" data-plan="supervip" onclick="selectPlan(this)">
+                            <div class="plan-header">
+                                <i class="fas fa-crown"></i>
+                                <h4>SUPERVIP</h4>
+                            </div>
+                            <div class="plan-price">
+                                <span class="price">R$ 199,99</span>
+                                <span class="period">por 30 dias</span>
+                            </div>
+                            <div class="plan-features">
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Anúncio por 30 dias</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Fotos ilimitadas</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Topo da lista</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Badge SUPERVIP</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Suporte 24h</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Basic Information -->
+                <div class="step-content" id="step2">
+                    <h3>Informações Básicas</h3>
+                    <p>Vamos começar com as informações principais do seu anúncio</p>
+
+                    <form class="ad-form">
+                        <div class="form-group">
+                            <label for="adTitle">Título do Anúncio *</label>
+                            <input type="text" id="adTitle" placeholder="Ex: Acompanhante Premium em Campo Grande"
+                                required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="adState">Estado *</label>
+                            <select id="adState" required onchange="loadCitiesForState()">
+                                <option value="">Selecione o estado</option>
+                                <!-- Estados serão carregados dinamicamente -->
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="adCity">Cidade *</label>
+                            <select id="adCity" required disabled>
+                                <option value="">Primeiro selecione um estado</option>
+                            </select>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="adAge">Idade *</label>
+                                <input type="number" id="adAge" min="18" max="99" placeholder="25" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="adPrice">Valor por Hora (R$) *</label>
+                                <input type="number" id="adPrice" min="50" placeholder="200" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="adCategory">Categoria *</label>
+                                <select id="adCategory" required>
+                                    <option value="">Selecione a categoria</option>
+                                    <option value="mulher">Mulheres</option>
+                                    <option value="homem">Homens</option>
+                                    <option value="travesti">Travestis</option>
+                                    <option value="massagista">Massagista</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="adWhatsApp">WhatsApp *</label>
+                                <input type="tel" id="adWhatsApp" placeholder="(67) 99999-9999" required>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Step 3: Photos -->
+                <div class="step-content" id="step3">
+                    <h3>Fotos do Anúncio</h3>
+                    <p>Adicione fotos atrativas e de qualidade (máximo 6 fotos)</p>
+
+                    <div class="photo-upload-area">
+                        <div class="upload-zone" id="uploadZone">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Clique ou arraste fotos aqui</p>
+                            <span>Máximo 6 fotos</span>
+                        </div>
+                        <input type="file" id="photoInput" multiple accept="image/*" style="display: none;">
+
+                        <div class="photo-preview" id="photoPreview">
+                            <!-- Fotos serão exibidas aqui -->
+                        </div>
+
+                        <div class="upload-notes">
+                            <p><strong>A primeira foto será a foto principal do anúncio</strong></p>
+                            <p>Use fotos de boa qualidade e bem iluminadas</p>
+                            <p>Fotos com marca d'água DesejosMS serão adicionadas automaticamente</p>
+                        </div>
+                    </div>
+
+                    <div class="video-upload-area" style="margin-top:16px;">
+                        <h4>Vídeo do Anúncio (opcional)</h4>
+                        <p>Envie um pequeno vídeo de apresentação (máx. 20MB).</p>
+                        <input type="file" id="videoInput" accept="video/*" />
+                        <div id="videoPreview" style="margin-top:10px;"></div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Details -->
+                <div class="step-content" id="step4-details">
+                    <h3>Detalhes do Serviço</h3>
+                    <p>Descreva seus serviços e disponibilidade</p>
+
+                    <form class="ad-form">
+                        <div class="form-group">
+                            <label for="adDescription">Descrição Completa *</label>
+                            <textarea id="adDescription" rows="6"
+                                placeholder="Descreva seus serviços, diferenciais e o que você oferece..."
+                                required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Serviços Oferecidos</label>
+                            <div class="services-grid">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" value="massagem-relaxante">
+                                    <span>Massagem Relaxante</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" value="atendimento-vip">
+                                    <span>Atendimento VIP</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" value="companhia-executiva">
+                                    <span>Companhia Executiva</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" value="companhia-eventos">
+                                    <span>Companhia para Eventos</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" value="acompanhante-viagem">
+                                    <span>Acompanhante de Viagem</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" value="eventos-sociais">
+                                    <span>Eventos Sociais</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" value="jantar-romantico">
+                                    <span>Jantar Romântico</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" value="massagem-tantrica">
+                                    <span>Massagem Tântrica</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" value="pernoite">
+                                    <span>Pernoite</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="adAvailability">Disponibilidade</label>
+                                <select id="adAvailability">
+                                    <option value="24h">24 Horas</option>
+                                    <option value="noite">Apenas Noite</option>
+                                    <option value="dia">Apenas Dia</option>
+                                    <option value="fins-semana">Fins de Semana</option>
+                                    <option value="agenda">Agenda Personalizada</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="adServiceType">Tipo de Atendimento</label>
+                                <select id="adServiceType">
+                                    <option value="motel">Motel</option>
+                                    <option value="hotel">Hotel</option>
+                                    <option value="local-proprio">Local Próprio</option>
+                                    <option value="residencia-cliente">Residência do Cliente</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Step 5 (removido da navegação): Plan Selection duplicado - manter marcado como bloco auxiliar, sem id duplicado -->
+                <div class="step-content" id="step4-duplicate-plan" style="display:none;">
+                    <h3>Escolha seu Plano</h3>
+                    <p>Selecione o plano que melhor se adequa às suas necessidades</p>
+
+                    <div class="plans-container">
+                        <div class="plan-card" data-plan="basic">
+                            <div class="plan-header">
+                                <i class="fas fa-shield-alt"></i>
+                                <h4>Básico</h4>
+                            </div>
+                            <div class="plan-price">
+                                <span class="price">R$ 149,90</span>
+                                <span class="period">por 30 dias</span>
+                            </div>
+                            <div class="plan-features">
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Anúncio por 30 dias</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Até 3 fotos</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Suporte básico</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="plan-card" data-plan="premium">
+                            <div class="plan-header">
+                                <i class="fas fa-star"></i>
+                                <h4>Premium</h4>
+                            </div>
+                            <div class="plan-price">
+                                <span class="price">R$ 249,90</span>
+                                <span class="period">por 30 dias</span>
+                            </div>
+                            <div class="plan-features">
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Anúncio por 30 dias</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Até 6 fotos</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Destaque na busca</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Suporte prioritário</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="plan-card" data-plan="vip">
+                            <div class="plan-header">
+                                <i class="fas fa-crown"></i>
+                                <h4>VIP</h4>
+                            </div>
+                            <div class="plan-price">
+                                <span class="price">R$ 399,90</span>
+                                <span class="period">por 30 dias</span>
+                            </div>
+                            <div class="plan-features">
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Anúncio por 30 dias</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Fotos ilimitadas</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Topo da lista</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Badge VIP</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-check"></i>
+                                    <span>Suporte 24h</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="payment-security">
+                        <i class="fas fa-lock"></i>
+                        <span>Pagamento Seguro</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="previousStep()" id="prevBtn">
+                    <i class="fas fa-arrow-left"></i>
+                    Anterior
+                </button>
+                <button class="btn btn-primary" onclick="nextStep()" id="nextBtn">
+                    Próximo
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div class="modal" id="paymentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Finalizar Pagamento</h2>
+                <button class="close-btn" onclick="closeModal('paymentModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <p>Complete seu pagamento para ativar seu anúncio</p>
+
+                <div class="payment-container">
+                    <div class="plan-summary">
+                        <h3>Plano Selecionado</h3>
+                        <div class="plan-details" id="selectedPlanDetails">
+                            <!-- Detalhes do plano serão exibidos aqui -->
+                        </div>
+                        <!-- Cupom de Desconto -->
+                        <div class="coupon-box"
+                            style="margin-top: 12px; padding: 10px; background: #0b132b14; border-radius: 8px;">
+                            <div style="display:flex; gap:8px; align-items:center;">
+                                <input type="text" id="couponInput" placeholder="Código do cupom"
+                                    style="flex:1; padding:10px; border:1px solid #2a2f45; border-radius:6px; background:#0b132b; color:#fff;">
+                                <button class="btn btn-secondary" id="applyCouponBtn" title="Aplicar cupom">
+                                    <i class="fas fa-ticket-alt"></i>
+                                    Aplicar
+                                </button>
+                            </div>
+                            <small id="couponMsg" style="display:block; margin-top:6px; color:#adb5bd;"></small>
+                        </div>
+
+                        <div class="payment-total">
+                            <div class="total-item">
+                                <span>Subtotal:</span>
+                                <span id="subtotal">R$ 0,00</span>
+                            </div>
+                            <div class="total-item" id="discountRow" style="display:none; color:#49dd8e;">
+                                <span>Desconto:</span>
+                                <span id="discountAmount">- R$ 0,00</span>
+                            </div>
+                            <div class="total-item">
+                                <span>Total:</span>
+                                <span id="total">R$ 0,00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="payment-methods">
+                        <h3>Pagamento Seguro</h3>
+
+                        <div class="payment-tabs">
+                            <button class="tab-btn active" data-method="pix">
+                                <i class="fas fa-qrcode"></i>
+                                PIX
+                            </button>
+                            <button class="tab-btn" data-method="card">
+                                <i class="fas fa-credit-card"></i>
+                                Cartão
+                            </button>
+                        </div>
+
+                        <div class="payment-content">
+                            <div class="payment-method active" id="pix-method">
+                                <div class="pix-info">
+                                    <i class="fas fa-mobile-alt"></i>
+                                    <h4>Pagamento via PIX</h4>
+                                    <p>Aprovação instantânea! Escaneie o QR Code ou copie o código PIX.</p>
+                                </div>
+
+                                <div class="pix-qr" id="pixQR">
+                                    <!-- QR Code será gerado aqui -->
+                                </div>
+
+                                <button class="btn btn-success" onclick="generatePIX()">
+                                    <i class="fas fa-qrcode"></i>
+                                    Gerar PIX
+                                </button>
+
+                                <button class="btn btn-primary" id="paymentBtn" onclick="processPayment()"
+                                    style="margin-top: 10px;">
+                                    <i class="fas fa-check"></i>
+                                    Finalizar Pagamento
+                                </button>
+                            </div>
+
+                            <div class="payment-method" id="card-method">
+                                <div class="card-form">
+                                    <div class="form-group">
+                                        <label>Número do Cartão</label>
+                                        <input type="text" placeholder="0000 0000 0000 0000">
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Validade</label>
+                                            <input type="text" placeholder="MM/AA">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>CVV</label>
+                                            <input type="text" placeholder="123">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Nome no Cartão</label>
+                                        <input type="text" placeholder="Nome completo">
+                                    </div>
+
+                                    <button class="btn btn-success">
+                                        <i class="fas fa-lock"></i>
+                                        Pagar com Cartão
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="payment-security-note">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Pagamento 100% seguro e criptografado</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verification Modal -->
+    <div class="modal" id="verificationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Verificação de Conta</h2>
+                <button class="close-btn" onclick="closeModal('verificationModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="verification-info">
+                    <h3>Documentos Necessários</h3>
+                    <p>Para verificar sua conta, você precisa enviar:</p>
+
+                    <ul class="verification-list">
+                        <li><i class="fas fa-id-card"></i> RG ou CNH</li>
+                        <li><i class="fas fa-camera"></i> Foto segurando um papel com seu código único</li>
+                        <li><i class="fas fa-user"></i> Foto de rosto</li>
+                    </ul>
+
+                    <div class="verification-code">
+                        <h4>Seu Código Único:</h4>
+                        <div class="code-display" id="verificationCode">DESEJOS2258</div>
+                        <p>Escreva este código em um papel e tire uma foto segurando o papel junto com seu documento.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="verification-form">
+                    <h3>Enviar Documentos</h3>
+
+                    <div class="form-group">
+                        <label>Documento de Identificação *</label>
+                        <input type="file" accept="image/*" required>
+                        <small>RG, CNH ou outro documento oficial</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Foto com Código *</label>
+                        <input type="file" accept="image/*" required>
+                        <small>Foto segurando o papel com o código</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Foto de Rosto *</label>
+                        <input type="file" accept="image/*" required>
+                        <small>Foto clara do seu rosto</small>
+                    </div>
+
+                    <!-- Pré-visualização dos arquivos -->
+                    <div id="verificationPreview"
+                        style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:10px; margin:10px 0;">
+                    </div>
+
+                    <!-- Barra de progresso do upload/leitura -->
+                    <div id="verificationProgress"
+                        style="display:none; width:100%; height:10px; background:#eee; border-radius:6px; overflow:hidden; margin:10px 0;">
+                        <div id="verificationProgressBar"
+                            style="height:100%; width:0%; background:#28a745; transition: width .2s ease;"></div>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="submitVerification()">
+                        <i class="fas fa-paper-plane"></i>
+                        Enviar Verificação
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="states-config.js"></script>
+    <script src="notifications.js"></script>
+    <script src="painel-anunciante.js"></script>
+
+    <script>
+        // Inicializar sistema quando a página carregar
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('🚀 Inicializando sistema...');
+
+            // Configurar upload de fotos
+            if (typeof setupPhotoUpload === 'function') {
+                setupPhotoUpload();
+                console.log('✅ Upload de fotos configurado');
+            }
+
+            // Configurar seleção de planos
+            if (typeof setupPlanSelection === 'function') {
+                setupPlanSelection();
+                console.log('✅ Seleção de planos configurada');
+            }
+
+            // Carregar estados disponíveis
+            if (typeof loadAvailableStates === 'function') {
+                loadAvailableStates();
+                console.log('✅ Estados carregados');
+            }
+
+            // Carregar dashboard
+            if (typeof loadDashboardStats === 'function') {
+                loadDashboardStats();
+                console.log('✅ Dashboard carregado');
+            }
+
+            // Carregar anúncios do usuário
+            if (typeof loadUserAds === 'function') {
+                loadUserAds();
+                console.log('✅ Anúncios carregados');
+            }
+
+            // Carregar perfil do usuário
+            if (typeof loadUserProfile === 'function') {
+                loadUserProfile();
+                console.log('✅ Perfil carregado');
+            }
+
+            // Carregar notificações
+            if (typeof loadUserNotifications === 'function') {
+                loadUserNotifications();
+                console.log('✅ Notificações carregadas');
+            }
+
+            console.log('🎉 Sistema inicializado com sucesso!');
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuração de Pagamentos - DesejosMS Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="payment-config.css">
+    <link rel="stylesheet" href="notifications.css">
+    <script src="plans-config.js"></script>
+</head>
+<body>
+    <!-- Age Verification Check -->
+    <script>
+        if (localStorage.getItem('ageVerified') !== 'true') {
+            window.location.href = 'age-verification.html';
+        }
+    </script>
+
+    <div class="payment-config-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <a href="admin-panel.html" class="back-btn">
+                        <i class="fas fa-arrow-left"></i>
+                        Voltar ao Painel
+                    </a>
+                    <h1><i class="fas fa-credit-card"></i> Configuração de Pagamentos</h1>
+                    <p>Configure suas APIs de pagamento e métodos de cobrança</p>
+                </div>
+                
+                <div class="header-right">
+                    <div class="stats-summary">
+                        <div class="stat-item">
+                            <span class="stat-number" id="activeGateways">0</span>
+                            <span class="stat-label">Gateways Ativos</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="totalTransactions">0</span>
+                            <span class="stat-label">Transações</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="totalRevenue">R$ 0</span>
+                            <span class="stat-label">Receita</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Payment Gateways Section -->
+        <div class="gateways-section">
+            <div class="section-header">
+                <h2><i class="fas fa-plug"></i> Gateways de Pagamento</h2>
+                <button class="btn btn-primary" onclick="showAddGatewayModal()">
+                    <i class="fas fa-plus"></i>
+                    Adicionar Gateway
+                </button>
+            </div>
+            
+            <div class="gateways-grid" id="gatewaysGrid">
+                <!-- Gateways serão carregados aqui -->
+            </div>
+        </div>
+
+        <!-- Payment Methods Section -->
+        <div class="methods-section">
+            <div class="section-header">
+                <h2><i class="fas fa-wallet"></i> Métodos de Pagamento</h2>
+                <button class="btn btn-primary" onclick="showAddMethodModal()">
+                    <i class="fas fa-plus"></i>
+                    Adicionar Método
+                </button>
+            </div>
+            
+            <div class="methods-grid" id="methodsGrid">
+                <!-- Métodos serão carregados aqui -->
+            </div>
+        </div>
+
+        <!-- Pricing Plans Section -->
+        <div class="pricing-section">
+            <div class="section-header">
+                <h2><i class="fas fa-tags"></i> Planos e Preços</h2>
+                <button class="btn btn-primary" onclick="showAddPlanModal()">
+                    <i class="fas fa-plus"></i>
+                    Adicionar Plano
+                </button>
+            </div>
+            
+            <div class="pricing-grid" id="pricingGrid">
+                <!-- Planos serão carregados aqui -->
+            </div>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="transactions-section">
+            <div class="section-header">
+                <h2><i class="fas fa-history"></i> Histórico de Transações</h2>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="exportTransactions()">
+                        <i class="fas fa-download"></i>
+                        Exportar
+                    </button>
+                    <button class="btn btn-primary" onclick="refreshTransactions()">
+                        <i class="fas fa-sync"></i>
+                        Atualizar
+                    </button>
+                </div>
+            </div>
+            
+            <div class="transactions-table" id="transactionsTable">
+                <!-- Transações serão carregadas aqui -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Gateway Modal -->
+    <div class="modal" id="addGatewayModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Adicionar Gateway de Pagamento</h2>
+                <button class="close-btn" onclick="closeModal('addGatewayModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Gateway *</label>
+                    <select id="gatewayType" onchange="updateGatewayFields()">
+                        <option value="">Selecione o Gateway</option>
+                        <option value="mercadopago">Mercado Pago</option>
+                        <option value="stripe">Stripe</option>
+                        <option value="paypal">PayPal</option>
+                        <option value="pix">PIX (Banco Central)</option>
+                        <option value="pagseguro">PagSeguro</option>
+                        <option value="paypal">PayPal</option>
+                        <option value="custom">Gateway Personalizado</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Nome do Gateway *</label>
+                    <input type="text" id="gatewayName" placeholder="Ex: Mercado Pago">
+                </div>
+                
+                <div class="form-group">
+                    <label>Chave Pública (Public Key) *</label>
+                    <input type="text" id="gatewayPublicKey" placeholder="pk_test_...">
+                </div>
+                
+                <div class="form-group">
+                    <label>Chave Secreta (Secret Key) *</label>
+                    <input type="password" id="gatewaySecretKey" placeholder="sk_test_...">
+                </div>
+                
+                <div class="form-group">
+                    <label>Webhook URL</label>
+                    <input type="url" id="gatewayWebhook" placeholder="https://seudominio.com/webhook">
+                </div>
+                
+                <div class="form-group">
+                    <label>Ambiente</label>
+                    <select id="gatewayEnvironment">
+                        <option value="sandbox">Sandbox (Teste)</option>
+                        <option value="production">Produção</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="gatewayStatus">
+                        <option value="active">Ativo</option>
+                        <option value="inactive">Inativo</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('addGatewayModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveGateway()">
+                    <i class="fas fa-save"></i>
+                    Salvar Gateway
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Payment Method Modal -->
+    <div class="modal" id="addMethodModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Adicionar Método de Pagamento</h2>
+                <button class="close-btn" onclick="closeModal('addMethodModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Tipo de Método *</label>
+                    <select id="methodType">
+                        <option value="">Selecione o Tipo</option>
+                        <option value="credit_card">Cartão de Crédito</option>
+                        <option value="debit_card">Cartão de Débito</option>
+                        <option value="pix">PIX</option>
+                        <option value="boleto">Boleto Bancário</option>
+                        <option value="bank_transfer">Transferência Bancária</option>
+                        <option value="crypto">Criptomoedas</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Nome do Método *</label>
+                    <input type="text" id="methodName" placeholder="Ex: Cartão de Crédito">
+                </div>
+                
+                <div class="form-group">
+                    <label>Descrição</label>
+                    <textarea id="methodDescription" placeholder="Descrição do método de pagamento"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Taxa (%)</label>
+                    <input type="number" id="methodFee" placeholder="0.00" step="0.01" min="0">
+                </div>
+                
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="methodStatus">
+                        <option value="active">Ativo</option>
+                        <option value="inactive">Inativo</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('addMethodModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="savePaymentMethod()">
+                    <i class="fas fa-save"></i>
+                    Salvar Método
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Pricing Plan Modal -->
+    <div class="modal" id="addPlanModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Adicionar Plano de Preços</h2>
+                <button class="close-btn" onclick="closeModal('addPlanModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Nome do Plano *</label>
+                    <input type="text" id="planName" placeholder="Ex: Plano Básico">
+                </div>
+                
+                <div class="form-group">
+                    <label>Tipo do Plano *</label>
+                    <select id="planType">
+                        <option value="">Selecione o Tipo</option>
+                        <option value="basic">Básico</option>
+                        <option value="top">Top</option>
+                        <option value="supervip">SuperVIP</option>
+                        <option value="custom">Personalizado</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Preço (R$) *</label>
+                    <input type="number" id="planPrice" placeholder="0.00" step="0.01" min="0">
+                </div>
+                
+                <div class="form-group">
+                    <label>Duração (dias) *</label>
+                    <input type="number" id="planDuration" placeholder="30" min="1">
+                </div>
+                
+                <div class="form-group">
+                    <label>Descrição</label>
+                    <textarea id="planDescription" placeholder="Descrição dos benefícios do plano"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Recursos Inclusos</label>
+                    <div class="features-list" id="planFeatures">
+                        <div class="feature-item">
+                            <input type="text" placeholder="Recurso 1" class="feature-input">
+                            <button type="button" class="remove-feature" onclick="removeFeature(this)">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="addFeature()">
+                        <i class="fas fa-plus"></i>
+                        Adicionar Recurso
+                    </button>
+                </div>
+                
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="planStatus">
+                        <option value="active">Ativo</option>
+                        <option value="inactive">Inativo</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('addPlanModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="savePricingPlan()">
+                    <i class="fas fa-save"></i>
+                    Salvar Plano
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="notifications.js"></script>
+    <script src="payment-config.js"></script>
+</body>
+</html>

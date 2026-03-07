@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Logo DesejosMS - Demonstração</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #2d2d2d 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(255, 215, 0, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(255, 215, 0, 0.1) 0%, transparent 40%);
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .demo-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .demo-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.05), transparent);
+            transform: rotate(45deg);
+            animation: premiumShine 6s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes premiumShine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+            100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+        }
+
+        .demo-title {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            font-family: 'Playfair Display', 'Georgia', serif;
+            font-style: italic;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(135deg, #C0C0C0 0%, #E5E4E2 25%, #FFD700 50%, #FFA500 75%, #FFD700 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-demo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            padding: 30px;
+            border-radius: 20px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+            filter: drop-shadow(0 8px 25px rgba(0, 0, 0, 0.4));
+        }
+
+        .logo-demo:hover {
+            transform: scale(1.05) translateY(-3px);
+            filter: drop-shadow(0 15px 40px rgba(255, 215, 0, 0.3));
+        }
+
+        .logo-icon {
+            font-size: 3.5rem;
+            color: #FFD700;
+            margin-right: 25px;
+            text-shadow: 
+                0 0 20px rgba(255, 215, 0, 0.6),
+                0 0 40px rgba(255, 215, 0, 0.3);
+            animation: premiumHeartbeat 3s ease-in-out infinite;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+        }
+
+        @keyframes premiumHeartbeat {
+            0%, 100% { 
+                transform: scale(1) rotate(0deg); 
+                filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5)) brightness(1);
+            }
+            25% { 
+                transform: scale(1.1) rotate(2deg); 
+                filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.6)) brightness(1.2);
+            }
+            50% { 
+                transform: scale(1.15) rotate(0deg); 
+                filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.7)) brightness(1.3);
+            }
+            75% { 
+                transform: scale(1.1) rotate(-2deg); 
+                filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.6)) brightness(1.2);
+            }
+        }
+
+        .logo-text h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            margin: 0;
+            font-family: 'Playfair Display', 'Georgia', serif;
+            font-style: italic;
+            letter-spacing: 3px;
+            color: #D62828;
+            text-shadow: 
+                3px 3px 6px rgba(0, 0, 0, 0.8),
+                0 0 30px rgba(255, 215, 0, 0.4);
+            background: linear-gradient(135deg, #C0C0C0 0%, #E5E4E2 25%, #FFD700 50%, #FFA500 75%, #FFD700 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+        }
+
+        .logo-text .slogan {
+            font-size: 1.4rem;
+            font-weight: 500;
+            color: #FFD700;
+            font-style: italic;
+            font-family: 'Playfair Display', 'Georgia', serif;
+            text-transform: none;
+            letter-spacing: 1.5px;
+            margin-top: 8px;
+            text-shadow: 
+                2px 2px 4px rgba(0, 0, 0, 0.8),
+                0 0 20px rgba(255, 215, 0, 0.5);
+            max-width: 450px;
+            line-height: 1.3;
+            opacity: 0.95;
+            transition: all 0.4s ease;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+        }
+
+        .logo-demo:hover .slogan {
+            opacity: 1;
+            transform: translateY(-2px);
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8)) brightness(1.2);
+        }
+
+        /* Efeito de brilho premium na logo */
+        .logo-demo::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.1), transparent);
+            transform: rotate(45deg);
+            animation: premiumShine 4s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        .specs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .spec-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .spec-card h3 {
+            color: #FFD700;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            font-family: 'Playfair Display', 'Georgia', serif;
+        }
+
+        .spec-card ul {
+            color: white;
+            list-style: none;
+        }
+
+        .spec-card li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .spec-card li::before {
+            content: '✓';
+            color: #FFD700;
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        .color-palette {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .color-item {
+            text-align: center;
+        }
+
+        .color-swatch {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .color-name {
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .color-hex {
+            color: #FFD700;
+            font-size: 0.8rem;
+            font-family: monospace;
+        }
+
+        @media (max-width: 768px) {
+            .demo-title {
+                font-size: 2rem;
+            }
+            
+            .logo-text h1 {
+                font-size: 2.5rem;
+            }
+            
+            .logo-icon {
+                font-size: 2.5rem;
+                margin-right: 15px;
+            }
+            
+            .logo-text .slogan {
+                font-size: 1rem;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="demo-section">
+            <h1 class="demo-title">✨ Logo Premium DesejosMS ✨</h1>
+            
+            <div class="logo-demo">
+                <i class="fas fa-heart logo-icon"></i>
+                <div class="logo-text">
+                    <h1>DesejosMS</h1>
+                    <span class="slogan">Onde seus desejos ganham vida.</span>
+                </div>
+            </div>
+
+            <div class="color-palette">
+                <div class="color-item">
+                    <div class="color-swatch" style="background: #C0C0C0;"></div>
+                    <div class="color-name">Prata Metálico</div>
+                    <div class="color-hex">#C0C0C0</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-swatch" style="background: #FFD700;"></div>
+                    <div class="color-name">Dourado Elegante</div>
+                    <div class="color-hex">#FFD700</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-swatch" style="background: #FFA500;"></div>
+                    <div class="color-name">Laranja Premium</div>
+                    <div class="color-hex">#FFA500</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="specs">
+            <div class="spec-card">
+                <h3>🎨 Design Premium</h3>
+                <ul>
+                    <li>Efeitos 3D metálicos (prateado/dourado)</li>
+                    <li>Coração animado com rotação sutil</li>
+                    <li>Gradientes metálicos sofisticados</li>
+                    <li>Sombras de profundidade realistas</li>
+                    <li>Efeito de brilho premium contínuo</li>
+                </ul>
+            </div>
+
+            <div class="spec-card">
+                <h3>💎 Luxo e Sofisticação</h3>
+                <ul>
+                    <li>Fundo escuro elegante</li>
+                    <li>Animações suaves e premium</li>
+                    <li>Efeitos de hover luxuosos</li>
+                    <li>Tipografia metálica 3D</li>
+                    <li>Reflexos de luz dinâmicos</li>
+                </ul>
+            </div>
+
+            <div class="spec-card">
+                <h3>✨ Características Premium</h3>
+                <ul>
+                    <li>Transmite exclusividade e luxo</li>
+                    <li>Design sem poluição visual</li>
+                    <li>Fundo adaptável e sofisticado</li>
+                    <li>Contraste premium otimizado</li>
+                    <li>Animação de coração premium</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h3 style="color: #FFD700; text-align: center; margin-bottom: 20px; font-size: 1.5rem;">
+                🎯 Logo Premium Implementada
+            </h3>
+            <p style="color: white; text-align: center; line-height: 1.6;">
+                A nova logo premium foi implementada em todas as páginas principais:<br>
+                <strong>index.html</strong>, <strong>painel-anunciante.html</strong>, <strong>admin-panel.html</strong>, 
+                <strong>login.html</strong> e <strong>signup.html</strong>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cupons de Desconto - DesejosMS Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="cupons.css">
+    <link rel="stylesheet" href="notifications.css">
+</head>
+<body>
+    <!-- Age Verification Check -->
+    <script>
+        if (localStorage.getItem('ageVerified') !== 'true') {
+            window.location.href = 'age-verification.html';
+        }
+    </script>
+
+    <div class="coupons-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <a href="admin-panel.html" class="back-btn">
+                        <i class="fas fa-arrow-left"></i>
+                        Voltar ao Painel
+                    </a>
+                    <h1><i class="fas fa-ticket-alt"></i> Cupons de Desconto</h1>
+                    <p>Gerencie cupons promocionais e descontos</p>
+                </div>
+                
+                <div class="header-right">
+                    <div class="stats-summary">
+                        <div class="stat-item">
+                            <span class="stat-number" id="activeCoupons">0</span>
+                            <span class="stat-label">Ativos</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="totalUses">0</span>
+                            <span class="stat-label">Usos</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="totalDiscount">R$ 0</span>
+                            <span class="stat-label">Descontos</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Create Coupon Section -->
+        <div class="create-section">
+            <div class="create-content">
+                <h2><i class="fas fa-plus"></i> Criar Novo Cupom</h2>
+                
+                <div class="coupon-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Código do Cupom *</label>
+                            <input type="text" id="couponCode" placeholder="Ex: DESCONTO30" maxlength="20">
+                            <small>Máximo 20 caracteres, apenas letras e números</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Desconto (%) *</label>
+                            <input type="number" id="couponDiscount" placeholder="30" min="1" max="100">
+                            <small>Percentual de desconto (1-100%)</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Dias de Validade *</label>
+                            <input type="number" id="couponDays" placeholder="30" min="1" max="365">
+                            <small>Quantos dias o cupom será válido</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Limite de Usos</label>
+                            <input type="number" id="couponLimit" placeholder="Ilimitado" min="1">
+                            <small>Deixe vazio para uso ilimitado</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Plano Aplicável</label>
+                            <select id="couponPlan">
+                                <option value="all">Todos os Planos</option>
+                                <option value="basic">Apenas Básico</option>
+                                <option value="premium">Apenas Premium</option>
+                                <option value="vip">Apenas VIP</option>
+                            </select>
+                            <small>Em qual plano o cupom pode ser usado</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Valor Mínimo</label>
+                            <input type="number" id="couponMinValue" placeholder="R$ 0" min="0" step="0.01">
+                            <small>Valor mínimo da compra para usar o cupom</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Descrição</label>
+                        <textarea id="couponDescription" placeholder="Descreva o cupom e suas condições..." rows="3"></textarea>
+                        <small>Descrição que aparecerá para os usuários</small>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button class="btn btn-primary" onclick="createCoupon()">
+                            <i class="fas fa-plus"></i>
+                            Criar Cupom
+                        </button>
+                        <button class="btn btn-secondary" onclick="clearForm()">
+                            <i class="fas fa-eraser"></i>
+                            Limpar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coupons List Section -->
+        <div class="coupons-section">
+            <div class="section-header">
+                <h2><i class="fas fa-list"></i> Cupons Existentes</h2>
+                
+                <div class="filters">
+                    <div class="filter-group">
+                        <label>Status:</label>
+                        <select id="statusFilter" onchange="filterCoupons()">
+                            <option value="all">Todos</option>
+                            <option value="active">Ativos</option>
+                            <option value="expired">Expirados</option>
+                            <option value="used">Usados</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Buscar:</label>
+                        <input type="text" id="searchInput" placeholder="Código do cupom..." onkeyup="searchCoupons()">
+                    </div>
+                    
+                    <div class="filter-actions">
+                        <button class="btn btn-success" onclick="exportCoupons()">
+                            <i class="fas fa-download"></i>
+                            Exportar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="coupons-grid" id="couponsGrid">
+                <!-- Cupons serão carregados aqui -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Coupon Details Modal -->
+    <div class="modal" id="couponModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Detalhes do Cupom</h2>
+                <button class="close-btn" onclick="closeModal('couponModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div id="couponDetails">
+                    <!-- Detalhes do cupom serão carregados aqui -->
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('couponModal')">Fechar</button>
+                <button class="btn btn-success" onclick="activateCoupon()" id="activateBtn">
+                    <i class="fas fa-check"></i>
+                    Ativar
+                </button>
+                <button class="btn btn-danger" onclick="deactivateCoupon()" id="deactivateBtn">
+                    <i class="fas fa-ban"></i>
+                    Desativar
+                </button>
+                <button class="btn btn-danger" onclick="deleteCoupon()" id="deleteBtn">
+                    <i class="fas fa-trash"></i>
+                    Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Usage History Modal -->
+    <div class="modal" id="usageModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Histórico de Uso</h2>
+                <button class="close-btn" onclick="closeModal('usageModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div id="usageHistory">
+                    <!-- Histórico de uso será carregado aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="notifications.js"></script>
+    <script src="cupons.js"></script>
+</body>
+</html>
+
+

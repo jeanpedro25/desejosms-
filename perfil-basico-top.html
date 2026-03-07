@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Melissa - DesejosMS Acompanhantes</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="profile.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        /* Logo atualizada */
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            text-decoration: none;
+            padding: 12px 0;
+        }
+        .logo-heart { width: 80px; height: 80px; }
+        .logo-text { line-height: 1.05; }
+        .logo-title { font-size: clamp(30px, 3.2vw, 38px); }
+        .logo-slogan { font-size: clamp(13px, 1.4vw, 16px); font-weight: 600; }
+        
+        /* Marca d'água embutida */
+        .image-item { position: relative; overflow: hidden; }
+        .profile-photo { width: 100%; height: 100%; object-fit: cover; transition: transform .3s ease; }
+        .image-item:hover .profile-photo { transform: scale(1.03); }
+        .wm {
+            position: absolute; inset: 0; display: flex; justify-content: center; align-items: center;
+            pointer-events: none; font-family: 'Cinzel', serif; font-weight: 700;
+            color: #ffffff; opacity: 0.10; transform: rotate(-18deg);
+            letter-spacing: 2px; text-shadow: 0 1px 2px rgba(0,0,0,.35);
+            font-size: clamp(28px, 6vw, 56px);
+        }
+        
+        /* Marca d'água no modal (overlay dedicado, não usa mais ::after) */
+        .image-modal .modal-content { 
+            position: absolute; 
+            overflow: hidden; 
+            display: inline-block; 
+            /* Garantir que o container encolha para o tamanho da imagem exibida */
+            width: auto; 
+            height: auto; 
+            max-width: 90vw; 
+            max-height: 85vh;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .image-modal .modal-image { 
+            display: block; 
+            width: auto; 
+            height: auto; 
+            max-width: 90vw; 
+            max-height: 85vh; 
+            object-fit: contain; 
+        }
+        .image-modal .modal-content::after { content: none !important; }
+        .wm-overlay {
+            position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-18deg);
+            color: #ffffff; opacity: .10; font-family: 'Cinzel', serif; font-weight: 700; letter-spacing: 2px;
+            text-shadow: 0 1px 2px rgba(0,0,0,.35); pointer-events: none; white-space: nowrap;
+            /* Fallback responsivo caso JS não calcule */
+            font-size: clamp(20px, 6vw, 96px);
+        }
+
+        /* Estilo para header actions e botão voltar */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-ghost {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .btn-ghost:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-ghost i {
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Age Verification Check -->
+    <script>
+        if (localStorage.getItem('ageVerified') !== 'true') {
+            window.location.href = 'age-verification.html';
+        }
+    </script>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo" aria-label="DesejosMS">
+                    <svg class="logo-heart" viewBox="0 0 120 110" width="64" height="64" aria-hidden="true">
+                        <defs>
+                            <linearGradient id="heartGradBasic" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stop-color="#FF3B55"/>
+                                <stop offset="55%" stop-color="#E1062C"/>
+                                <stop offset="100%" stop-color="#8A0017"/>
+                            </linearGradient>
+                            <filter id="heartGlowBasic" x="-40%" y="-40%" width="180%" height="180%">
+                                <feGaussianBlur stdDeviation="4" result="blur"/>
+                                <feMerge>
+                                    <feMergeNode in="blur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                        </defs>
+                        <!-- Glow suave vermelho -->
+                        <path fill="rgba(225,6,44,0.55)" d="M60 108c40-28 56-46 56-69C116 21 102 7 86 7c-9 0-18 5-26 15C52 12 43 7 34 7 18 7 4 21 4 39c0 23 16 41 56 69z"/>
+                        <!-- Coração principal -->
+                        <path filter="url(#heartGlowBasic)" fill="url(#heartGradBasic)" d="M60 98c35-24 50-39 50-58 0-13-10-23-22-23-8 0-16 4-22 13-6-9-14-13-22-13C32 17 22 27 22 40c0 19 15 34 38 58z"/>
+                    </svg>
+                     <div class="logo-text">
+                        <span class="logo-title">DesejosMS</span>
+                        <span class="logo-slogan">Onde o seu desejo se transforma em prazer</span>
+                     </div>
+                </a>
+
+                <div class="header-actions">
+                    <a href="age-verification.html" class="btn btn-ghost">
+                        <i class="fas fa-arrow-left"></i>
+                        Voltar
+                    </a>
+                </div>
+
+                <div class="header-right" style="display:none;">
+                    <div class="location-selector">
+                        <select id="locationSelect"></select>
+                    </div>
+                    <button class="announce-btn" style="display:none;"></button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="profile-container">
+                <!-- Left Side - Images -->
+                <div class="profile-images">
+                    <div class="image-grid">
+                        <!-- Fotos serão renderizadas dinamicamente -->
+                    </div>
+
+                    <!-- Video Players -->
+                    <div class="video-players" id="videoPlayers"></div>
+                </div>
+
+                <!-- Right Side - Profile Info -->
+                <div class="profile-info">
+                    <div class="profile-header">
+                        <h1>Melissa</h1>
+                        <div class="profile-stats">
+                            <span>30 Anos Aquidauana MS</span>
+                            <span>Mulher</span>
+                            <span>Ref 19824</span>
+                        </div>
+                    </div>
+
+                    <div class="contact-section">
+                        <div class="contact-box">
+                            <i class="fas fa-phone"></i>
+                            <span>(67) 9-9909-0483</span>
+                        </div>
+                        <div class="contact-box whatsapp">
+                            <i class="fab fa-whatsapp"></i>
+                            <span>(67) 9-9909-0483</span>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <div class="info-item">
+                            <strong>Disponível:</strong> 24h
+                        </div>
+                        <div class="info-item">
+                            <strong>Valor:</strong> A COMBINAR
+                        </div>
+                    </div>
+
+                                         <div class="warning-section">
+                         <p class="warning-text">"Para evitar enganação, não faça pagamento adiantado."</p>
+                         <p class="warning-text">SEMPRE MENCIONE: DesejosMS</p>
+                     </div>
+
+                    <div class="services-section">
+                        <h3>ONDE ATENDO:</h3>
+                        <div class="services-list">
+                            <div class="service-item">
+                                <i class="fas fa-check"></i>
+                                <span>Motel</span>
+                            </div>
+                            <div class="service-item">
+                                <i class="fas fa-check"></i>
+                                <span>Hotel</span>
+                            </div>
+                            <div class="service-item">
+                                <i class="fas fa-check"></i>
+                                <span>Local Próprio</span>
+                            </div>
+                            <div class="service-item">
+                                <i class="fas fa-check"></i>
+                                <span>Residência do Cliente</span>
+                            </div>
+                        </div>
+
+                        <h3>Quem Atendo:</h3>
+                        <div class="services-list">
+                            <div class="service-item">
+                                <i class="fas fa-check"></i>
+                                <span>Homem</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="description-section">
+                        <h3>DESCRIÇÃO:</h3>
+                        <p id="profileDescription"></p>
+                    </div>
+
+                    <!-- Seção de Anúncios SUPERVIP -->
+                    <div class="supervip-ads-section">
+                        <h3><i class="fas fa-crown"></i> Anúncios SUPERVIP</h3>
+                        <div class="supervip-ads-grid" id="supervipAdsGrid">
+                            <!-- Anúncios SUPERVIP serão carregados aqui via JavaScript -->
+                        </div>
+                                         </div>
+                 </div>
+             </div>
+         </div>
+     </main>
+
+     <!-- Modal para visualização de imagens -->
+     <div id="imageModal" class="image-modal">
+         <span class="close-modal" onclick="closeImageModal()">&times;</span>
+         <div class="image-counter" id="imageCounter">1 / 40</div>
+         <div class="modal-content">
+             <img class="modal-image" id="modalImage" src="" alt="Imagem">
+         </div>
+         <a class="prev-image" onclick="changeImage(-1)">&#10094;</a>
+         <a class="next-image" onclick="changeImage(1)">&#10095;</a>
+     </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Informações sobre anunciantes</h3>
+                    <p>Informações sobre anunciantes, somente na página do mesmo ou via contato telefônico direto no número do anunciante. Não temos nenhum vínculo com os anunciantes, nosso objetivo é somente aluguel de espaço para anúncios.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Política DesejosMS</h3>
+                    <p>Este é um site de classificados para acompanhantes. Não temos envolvimento em contatos ou negócios entre interessados e anunciantes. NÃO FAZEMOS NENHUM TIPO DE INDICAÇÃO.</p>
+                    <p>Os contatos são feitos diretamente com os anunciantes. Não somos agência.</p>
+                    <p>Todos os acompanhantes do site autorizaram a publicação de seus anúncios com informações de sua própria autoria e total responsabilidade.</p>
+                    <p>O www.desejosms.com.br não promove prática sexual infantil, respeitando o estatuto de menores e adolescentes. Todos os anunciantes confirmam ser maiores de idade.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Função para carregar dados da anunciante específica
+        function loadProfileData() {
+            const selectedProfileId = localStorage.getItem('selectedProfileId');
+            
+            if (!selectedProfileId) {
+                // Se não há ID selecionado, usar dados padrão (Melissa)
+                return;
+            }
+            
+            // Buscar anúncios no localStorage
+            const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
+            const selectedProfile = announcements.find(ad => ad.id == selectedProfileId);
+            
+            if (selectedProfile) {
+                // Atualizar dados da página com os dados da anunciante selecionada
+                updateProfilePage(selectedProfile);
+            }
+        }
+        
+        // Função para atualizar a página com dados da anunciante
+        function updateProfilePage(profile) {
+                         // Atualizar título da página (sem sufixos de plano)
+             const cleanName = profile.name.replace(/\s*-\s*(Super\s*VIP|Plano\s*TOP|Básico|SUPERVIP|TOP|BASICO)/i, '');
+             document.title = `${cleanName} - DesejosMS Acompanhantes`;
+            
+                         // Atualizar nome da anunciante (sem sufixos de plano) - MAIÚSCULO
+             const profileName = document.querySelector('.profile-header h1');
+             if (profileName) {
+                 // Remover qualquer sufixo de plano do nome e converter para maiúsculo
+                 const cleanName = profile.name.replace(/\s*-\s*(Super\s*VIP|Plano\s*TOP|Básico|SUPERVIP|TOP|BASICO)/i, '');
+                 profileName.textContent = cleanName.toUpperCase();
+             }
+             
+             // Carregar fotos reais da anunciante
+             loadProfileImages(profile);
+             // Carregar vídeos somente se existirem
+             loadProfileVideos(profile);
+            
+            // Atualizar estatísticas do perfil
+            const profileStats = document.querySelector('.profile-stats');
+            if (profileStats) {
+                profileStats.innerHTML = `
+                    <span>${profile.age || 25} Anos ${profile.city}, MS</span>
+                    <span>${profile.category === 'mulher' ? 'Mulher' : profile.category}</span>
+                    <span>Ref ${profile.id}</span>
+                `;
+            }
+            
+            // Atualizar informações de contato
+            const phoneElements = document.querySelectorAll('.contact-box span');
+            phoneElements.forEach(element => {
+                element.textContent = profile.whatsapp || profile.phone || '(67) 9-9909-0483';
+            });
+            
+            // Atualizar seção de informações
+            const infoSection = document.querySelector('.info-section');
+            if (infoSection) {
+                infoSection.innerHTML = `
+                    <div class="info-item">
+                        <strong>Disponível:</strong> 24h
+                    </div>
+                    <div class="info-item">
+                        <strong>Valor:</strong> ${profile.price || 'A COMBINAR'}
+                    </div>
+                `;
+            }
+            
+            // Atualizar seção de serviços
+            const servicesSection = document.querySelector('.services-section');
+            if (servicesSection && profile.services) {
+                const servicesList = servicesSection.querySelector('.services-list');
+                if (servicesList) {
+                    servicesList.innerHTML = profile.services.map(service => `
+                        <div class="service-item">
+                            <i class="fas fa-check"></i>
+                            <span>${service}</span>
+                        </div>
+                    `).join('');
+                }
+            }
+            
+            // Atualizar descrição - APENAS O QUE O ANUNCIANTE ESCREVEU
+            const descriptionSection = document.getElementById('profileDescription');
+            if (descriptionSection) {
+                descriptionSection.textContent = profile.description || profile.bio || '';
+                const wrapper = document.querySelector('.description-section');
+                if (!descriptionSection.textContent.trim() && wrapper) wrapper.style.display = 'none';
+            }
+            
+                         // Atualizar função do WhatsApp
+             window.openWhatsAppProfile = function() {
+                 const phone = profile.whatsapp || profile.phone || '(67) 9-9909-0483';
+                 const cleanName = profile.name.replace(/\s*-\s*(Super\s*VIP|Plano\s*TOP|Básico|SUPERVIP|TOP|BASICO)/i, '') || 'Melissa';
+                 const message = `Olá ${cleanName}! Vi seu anúncio no DesejosMS. Gostaria de mais informações sobre seus serviços.`;
+                 const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+                 window.open(whatsappUrl, '_blank');
+             };
+        }
+        
+        // Função para carregar fotos reais da anunciante
+        function loadProfileImages(profile) {
+            const imageGrid = document.querySelector('.image-grid');
+            if (!imageGrid) return;
+            
+            console.log('📷 Carregando fotos da anunciante:', profile.name);
+            
+            // Limpar grid existente
+            imageGrid.innerHTML = '';
+            
+            // Verificar várias fontes de imagens
+            let photos = [];
+            
+            // 1. Fotos específicas do perfil
+            if (profile.photos && Array.isArray(profile.photos) && profile.photos.length > 0) {
+                photos = profile.photos;
+            } 
+            // 2. Imagem única do perfil
+            else if (profile.photo && typeof profile.photo === 'string') {
+                photos = [profile.photo];
+            }
+            // 3. Campo image
+            else if (profile.image && typeof profile.image === 'string') {
+                photos = [profile.image];
+            }
+            // 4. Fotos do arquivo uploader (se existir)
+            else if (profile.uploadedPhotos && Array.isArray(profile.uploadedPhotos)) {
+                photos = profile.uploadedPhotos;
+            }
+            
+            console.log('📸 Fotos encontradas:', photos.length);
+            
+            // Se não há fotos reais, usar imagens de alta qualidade por categoria
+            if (photos.length === 0) {
+                console.log('📷 Usando fotos padrão para categoria:', profile.category);
+                
+                const defaultImages = {
+                    'mulher': [
+                        'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300&h=300&fit=crop&crop=face',
+                        'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=300&fit=crop&crop=face',
+                        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop&crop=face',
+                        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&h=300&fit=crop&crop=face',
+                        'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=300&h=300&fit=crop&crop=face',
+                        'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&h=300&fit=crop&crop=face'
+                    ],
+                    'homem': [
+                        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face',
+                        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=300&fit=crop&crop=face',
+                        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face',
+                        'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&h=300&fit=crop&crop=face',
+                        'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300&h=300&fit=crop&crop=face',
+                        'https://images.unsplash.com/photo-1545167622-3a6ac756afa4?w=300&h=300&fit=crop&crop=face'
+                    ],
+                    'travesti': [
+                        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop&crop=face',
+                        'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300&h=300&fit=crop&crop=face',
+                        'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=300&fit=crop&crop=face'
+                    ]
+                };
+                
+                const categoryImages = defaultImages[profile.category] || defaultImages['mulher'];
+                photos = categoryImages.slice(0, 6); // Máximo 6 fotos
+            }
+            
+            // Garantir que temos pelo menos 6 fotos
+            if (photos.length < 6) {
+                while (photos.length < 6) {
+                    photos.push(`https://via.placeholder.com/300x300/FFB6C1/FFFFFF?text=Foto+${photos.length + 1}`);
+                }
+            }
+            
+            console.log('✅ Fotos finais a serem exibidas:', photos.length);
+            
+            // Criar elementos de imagem com marca d'água
+            photos.forEach((photo, index) => {
+                const imageItem = document.createElement('div');
+                imageItem.className = 'image-item';
+                
+                imageItem.innerHTML = `
+                    <img src="${photo}" 
+                         alt="Foto ${index + 1} - ${profile.name || 'Anunciante'}" 
+                         class="profile-photo"
+                         oncontextmenu="return false;"
+                         onerror="this.src='https://via.placeholder.com/300x300/FFB6C1/FFFFFF?text=Foto+${index + 1}'"
+                         loading="lazy"
+                         onclick="openImageModal(${index})">
+                    <div class="wm">${window.statesManager ? statesManager.getCurrentWatermark() : 'DesejosMS'}</div>
+                `;
+                
+                imageGrid.appendChild(imageItem);
+
+                // Ajuste automático da marca d'água branca conforme a dimensão da foto
+                const imgEl = imageItem.querySelector('img');
+                const wmEl = imageItem.querySelector('.wm');
+                const adjust = () => {
+                    try {
+                        const w = imgEl.naturalWidth || imgEl.width || 300;
+                        const h = imgEl.naturalHeight || imgEl.height || 300;
+                        const base = Math.min(w, h);
+                        const size = Math.max(18, Math.min(56, Math.round(base * 0.08)));
+                        wmEl.style.fontSize = size + 'px';
+                        wmEl.style.opacity = '0.08';
+                    } catch(_) {}
+                };
+                if (imgEl.complete) { adjust(); } else { imgEl.addEventListener('load', adjust, { once: true }); }
+            });
+            
+            // Atualizar total de imagens para o modal
+            totalImages = photos.length;
+        }
+        
+        function loadProfileVideos(profile){
+            const container = document.getElementById('videoPlayers');
+            if (!container) return;
+            container.innerHTML = '';
+            const videos = Array.isArray(profile.videos) ? profile.videos : (profile.video ? [profile.video] : []);
+            if (!videos.length) { container.style.display = 'none'; return; }
+            container.style.display = '';
+            videos.forEach(src => {
+                if (!src) return;
+                const wrap = document.createElement('div');
+                wrap.className = 'video-player';
+                wrap.innerHTML = `<video controls preload="metadata"><source src="${src}" type="video/mp4">Seu navegador não suporta vídeos.</video>`;
+                container.appendChild(wrap);
+            });
+        }
+                 // Função para carregar anúncios SUPERVIP de forma aleatória e limitada
+         function loadRandomSupervipAds() {
+             const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
+             const selectedProfileId = localStorage.getItem('selectedProfileId');
+             
+             console.log('👑 Carregando anúncios SUPERVIP aleatórios...');
+             console.log('📊 Total de anúncios:', announcements.length);
+             
+             // Buscar informações da anunciante atual para pegar cidade E categoria
+             const currentProfile = announcements.find(ad => ad.id == selectedProfileId);
+             const currentCity = currentProfile ? currentProfile.city : null;
+             const currentCategory = currentProfile ? currentProfile.category : null;
+             
+             console.log('🏙️ Cidade da anunciante atual:', currentCity);
+             console.log('👤 Categoria da anunciante atual:', currentCategory);
+             
+             // Filtrar anúncios SUPERVIP da MESMA CATEGORIA E MESMA CIDADE
+             let supervipAds = announcements.filter(ad => 
+                 ad.planType === 'supervip' && 
+                 ad.status === 'active' &&
+                 ad.id != selectedProfileId && // Excluir a anunciante atual
+                 ad.city === currentCity && // MESMA CIDADE!
+                 ad.category === currentCategory // MESMA CATEGORIA!
+             );
+             
+             console.log('👑 SUPERVIP da mesma categoria e cidade encontrados:', supervipAds.length);
+             
+             // Se não há SUPERVIP da mesma categoria na mesma cidade, buscar da mesma categoria em MS
+             if (supervipAds.length === 0 && currentCity && currentCategory) {
+                 console.log('🔄 Nenhum SUPERVIP da mesma categoria na cidade, buscando mesma categoria em MS...');
+                 supervipAds = announcements.filter(ad => 
+                     ad.planType === 'supervip' && 
+                     ad.status === 'active' &&
+                     ad.id != selectedProfileId &&
+                     ad.category === currentCategory && // MESMA CATEGORIA!
+                     ad.city && ad.city.toLowerCase().includes('ms') // Qualquer cidade de MS
+                 );
+                 console.log('📍 SUPERVIP da mesma categoria em MS encontrados:', supervipAds.length);
+             }
+             
+             // Terceiro nível: mesma cidade, qualquer categoria
+             if (supervipAds.length === 0 && currentCity) {
+                 console.log('🔄 Nenhum SUPERVIP da mesma categoria, buscando qualquer categoria na mesma cidade...');
+                 supervipAds = announcements.filter(ad => 
+                     ad.planType === 'supervip' && 
+                     ad.status === 'active' &&
+                     ad.id != selectedProfileId &&
+                     ad.city === currentCity // MESMA CIDADE, qualquer categoria
+                 );
+                 console.log('🏙️ SUPERVIP da mesma cidade (qualquer categoria) encontrados:', supervipAds.length);
+             }
+             
+             // Último recurso: qualquer SUPERVIP ativo
+             if (supervipAds.length === 0) {
+                 console.log('🔄 Último recurso: qualquer SUPERVIP...');
+                 supervipAds = announcements.filter(ad => 
+                     ad.planType === 'supervip' && 
+                     ad.status === 'active' &&
+                     ad.id != selectedProfileId
+                 );
+                 console.log('🌐 Total SUPERVIP encontrados:', supervipAds.length);
+             }
+
+             // Embaralhar array para mostrar aleatoriamente
+             const shuffledAds = supervipAds.sort(() => Math.random() - 0.5);
+             
+             // Limitar a 2 anúncios (não mostrar muitos)
+             const limitedAds = shuffledAds.slice(0, 2);
+
+             const supervipGrid = document.getElementById('supervipAdsGrid');
+             
+             if (limitedAds.length === 0) {
+                 supervipGrid.innerHTML = `
+                     <div style="text-align: center; color: #ccc; padding: 20px;">
+                         <i class="fas fa-crown" style="font-size: 24px; margin-bottom: 10px; color: #ffd700;"></i>
+                         <p style="font-size: 12px;">Nenhum anúncio SUPERVIP disponível</p>
+                     </div>
+                 `;
+                 return;
+             }
+
+             supervipGrid.innerHTML = limitedAds.map(ad => {
+                 // Escolher imagem do anunciante SUPERVIP
+                 let adImage = 'https://via.placeholder.com/200x120/FFD700/000000?text=SUPERVIP';
+                 
+                 // Verificar várias fontes de imagens
+                 if (ad.photos && Array.isArray(ad.photos) && ad.photos.length > 0) {
+                     adImage = ad.photos[0];
+                 } else if (ad.photo && typeof ad.photo === 'string') {
+                     adImage = ad.photo;
+                 } else if (ad.image && typeof ad.image === 'string') {
+                     adImage = ad.image;
+                 } else {
+                     // Usar imagem padrão baseada na categoria
+                     const defaultImages = {
+                         'mulher': 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200&h=120&fit=crop&crop=face',
+                         'homem': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=120&fit=crop&crop=face',
+                         'travesti': 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=120&fit=crop&crop=face',
+                         'massagista': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=120&fit=crop&crop=face'
+                     };
+                     adImage = defaultImages[ad.category] || defaultImages['mulher'];
+                 }
+                 
+                 // Limpar nome do anunciante
+                 const cleanName = ad.name.replace(/\s*-\s*(Super\s*VIP|Plano\s*TOP|Básico|SUPERVIP|TOP|BASICO)/i, '');
+                 
+                 return `
+                 <div class="supervip-ad-card">
+                     <div class="supervip-ad-image">
+                             <img src="${adImage}" 
+                                  alt="${cleanName}" 
+                                  oncontextmenu="return false;"
+                                  onerror="this.src='https://via.placeholder.com/200x120/FFD700/000000?text=SUPERVIP'">
+                         <div class="supervip-badge">SUPERVIP</div>
+                     </div>
+                     <div class="supervip-ad-info">
+                             <div class="supervip-ad-name">${cleanName}</div>
+                         <div class="supervip-ad-location">${ad.city}, MS</div>
+                             <div class="supervip-ad-description">${ad.description ? ad.description.substring(0, 50) + '...' : ad.category === 'mulher' ? 'Mulher' : ad.category === 'homem' ? 'Homem' : ad.category === 'travesti' ? 'Travesti' : 'Massagista'}</div>
+                         <button class="supervip-ad-contact" onclick="openSupervipProfile('${ad.id}')">
+                                 <i class="fas fa-eye"></i>
+                             Ver Perfil
+                         </button>
+                     </div>
+                 </div>
+                 `;
+             }).join('');
+         }
+
+        // Função para abrir WhatsApp dos anúncios SUPERVIP
+        function openWhatsAppSupervip(phone, name) {
+            const message = `Olá! Vi seu anúncio SUPERVIP no DesejosMS. Gostaria de mais informações sobre seus serviços.`;
+            const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+                 // Função para abrir WhatsApp do perfil principal
+         function openWhatsAppProfile() {
+             const selectedProfileId = localStorage.getItem('selectedProfileId');
+             const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
+             const selectedProfile = announcements.find(ad => ad.id == selectedProfileId);
+             
+             const phone = selectedProfile ? (selectedProfile.whatsapp || selectedProfile.phone) : '(67) 9-9909-0483';
+             const cleanName = selectedProfile ? selectedProfile.name.replace(/\s*-\s*(Super\s*VIP|Plano\s*TOP|Básico|SUPERVIP|TOP|BASICO)/i, '') : 'Melissa';
+             const message = `Olá ${cleanName}! Vi seu anúncio no DesejosMS. Gostaria de mais informações sobre seus serviços.`;
+             const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+             window.open(whatsappUrl, '_blank');
+         }
+
+                 // Função para abrir perfil SUPERVIP
+         function openSupervipProfile(profileId) {
+             // Salvar o ID do perfil SUPERVIP no localStorage
+             localStorage.setItem('selectedProfileId', profileId);
+             
+             // Redirecionar para a página SUPERVIP (não recarregar a atual)
+             window.open(`perfil-supervip.html?id=${profileId}`, '_blank');
+         }
+
+         // Variáveis para o modal de imagens
+         let currentImageIndex = 0;
+         let totalImages = 40;
+
+         // Função para abrir modal de imagem
+         function openImageModal(imageIndex) {
+             currentImageIndex = imageIndex;
+             const modal = document.getElementById('imageModal');
+             const modalImage = document.getElementById('modalImage');
+             const imageCounter = document.getElementById('imageCounter');
+             
+             // Pegar a imagem exata que foi clicada
+             const clickedImage = document.querySelectorAll('.image-item img')[imageIndex];
+             const imageSrc = clickedImage.src;
+             
+             // Usar a mesma imagem, mas em tamanho maior
+             modalImage.src = imageSrc.replace('/150/150', '/800/600');
+             imageCounter.textContent = `${imageIndex + 1} / ${totalImages}`;
+             
+             modal.style.display = 'block';
+            
+            // Inserir overlay de marca d'água dentro do conteúdo do modal para caber na imagem
+            const content = modal.querySelector('.modal-content');
+            let overlay = content.querySelector('.wm-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.className = 'wm-overlay';
+                overlay.textContent = window.statesManager ? statesManager.getCurrentWatermark() : 'DesejosMS';
+                content.appendChild(overlay);
+            }
+
+            // escala ajustável persistida
+            const getWmScale = () => {
+                const v = parseFloat(localStorage.getItem('wmScale') || '1');
+                return Math.min(1.6, Math.max(0.6, isNaN(v)?1:v));
+            };
+            const setWmScale = (s) => {
+                const c = Math.min(1.6, Math.max(0.6, s));
+                localStorage.setItem('wmScale', String(c));
+                adjustOverlay();
+            };
+
+            const adjustOverlay = () => {
+                try {
+                    const rect = modalImage.getBoundingClientRect();
+                    const base = Math.min(rect.width, rect.height);
+                    const fontPx = Math.max(22, Math.min(84, Math.round(base * 0.16 * getWmScale())));
+                    overlay.style.fontSize = fontPx + 'px';
+                } catch(_) {}
+            };
+            if (modalImage.complete) adjustOverlay(); else modalImage.addEventListener('load', adjustOverlay, { once: true });
+            window.addEventListener('resize', adjustOverlay, { once: true });
+
+            // atalhos: + aumenta, - diminui, 0 reseta
+            const keyHandler = (e) => {
+                if (modal.style.display !== 'block') return;
+                if (e.key === '+' || e.key === '=') setWmScale(getWmScale()+0.1);
+                if (e.key === '-' || e.key === '_') setWmScale(getWmScale()-0.1);
+                if (e.key === '0') setWmScale(1);
+            };
+            document.addEventListener('keydown', keyHandler);
+        }
+
+         // Função para fechar modal
+         function closeImageModal() {
+             const modal = document.getElementById('imageModal');
+             modal.style.display = 'none';
+         }
+
+         // Função para navegar entre imagens
+         function changeImage(direction) {
+             currentImageIndex += direction;
+             
+             if (currentImageIndex >= totalImages) {
+                 currentImageIndex = 0;
+             } else if (currentImageIndex < 0) {
+                 currentImageIndex = totalImages - 1;
+             }
+             
+             const modalImage = document.getElementById('modalImage');
+             const imageCounter = document.getElementById('imageCounter');
+             
+             // Pegar a imagem correspondente ao índice atual
+             const currentImage = document.querySelectorAll('.image-item img')[currentImageIndex];
+             const imageSrc = currentImage.src;
+             
+             // Usar a mesma imagem, mas em tamanho maior
+             modalImage.src = imageSrc.replace('/150/150', '/800/600');
+             imageCounter.textContent = `${currentImageIndex + 1} / ${totalImages}`;
+         }
+
+         // Adicionar evento de clique no botão WhatsApp do perfil
+         document.addEventListener('DOMContentLoaded', function() {
+             // Carregar dados da anunciante específica
+             loadProfileData();
+             
+             const whatsappButton = document.querySelector('.contact-box.whatsapp');
+             if (whatsappButton) {
+                 whatsappButton.addEventListener('click', openWhatsAppProfile);
+             }
+             
+             // Adicionar eventos de clique nas imagens
+             const imageItems = document.querySelectorAll('.image-item');
+             imageItems.forEach((item, index) => {
+                 item.addEventListener('click', () => openImageModal(index));
+             });
+             
+             // Carregar anúncios SUPERVIP
+             loadRandomSupervipAds();
+             
+             // Fechar modal ao clicar fora da imagem
+             const modal = document.getElementById('imageModal');
+             modal.addEventListener('click', function(e) {
+                 if (e.target === modal) {
+                     closeImageModal();
+                 }
+             });
+             
+             // Navegação com teclado
+             document.addEventListener('keydown', function(e) {
+                 if (modal.style.display === 'block') {
+                     if (e.key === 'Escape') {
+                         closeImageModal();
+                     } else if (e.key === 'ArrowLeft') {
+                         changeImage(-1);
+                     } else if (e.key === 'ArrowRight') {
+                         changeImage(1);
+                     }
+                 }
+             });
+         });
+         
+         // Carregar dados quando a página é carregada
+         document.addEventListener('DOMContentLoaded', function() {
+             // Carregar dados do perfil
+             loadProfileData();
+
+             // Carregar anúncios SUPERVIP
+             loadRandomSupervipAds();
+
+             // Atualizar marca d'água e títulos dinâmicos
+             if (window.statesManager) {
+                 updateWatermarkForCurrentState();
+                 updateBrandInHeader();
+             }
+         });
+    </script>
+
+    <script src="states-config.js"></script>
+</body>
+</html>

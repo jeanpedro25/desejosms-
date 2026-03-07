@@ -1,0 +1,102 @@
+/* Logo DesejosMS - Design Limpo e Funcional */
+
+/* Apenas para a página específica do logo */
+body.logo-page {
+    margin: 0;
+    padding: 0;
+    background: #f5f5f5;
+    font-family: 'Poppins', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Container do Logo - apenas para página específica */
+body.logo-page .logo-container {
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+body.logo-page .logo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Coração Simples - apenas para página específica */
+body.logo-page .heart-icon {
+    font-size: 32px;
+    color: #ff1493;
+    filter: drop-shadow(0 2px 4px rgba(255, 20, 147, 0.3));
+}
+
+/* Texto Principal - apenas para página específica */
+body.logo-page .logo-text {
+    display: flex;
+    flex-direction: column;
+}
+
+body.logo-page .main-title {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 1px;
+}
+
+body.logo-page .desejos {
+    color: #333;
+    font-weight: 600;
+}
+
+body.logo-page .ms {
+    color: #ff1493;
+    font-weight: 700;
+}
+
+/* Responsividade - apenas para página específica */
+@media (max-width: 768px) {
+    body.logo-page .logo {
+        gap: 10px;
+    }
+    
+    body.logo-page .main-title {
+        font-size: 24px;
+    }
+    
+    body.logo-page .heart-icon {
+        font-size: 28px;
+    }
+}
+
+/* Versão para Header (menor) */
+.logo-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.logo-header .heart-icon {
+    font-size: 20px;
+}
+
+.logo-header .main-title {
+    font-size: 18px;
+}
+
+/* Versão para Footer (ainda menor) */
+.logo-footer {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.logo-footer .heart-icon {
+    font-size: 16px;
+}
+
+.logo-footer .main-title {
+    font-size: 14px;
+}

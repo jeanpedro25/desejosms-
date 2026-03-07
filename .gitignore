@@ -1,0 +1,42 @@
+# Dependências
+node_modules/
+package-lock.json
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# Variáveis de ambiente (IMPORTANTE - NUNCA ENVIAR!)
+.env
+.env.local
+.env.production
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Backups
+backup-*/
+*.backup
+
+# Scripts locais (evitar enviar scripts de Windows)
+*.ps1
+*.bat
+
+# Vercel
+.vercel/
+
+# Documentação (excluir tudo, menos os importantes)
+*.md
+!README.md
+!GUIA_DEPLOY.md
+!GUIA_PAGAMENTOS.md
+!DIAGNOSTICO_CADASTRO.md
+!INSTRUCOES_CONFIGURACAO.md
+!PLANO_COMPLETO_DEPLOY_E_PAGAMENTOS.md
+
+# Temporários
+*.tmp
+*.temp
+.cache/

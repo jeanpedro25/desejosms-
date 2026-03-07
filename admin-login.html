@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - DesejosMS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh; 
+            background: linear-gradient(135deg, #8B0000 0%, #800020 50%, #8B0000 100%);
+            margin: 0;
+            font-family: 'Poppins', Arial, sans-serif;
+        }
+        
+        .admin-login-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .logo-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo-heart {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 15px;
+        }
+        
+        .admin-title {
+            font-family: 'Cinzel', serif;
+            font-weight: 800;
+            font-size: 28px;
+            color: #8B0000;
+            margin: 0 0 5px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .admin-subtitle {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 16px;
+            color: #666;
+            margin: 0;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #8B0000;
+            box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.1);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #8B0000, #800020);
+            color: white;
+            box-shadow: 0 4px 15px rgba(139, 0, 0, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 0, 0, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #666;
+            border: 2px solid #ddd;
+        }
+        
+        .btn-secondary:hover {
+            background: #e9ecef;
+            border-color: #8B0000;
+            color: #8B0000;
+        }
+        
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            display: none;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .back-link a {
+            color: #8B0000;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 480px) {
+            .admin-login-container {
+                margin: 20px;
+                padding: 30px 20px;
+            }
+            
+            .admin-title {
+                font-size: 24px;
+            }
+            
+            .logo-heart {
+                width: 50px;
+                height: 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Logo DesejosMS -->
+    <div style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000;">
+        <div style="display: flex; align-items: center; gap: 16px; background: rgba(139, 0, 0, 0.9); padding: 12px 20px; border-radius: 15px; border: 1px solid rgba(255, 215, 0, 0.3);">
+            <svg class="logo-heart" viewBox="0 0 120 110" width="48" height="48" aria-hidden="true">
+                <defs>
+                    <linearGradient id="heartGrad" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#FF3B55"/>
+                        <stop offset="55%" stop-color="#E1062C"/>
+                        <stop offset="100%" stop-color="#8A0017"/>
+                    </linearGradient>
+                    <filter id="heartGlow" x="-40%" y="-40%" width="180%" height="180%">
+                        <feGaussianBlur stdDeviation="4" result="blur"/>
+                        <feMerge>
+                            <feMergeNode in="blur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                </defs>
+                <!-- Glow suave vermelho -->
+                <path fill="rgba(225,6,44,0.55)" d="M60 108c40-28 56-46 56-69C116 21 102 7 86 7c-9 0-18 5-26 15C52 12 43 7 34 7 18 7 4 21 4 39c0 23 16 41 56 69z"/>
+                <!-- Coração principal -->
+                <path filter="url(#heartGlow)" fill="url(#heartGrad)" d="M60 98c35-24 50-39 50-58 0-13-10-23-22-23-8 0-16 4-22 13-6-9-14-13-22-13C32 17 22 27 22 40c0 19 15 34 38 58z"/>
+            </svg>
+
+            <div style="display: flex; flex-direction: column; line-height: 1.1; gap: 3px;">
+                <span style="font-family: 'Cinzel', 'Playfair Display', serif; font-weight: 900; font-size: 24px; color: #FFFFFF; text-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 2px 2px 4px rgba(0, 0, 0, 0.6);">DesejosMS</span>
+                <span style="font-family: 'Playfair Display', 'Georgia', serif; font-style: italic; font-weight: 500; font-size: 12px; background: linear-gradient(135deg, #FFF2B0 0%, #FFD76A 25%, #D4AF37 50%, #8A6B21 75%, #D4AF37 100%); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);">Onde seus desejos ganham vida</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-login-container">
+        <div class="logo-section">
+            <svg class="logo-heart" viewBox="0 0 120 110" aria-hidden="true">
+                <defs>
+                    <linearGradient id="heartGrad" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#FF3B55"/>
+                        <stop offset="55%" stop-color="#E1062C"/>
+                        <stop offset="100%" stop-color="#8A0017"/>
+                    </linearGradient>
+                    <filter id="heartGlow" x="-40%" y="-40%" width="180%" height="180%">
+                        <feGaussianBlur stdDeviation="4" result="blur"/>
+                        <feMerge>
+                            <feMergeNode in="blur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                </defs>
+                <!-- Glow suave vermelho -->
+                <path fill="rgba(225,6,44,0.55)" d="M60 108c40-28 56-46 56-69C116 21 102 7 86 7c-9 0-18 5-26 15C52 12 43 7 34 7 18 7 4 21 4 39c0 23 16 41 56 69z"/>
+                <!-- Coração principal -->
+                <path filter="url(#heartGlow)" fill="url(#heartGrad)" d="M60 98c35-24 50-39 50-58 0-13-10-23-22-23-8 0-16 4-22 13-6-9-14-13-22-13C32 17 22 27 22 40c0 19 15 34 38 58z"/>
+            </svg>
+            <h1 class="admin-title">Painel Admin</h1>
+            <p class="admin-subtitle">Acesso Administrativo</p>
+        </div>
+
+        <div id="alert" class="alert"></div>
+
+        <form onsubmit="handleAdminLogin(event)">
+            <div class="form-group">
+                <label for="adminEmail">Email Administrativo:</label>
+                <input type="email" id="adminEmail" placeholder="admin@desejosms.com" required>
+            </div>
+            <div class="form-group">
+                <label for="adminPassword">Senha:</label>
+                <input type="password" id="adminPassword" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-sign-in-alt"></i> Acessar Painel
+            </button>
+        </form>
+
+        <div class="back-link">
+            <a href="index.html">
+                <i class="fas fa-arrow-left"></i> Voltar ao Site
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Verificação de idade
+        if (localStorage.getItem('ageVerified') !== 'true') {
+            window.location.href = 'age-verification.html';
+        }
+        
+        // Se já for admin, redirecionar para o painel
+        if (localStorage.getItem('adminUser')) {
+            window.location.href = 'admin-panel.html';
+        }
+
+        function handleAdminLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('adminEmail').value.trim();
+            const password = document.getElementById('adminPassword').value.trim();
+            
+            // Credenciais padrão do admin (em produção, usar sistema seguro)
+            const adminCredentials = [
+                { email: 'admin@desejosms.com', password: 'admin123', name: 'Administrador' },
+                { email: 'admin', password: 'admin', name: 'Administrador' },
+                { email: 'teste@desejosms.com', password: '123456', name: 'Admin Teste' }
+            ];
+            
+            const admin = adminCredentials.find(cred => 
+                cred.email.toLowerCase() === email.toLowerCase() && cred.password === password
+            );
+            
+            if (!admin) {
+                showAlert('Email ou senha incorretos!', 'error');
+                return;
+            }
+            
+            // Login bem-sucedido
+            localStorage.setItem('adminUser', JSON.stringify({
+                email: admin.email,
+                name: admin.name,
+                role: 'admin',
+                loginTime: new Date().toISOString()
+            }));
+            
+            showAlert('Login realizado com sucesso! Redirecionando...', 'success');
+            
+            setTimeout(() => {
+                window.location.href = 'admin-panel.html';
+            }, 1500);
+        }
+        
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert alert-${type}`;
+            alert.style.display = 'block';
+            
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Auto-focus no primeiro campo
+        document.getElementById('adminEmail').focus();
+    </script>
+</body>
+</html>

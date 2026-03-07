@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificações de Documentos - DesejosMS Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="verificacoes.css">
+    <link rel="stylesheet" href="notifications.css">
+</head>
+<body>
+    <!-- Age Verification Check -->
+    <script>
+        if (localStorage.getItem('ageVerified') !== 'true') {
+            window.location.href = 'age-verification.html';
+        }
+    </script>
+
+    <div class="verifications-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <a href="admin-panel.html" class="back-btn">
+                        <i class="fas fa-arrow-left"></i>
+                        Voltar ao Painel
+                    </a>
+                    <h1><i class="fas fa-id-card"></i> Verificações de Documentos</h1>
+                    <p>Gerencie as verificações de identidade dos anunciantes</p>
+                </div>
+                
+                <div class="header-right">
+                    <div class="stats-summary">
+                        <div class="stat-item">
+                            <span class="stat-number" id="pendingCount">0</span>
+                            <span class="stat-label">Pendentes</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="approvedCount">0</span>
+                            <span class="stat-label">Aprovadas</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="rejectedCount">0</span>
+                            <span class="stat-label">Rejeitadas</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Filters -->
+        <div class="filters-section">
+            <div class="filters-content">
+                <div class="filter-group">
+                    <label>Status:</label>
+                    <select id="statusFilter" onchange="filterVerifications()">
+                        <option value="all" selected>Todos</option>
+                        <option value="pending">Pendentes</option>
+                        <option value="approved">Aprovadas</option>
+                        <option value="rejected">Rejeitadas</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Ordenar por:</label>
+                    <select id="sortFilter" onchange="sortVerifications()">
+                        <option value="date">Data de Envio</option>
+                        <option value="name">Nome</option>
+                        <option value="email">Email</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Buscar:</label>
+                    <input type="text" id="searchInput" placeholder="Nome ou email..." onkeyup="searchVerifications()">
+                </div>
+                
+                <div class="filter-actions">
+                    <button class="btn btn-primary" onclick="approveAllPending()">
+                        <i class="fas fa-check"></i>
+                        Aprovar Todos Pendentes
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportVerifications()">
+                        <i class="fas fa-download"></i>
+                        Exportar
+                    </button>
+                    <button class="btn btn-warning" onclick="debugVerifications()" style="background: #ffc107; color: #000;">
+                        <i class="fas fa-bug"></i>
+                        Debug
+                    </button>
+                    <button class="btn btn-info" onclick="forceRefresh()" style="background: #17a2b8; color: #fff;">
+                        <i class="fas fa-sync"></i>
+                        Atualizar
+                    </button>
+                    <button class="btn btn-success" onclick="createTestVerification()" style="background: #28a745; color: #fff;">
+                        <i class="fas fa-plus"></i>
+                        Criar Teste
+                    </button>
+                    <button class="btn btn-danger" onclick="createDirectVerifications()" style="background: #dc3545; color: #fff;">
+                        <i class="fas fa-bolt"></i>
+                        Criar Direto
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verifications List -->
+        <div class="verifications-section">
+            <div class="verifications-grid" id="verificationsGrid">
+                <!-- Verificações serão carregadas aqui -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Verification Details Modal -->
+    <div class="modal" id="verificationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Detalhes da Verificação</h2>
+                <button class="close-btn" onclick="closeModal('verificationModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div id="verificationDetails">
+                    <!-- Detalhes da verificação serão carregados aqui -->
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('verificationModal')">Fechar</button>
+                <button class="btn btn-success" onclick="approveVerification()" id="approveBtn">
+                    <i class="fas fa-check"></i>
+                    Aprovar
+                </button>
+                <button class="btn btn-danger" onclick="rejectVerification()" id="rejectBtn">
+                    <i class="fas fa-times"></i>
+                    Rejeitar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Preview Modal -->
+    <div class="modal" id="documentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Visualizar Documento</h2>
+                <button class="close-btn" onclick="closeModal('documentModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div id="documentPreview">
+                    <!-- Preview do documento será carregado aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="notifications.js"></script>
+    <!-- <script src="debug-live.js"></script> -->
+    <script src="verificacoes.js"></script>
+    
+    <style>
+        .user-phone {
+            color: #007bff !important;
+            font-weight: 500;
+            font-size: 0.85em !important;
+        }
+    </style>
+</body>
+</html>
+
+

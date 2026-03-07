@@ -1,0 +1,430 @@
+/* Estilos para verificação de idade */
+.age-verification-container {
+    min-height: 100vh;
+    background: #8B0000;
+    background-image: 
+        radial-gradient(circle at 20% 20%, rgba(165, 42, 42, 0.4) 0%, transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(165, 42, 42, 0.4) 0%, transparent 40%);
+    background-size: 120px 120px;
+}
+
+.age-header {
+    background: linear-gradient(135deg, #8B0000, #DC143C);
+    color: white;
+    padding: 15px 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    border-bottom: 2px solid #FFD700;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-icon {
+    font-size: 2.2rem;
+    color: #FFD700;
+}
+
+.logo-text h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    font-family: Arial, sans-serif;
+    letter-spacing: 0.3px;
+}
+
+.logo-text span {
+    font-size: 0.9rem;
+    opacity: 0.95;
+    font-style: italic;
+    color: #FFD700;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+.age-main {
+    padding: 40px 0;
+}
+
+.age-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    padding: 40px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Painel de Cidades */
+.cities-panel {
+    padding: 20px;
+}
+
+.cities-panel h2 {
+    color: #8B0000;
+    font-size: 24px;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.cities-subtitle {
+    color: #FFD700;
+    font-size: 18px;
+    margin-bottom: 10px;
+    text-align: center;
+    font-style: italic;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+.state-selection-text {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 16px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.cities-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.city-btn {
+    background: linear-gradient(135deg, #8B0000, #DC143C);
+    color: white;
+    padding: 12px 15px;
+    border: none;
+    border-radius: 8px;
+    text-decoration: none;
+    text-align: center;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.city-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    background: linear-gradient(135deg, #DC143C, #8B0000);
+}
+
+/* Painel de Aviso */
+.warning-panel {
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border-left: 5px solid #8B0000;
+}
+
+.warning-content h2 {
+    color: #8B0000;
+    font-size: 24px;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.warning-text {
+    margin-bottom: 25px;
+}
+
+.warning-text p {
+    margin-bottom: 15px;
+    line-height: 1.6;
+    color: #333;
+    font-size: 14px;
+}
+
+.important-notice {
+    color: #8B0000 !important;
+    font-weight: bold !important;
+    font-size: 16px !important;
+    text-align: center;
+    background: #ffe6e6;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 15px 0 !important;
+}
+
+.site-description {
+    color: #666 !important;
+    font-style: italic;
+    text-align: center;
+    margin-top: 15px !important;
+}
+
+.warning-buttons {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.btn-accept {
+    background: linear-gradient(135deg, #25D366, #128C7E);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 25px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex: 1;
+    min-width: 200px;
+}
+
+.btn-accept:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+}
+
+.btn-decline {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 25px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex: 1;
+    min-width: 200px;
+}
+
+.btn-decline:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .age-content {
+        grid-template-columns: 1fr;
+        padding: 20px;
+        gap: 20px;
+    }
+    
+    .cities-list {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    }
+    
+    .warning-buttons {
+        flex-direction: column;
+    }
+    
+    .btn-accept, .btn-decline {
+        min-width: 100%;
+    }
+}
+
+/* Estilos para seleção de estados */
+.states-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.state-btn {
+    background: linear-gradient(135deg, #fff, #f8f9fa);
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: left;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.state-btn:hover {
+    border-color: #8B0000;
+    box-shadow: 0 4px 15px rgba(139, 0, 0, 0.2);
+    transform: translateY(-2px);
+}
+
+.state-btn.selected {
+    background: linear-gradient(135deg, #8B0000, #DC143C);
+    border-color: #FFD700;
+    color: white;
+    box-shadow: 0 6px 20px rgba(139, 0, 0, 0.4);
+}
+
+.state-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.state-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: inherit;
+}
+
+.state-code {
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0.8;
+    color: inherit;
+}
+
+.state-brand {
+    font-size: 12px;
+    font-style: italic;
+    opacity: 0.7;
+    color: inherit;
+}
+
+.state-btn.selected .state-name,
+.state-btn.selected .state-code,
+.state-btn.selected .state-brand {
+    color: white;
+}
+
+.state-btn.selected .state-code {
+    color: #FFD700;
+}
+
+/* Seção de cidades */
+.cities-section {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.cities-section h3 {
+    color: white;
+    font-size: 18px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.cities-list .city-btn {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #333;
+    font-size: 14px;
+    padding: 10px 15px;
+    margin: 5px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.cities-list .city-btn:hover {
+    background: rgba(255, 255, 255, 1);
+    border-color: #8B0000;
+    color: #8B0000;
+}
+
+.cities-list .city-btn.selected {
+    background: #FFD700;
+    border-color: #8B0000;
+    color: #8B0000;
+    font-weight: 600;
+}
+
+/* Estados de carregamento */
+.loading-states {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 30px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 16px;
+}
+
+.loading-states i {
+    font-size: 20px;
+    color: #FFD700;
+}
+
+.no-states {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 30px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 16px;
+}
+
+.no-states i {
+    font-size: 20px;
+    color: #FFD700;
+}
+
+/* Mensagem de estado selecionado */
+.selected-state-message {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.state-confirmation {
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    border: 2px solid #28a745;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
+}
+
+.state-confirmation i {
+    font-size: 3rem;
+    color: #28a745;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.state-confirmation h3 {
+    color: #155724;
+    font-size: 24px;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.state-confirmation p {
+    color: #155724;
+    font-size: 16px;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Estados */
+.states-list {
+    margin-top: 20px;
+}
+
+@media (max-width: 480px) {
+    .age-content {
+        padding: 15px;
+    }
+
+    .cities-panel h2, .warning-content h2 {
+        font-size: 20px;
+    }
+
+    .warning-text p {
+        font-size: 13px;
+    }
+
+    .state-btn {
+        padding: 12px;
+    }
+
+    .state-name {
+        font-size: 14px;
+    }
+
+    .state-code {
+        font-size: 12px;
+    }
+
+    .state-brand {
+        font-size: 11px;
+    }
+}

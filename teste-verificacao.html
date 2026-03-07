@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste do Sistema de Verificação - DesejosMS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #8B0000;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .step {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #8B0000;
+        }
+        .step h3 {
+            color: #8B0000;
+            margin-top: 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 20px;
+            margin: 10px;
+            background: #8B0000;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background: #660000;
+            transform: translateY(-2px);
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #000;
+        }
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        .btn-info {
+            background: #17a2b8;
+        }
+        .btn-info:hover {
+            background: #138496;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+        .flow-diagram {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .flow-step {
+            text-align: center;
+            flex: 1;
+            min-width: 150px;
+            margin: 10px;
+        }
+        .flow-step i {
+            font-size: 2em;
+            color: #8B0000;
+            margin-bottom: 10px;
+        }
+        .flow-arrow {
+            font-size: 1.5em;
+            color: #8B0000;
+        }
+        .test-results {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-id-card"></i> Teste do Sistema de Verificação</h1>
+        
+        <div class="status status-info">
+            <i class="fas fa-info-circle"></i>
+            <strong>Como funciona o sistema de verificação:</strong>
+            <ol>
+                <li>O anunciante envia documentos pelo Painel Anunciante</li>
+                <li>Os documentos ficam em "pendingVerifications" no localStorage</li>
+                <li>O admin acessa a página de Verificações</li>
+                <li>O sistema mescla automaticamente os documentos pendentes</li>
+                <li>O admin pode aprovar ou rejeitar os documentos</li>
+            </ol>
+        </div>
+
+        <div class="flow-diagram">
+            <div class="flow-step">
+                <i class="fas fa-user"></i>
+                <h4>Anunciante</h4>
+                <p>Envia documentos</p>
+            </div>
+            <div class="flow-arrow">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+            <div class="flow-step">
+                <i class="fas fa-clock"></i>
+                <h4>Pendente</h4>
+                <p>Documentos aguardando</p>
+            </div>
+            <div class="flow-arrow">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+            <div class="flow-step">
+                <i class="fas fa-user-shield"></i>
+                <h4>Admin</h4>
+                <p>Revisa documentos</p>
+            </div>
+            <div class="flow-arrow">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+            <div class="flow-step">
+                <i class="fas fa-check-circle"></i>
+                <h4>Aprovado</h4>
+                <p>Usuário verificado</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <h3><i class="fas fa-play"></i> Passo 1: Simular Envio de Documentos</h3>
+            <p>Vamos simular que um anunciante enviou documentos para verificação.</p>
+            <button class="btn btn-success" onclick="simulateDocumentSubmission()">
+                <i class="fas fa-upload"></i> Simular Envio de Documentos
+            </button>
+            <div id="step1Result"></div>
+        </div>
+
+        <div class="step">
+            <h3><i class="fas fa-search"></i> Passo 2: Verificar Documentos Pendentes</h3>
+            <p>Vamos verificar se os documentos foram salvos corretamente.</p>
+            <button class="btn btn-info" onclick="checkPendingDocuments()">
+                <i class="fas fa-search"></i> Verificar Documentos Pendentes
+            </button>
+            <div id="step2Result"></div>
+        </div>
+
+        <div class="step">
+            <h3><i class="fas fa-sync"></i> Passo 3: Mesclar Documentos</h3>
+            <p>Vamos simular o processo de mesclagem que acontece na página de verificações.</p>
+            <button class="btn btn-warning" onclick="mergeDocuments()">
+                <i class="fas fa-sync"></i> Mesclar Documentos
+            </button>
+            <div id="step3Result"></div>
+        </div>
+
+        <div class="step">
+            <h3><i class="fas fa-check"></i> Passo 4: Verificar Resultado Final</h3>
+            <p>Vamos verificar se os documentos aparecem na lista de verificações.</p>
+            <button class="btn btn-success" onclick="checkFinalResult()">
+                <i class="fas fa-check"></i> Verificar Resultado
+            </button>
+            <div id="step4Result"></div>
+        </div>
+
+        <div class="step">
+            <h3><i class="fas fa-external-link-alt"></i> Passo 5: Testar na Página Real</h3>
+            <p>Agora vamos testar na página real de verificações.</p>
+            <a href="verificacoes.html" class="btn btn-info">
+                <i class="fas fa-external-link-alt"></i> Abrir Página de Verificações
+            </a>
+            <p><small>Dica: Clique no botão "Criar Teste" na página de verificações para criar dados de teste.</small></p>
+        </div>
+
+        <div class="test-results" id="testResults">
+            <strong>Resultados dos Testes:</strong><br>
+            Aguardando execução dos testes...
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <button class="btn btn-warning" onclick="clearAllData()">
+                <i class="fas fa-trash"></i> Limpar Todos os Dados
+            </button>
+            <button class="btn btn-info" onclick="runFullTest()">
+                <i class="fas fa-play"></i> Executar Teste Completo
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function addResult(step, message, type = 'info') {
+            const results = document.getElementById('testResults');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8';
+            results.innerHTML += `<div style="color: ${color}; margin: 5px 0;">[${timestamp}] ${step}: ${message}</div>`;
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function simulateDocumentSubmission() {
+            addResult('PASSO 1', 'Simulando envio de documentos...', 'info');
+            
+            const testUser = {
+                id: Date.now(),
+                email: 'teste@desejosms.com',
+                name: 'Usuário Teste'
+            };
+            
+            // Criar documentos de teste
+            const testDocs = [
+                { 
+                    userEmail: testUser.email, 
+                    type: 'documento', 
+                    url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 
+                    submittedAt: new Date().toISOString(), 
+                    status: 'pending' 
+                },
+                { 
+                    userEmail: testUser.email, 
+                    type: 'foto-codigo', 
+                    url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 
+                    submittedAt: new Date().toISOString(), 
+                    status: 'pending' 
+                },
+                { 
+                    userEmail: testUser.email, 
+                    type: 'selfie', 
+                    url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 
+                    submittedAt: new Date().toISOString(), 
+                    status: 'pending' 
+                }
+            ];
+            
+            // Salvar no localStorage
+            localStorage.setItem('pendingVerifications', JSON.stringify(testDocs));
+            
+            const step1Result = document.getElementById('step1Result');
+            step1Result.innerHTML = '<div class="status status-success">✅ Documentos simulados enviados com sucesso!</div>';
+            
+            addResult('PASSO 1', 'Documentos enviados: ' + testDocs.length, 'success');
+        }
+
+        function checkPendingDocuments() {
+            addResult('PASSO 2', 'Verificando documentos pendentes...', 'info');
+            
+            const pendingDocs = JSON.parse(localStorage.getItem('pendingVerifications') || '[]');
+            
+            const step2Result = document.getElementById('step2Result');
+            if (pendingDocs.length > 0) {
+                step2Result.innerHTML = `<div class="status status-success">✅ Encontrados ${pendingDocs.length} documentos pendentes</div>`;
+                addResult('PASSO 2', `Documentos pendentes encontrados: ${pendingDocs.length}`, 'success');
+            } else {
+                step2Result.innerHTML = '<div class="status status-warning">⚠️ Nenhum documento pendente encontrado</div>';
+                addResult('PASSO 2', 'Nenhum documento pendente encontrado', 'error');
+            }
+        }
+
+        function mergeDocuments() {
+            addResult('PASSO 3', 'Mesclando documentos...', 'info');
+            
+            // Simular a função mergePendingFromAdvertiser
+            const pendingDocs = JSON.parse(localStorage.getItem('pendingVerifications') || '[]');
+            
+            if (pendingDocs.length === 0) {
+                addResult('PASSO 3', 'Nenhum documento para mesclar', 'error');
+                return;
+            }
+            
+            const nameMap = {
+                'documento': 'Documento de Identificação',
+                'foto-codigo': 'Foto com Código',
+                'selfie': 'Selfie'
+            };
+            
+            const grouped = {};
+            pendingDocs.forEach(d => {
+                if (!grouped[d.userEmail]) grouped[d.userEmail] = [];
+                grouped[d.userEmail].push(d);
+            });
+            
+            let verifications = JSON.parse(localStorage.getItem('verifications') || '[]');
+            
+            Object.entries(grouped).forEach(([email, docs]) => {
+                const user = { name: email };
+                const documents = {};
+                
+                docs.forEach(dd => {
+                    documents[dd.type || 'documento'] = { 
+                        name: nameMap[dd.type] || 'Documento', 
+                        uploaded: true, 
+                        verified: false, 
+                        url: dd.url 
+                    };
+                });
+                
+                const submittedAt = docs[0]?.submittedAt || new Date().toISOString();
+                
+                const verificationObj = {
+                    id: Date.now() + Math.floor(Math.random() * 1000),
+                    userId: null,
+                    userName: user.name || email,
+                    userEmail: email,
+                    status: 'pending',
+                    submittedAt,
+                    documents,
+                    notes: 'Documentos enviados pelo anunciante',
+                    adminNotes: ''
+                };
+                
+                verifications.push(verificationObj);
+            });
+            
+            localStorage.setItem('verifications', JSON.stringify(verifications));
+            localStorage.removeItem('pendingVerifications');
+            
+            const step3Result = document.getElementById('step3Result');
+            step3Result.innerHTML = `<div class="status status-success">✅ ${Object.keys(grouped).length} verificação(ões) criada(s) com sucesso!</div>`;
+            
+            addResult('PASSO 3', `Verificações criadas: ${Object.keys(grouped).length}`, 'success');
+        }
+
+        function checkFinalResult() {
+            addResult('PASSO 4', 'Verificando resultado final...', 'info');
+            
+            const verifications = JSON.parse(localStorage.getItem('verifications') || '[]');
+            const pendingVerifications = verifications.filter(v => v.status === 'pending');
+            
+            const step4Result = document.getElementById('step4Result');
+            if (pendingVerifications.length > 0) {
+                step4Result.innerHTML = `<div class="status status-success">✅ ${pendingVerifications.length} verificação(ões) pendente(s) encontrada(s)!</div>`;
+                addResult('PASSO 4', `Verificações pendentes: ${pendingVerifications.length}`, 'success');
+            } else {
+                step4Result.innerHTML = '<div class="status status-warning">⚠️ Nenhuma verificação pendente encontrada</div>';
+                addResult('PASSO 4', 'Nenhuma verificação pendente encontrada', 'error');
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('Tem certeza que deseja limpar todos os dados de verificação?')) {
+                localStorage.removeItem('pendingVerifications');
+                localStorage.removeItem('verifications');
+                addResult('LIMPEZA', 'Todos os dados de verificação foram removidos', 'info');
+                
+                // Limpar resultados
+                document.getElementById('step1Result').innerHTML = '';
+                document.getElementById('step2Result').innerHTML = '';
+                document.getElementById('step3Result').innerHTML = '';
+                document.getElementById('step4Result').innerHTML = '';
+            }
+        }
+
+        function runFullTest() {
+            addResult('TESTE COMPLETO', 'Iniciando teste completo do sistema...', 'info');
+            
+            // Limpar dados anteriores
+            localStorage.removeItem('pendingVerifications');
+            localStorage.removeItem('verifications');
+            
+            // Executar todos os passos
+            setTimeout(() => simulateDocumentSubmission(), 500);
+            setTimeout(() => checkPendingDocuments(), 1000);
+            setTimeout(() => mergeDocuments(), 1500);
+            setTimeout(() => checkFinalResult(), 2000);
+            
+            setTimeout(() => {
+                addResult('TESTE COMPLETO', 'Teste completo finalizado!', 'success');
+            }, 2500);
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            addResult('SISTEMA', 'Página de teste carregada', 'info');
+        });
+    </script>
+</body>
+</html>
+
+

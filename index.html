@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desejos - Acompanhantes</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="auth-modal.css">
+    <link rel="stylesheet" href="notifications.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Estilo para feedback de categoria */
+        .category-feedback {
+            background: linear-gradient(135deg, #8B0000, #DC143C);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(139, 0, 0, 0.3);
+            animation: slideInDown 0.3s ease-out;
+        }
+
+        .feedback-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .feedback-content i {
+            font-size: 18px;
+            color: #FFD700;
+        }
+
+        .feedback-text {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .feedback-count {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        /* Animação de entrada */
+        @keyframes slideInDown {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Melhorar estilo dos botões de categoria ativos */
+        .nav-item.active {
+            background: linear-gradient(135deg, #8B0000, #DC143C) !important;
+            color: white !important;
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(139, 0, 0, 0.4);
+        }
+
+        .nav-item.active i {
+            color: #FFD700 !important;
+        }
+
+        /* Efeito hover melhorado */
+        .nav-item:hover {
+            transform: scale(1.02);
+            transition: all 0.2s ease;
+        }
+    </style>
+</head>
+<body>
+    <!-- Age Verification Check -->
+    <script>
+        // Verificar se deve resetar (para testes)
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('reset') === 'true') {
+            localStorage.removeItem('ageVerified');
+            localStorage.removeItem('currentState');
+            localStorage.removeItem('selectedCity');
+            console.log('🔄 Sistema resetado para testes');
+            window.location.replace('age-verification.html');
+        }
+
+        // Verificar idade imediatamente
+        (function() {
+            const ageVerified = localStorage.getItem('ageVerified');
+            console.log('🔍 Verificando idade:', ageVerified);
+
+            if (ageVerified !== 'true') {
+                console.log('❌ Idade não verificada, redirecionando...');
+                window.location.replace('age-verification.html');
+                return;
+            }
+
+            console.log('✅ Idade verificada, carregando site...');
+
+            // Verificar se há estado selecionado e aplicar configurações
+            const selectedState = localStorage.getItem('currentState');
+            const selectedCity = localStorage.getItem('selectedCity');
+
+            console.log('🏛️ Estado selecionado:', selectedState);
+            console.log('🏙️ Cidade selecionada:', selectedCity);
+
+            // Se há estado selecionado, aplicar configurações imediatamente
+            if (selectedState) {
+                // Aguardar carregamento do DOM para aplicar configurações
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Aplicar configurações do estado
+                    if (window.changeState) {
+                        window.changeState(selectedState);
+                    }
+
+                    // Se há cidade selecionada, aplicar filtro
+                    if (selectedCity && window.setCurrentCity) {
+                        window.setCurrentCity(selectedCity);
+                    }
+                });
+            }
+        })();
+
+        // Função de teste para limpar verificação de idade
+        function resetAgeVerification() {
+            localStorage.removeItem('ageVerified');
+            localStorage.removeItem('currentState');
+            localStorage.removeItem('selectedCity');
+            console.log('🔄 Verificação de idade resetada');
+            window.location.reload();
+        }
+
+        // Adicionar botão de teste (apenas para desenvolvimento)
+        window.addEventListener('load', function() {
+            if (window.location.hostname === 'localhost' || window.location.protocol === 'file:') {
+                const testBtn = document.createElement('button');
+                testBtn.innerHTML = '🔄 Reset Sistema';
+                testBtn.style.cssText = `
+                    position: fixed;
+                    top: 10px;
+                    right: 10px;
+                    z-index: 9999;
+                    background: #ff4444;
+                    color: white;
+                    border: none;
+                    padding: 12px 16px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-size: 12px;
+                    font-weight: bold;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                `;
+                testBtn.title = 'Resetar sistema para testar fluxo completo';
+                testBtn.onclick = function() {
+                    if (confirm('Resetar sistema e voltar para verificação de idade?')) {
+                        window.location.href = 'index.html?reset=true';
+                    }
+                };
+                document.body.appendChild(testBtn);
+            }
+        });
+    </script>
+
+    <!-- Header -->
+    <header class="topbar">
+        <div class="topbar-wrap">
+            <a href="/" class="logo" aria-label="DesejosMS">
+                                        <svg class="logo-heart" viewBox="0 0 120 110" width="64" height="64" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="heartGrad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#FF3B55"/>
+                            <stop offset="55%" stop-color="#E1062C"/>
+                            <stop offset="100%" stop-color="#8A0017"/>
+                        </linearGradient>
+                        <filter id="heartGlow" x="-40%" y="-40%" width="180%" height="180%">
+                            <feGaussianBlur stdDeviation="4" result="blur"/>
+                            <feMerge>
+                                <feMergeNode in="blur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    <!-- Glow suave vermelho -->
+                    <path fill="rgba(225,6,44,0.55)" d="M60 108c40-28 56-46 56-69C116 21 102 7 86 7c-9 0-18 5-26 15C52 12 43 7 34 7 18 7 4 21 4 39c0 23 16 41 56 69z"/>
+                    <!-- Coração principal -->
+                    <path filter="url(#heartGlow)" fill="url(#heartGrad)" d="M60 98c35-24 50-39 50-58 0-13-10-23-22-23-8 0-16 4-22 13-6-9-14-13-22-13C32 17 22 27 22 40c0 19 15 34 38 58z"/>
+                </svg>
+
+                <div class="logo-text">
+                    <span class="logo-title" id="logoTitle">DesejosMS</span>
+                    <span class="logo-slogan">Onde seus desejos ganham vida</span>
+                </div>
+            </a>
+
+            <div class="header-actions">
+                <button class="btn btn-ghost" onclick="toggleAuthModal()">
+                    <i class="fas fa-user"></i>
+                    Entrar / Cadastrar
+                </button>
+
+                <select class="city-select" id="citySelector" onchange="setCurrentCity(this.value)" aria-label="Selecionar cidade">
+                    <option value="">Carregando cidades...</option>
+                </select>
+
+                <a href="#" class="btn btn-primary" onclick="showAdvertiseModal()">
+                    <i class="fas fa-plus"></i>
+                    + Anunciar
+                </a>
+
+                                        <a href="#" class="btn btn-ghost admin-btn" title="Painel Administrativo" onclick="toggleAuthModal(); switchAuthTab('admin', null)" style="display: none;">
+                            <i class="fas fa-cog"></i>
+                            Admin
+                        </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav-categories">
+        <div class="container">
+            <div class="nav-container" id="navItems">
+                <!-- Categorias serão carregadas dinamicamente via JavaScript -->
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Search Section -->
+            <div class="search-section">
+                <h1 class="section-title">Acompanhantes Mato Grosso do Sul</h1>
+                <p class="section-subtitle">Encontre as melhores acompanhantes do Mato Grosso do Sul</p>
+
+                <!-- Statistics -->
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <div class="stat-number" id="activeAdsCount">0</div>
+                        <div class="stat-label">Anúncios Ativos</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="activeUsersCount">0</div>
+                        <div class="stat-label">Anunciantes Ativos</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="verifiedPercentage">0%</div>
+                        <div class="stat-label">Verificado</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TOP ANÚNCIOS Section -->
+            <div class="top-announcements">
+                <div class="top-header">
+                    <h2><i class="fas fa-crown"></i> TOP ANÚNCIOS</h2>
+                    <p>Os anúncios mais populares e bem avaliados da plataforma. Anunciantes premium com maior visibilidade e destaque especial.</p>
+                </div>
+
+                <div class="top-announcements-grid" id="topAnnouncementsGrid">
+                    <!-- TOP anúncios serão carregados aqui via JavaScript -->
+                </div>
+            </div>
+
+            <!-- Call to Action -->
+            <div class="cta-section">
+                <div class="cta-content">
+                    <h3>Quer aparecer no TOP ANÚNCIOS?</h3>
+                    <p>Destaque seu anúncio e tenha até 10x mais visualizações!</p>
+                    <button class="cta-btn" onclick="window.location.href='painel-anunciante.html'">
+                        Tornar-se Premium
+                    </button>
+                </div>
+            </div>
+
+            <!-- Regular Announcements -->
+            <div class="announcements-section">
+                <div class="announcements-header">
+                    <h2 id="dynamicSectionTitle">Anúncios Recentes</h2>
+                </div>
+                <div class="profiles-grid" id="profilesGrid">
+                    <!-- Anúncios regulares serão carregados aqui -->
+                </div>
+                <!-- Removido botão Carregar Mais Anúncios -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Removido bloco Desejos Trans -->
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-logo">
+                        <i class="fas fa-heart"></i>
+                        <h3>DesejosMS</h3>
+                    </div>
+                    <p>A melhor plataforma de classificados do Mato Grosso do Sul. Conectamos pessoas com total segurança e discrição.</p>
+                    <div class="social-links">
+                        <a href="#" class="facebook"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="whatsapp"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+
+                <div class="footer-section">
+                    <h3>Links Úteis</h3>
+                    <ul>
+                        <li><a href="#" onclick="toggleAuthModal(); switchAuthTab('login', null)">Login</a></li>
+                        <li><a href="#" onclick="toggleAuthModal(); switchAuthTab('signup', null)">Cadastre-se</a></li>
+                        <li><a href="painel-anunciante.html">Anunciar</a></li>
+                        <li><a href="#">Suporte</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h3>Contatos</h3>
+                    <ul>
+                        <li>contato@desejosms.com.br</li>
+                        <li>(67) 9999-0000</li>
+                        <li>Mato Grosso do Sul, Brasil</li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h3>Políticas</h3>
+                    <ul>
+                        <li><a href="termos-de-uso.html" target="_blank">Termos de Uso</a></li>
+                        <li><a href="politica-de-privacidade.html" target="_blank">Política de Privacidade</a></li>
+                        <li><a href="regras-da-plataforma.html" target="_blank">Regras da Plataforma</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2024 DesejosMS. Todos os direitos reservados.</p>
+                <p>Este site é destinado a maiores de 18 anos</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal de Autenticação Unificado Elegante -->
+    <div id="authModal" class="auth-modal-overlay" style="display: none;">
+        <div class="auth-modal-container">
+            <button class="auth-close-btn" onclick="closeAuthModal()">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <!-- Logo e Título -->
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <h1 class="auth-title">DesejosMS</h1>
+                <p class="auth-subtitle">Acesse sua conta ou crie uma nova</p>
+            </div>
+
+            <!-- Tabs de Navegação -->
+            <div class="auth-tabs">
+                <button class="auth-tab-btn active" onclick="switchAuthTab('login', event)">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Entrar
+                </button>
+                <button class="auth-tab-btn" onclick="switchAuthTab('signup', event)">
+                    <i class="fas fa-user-plus"></i>
+                    Cadastrar
+                </button>
+                <button class="auth-tab-btn" onclick="switchAuthTab('admin', event)">
+                    <i class="fas fa-crown"></i>
+                    Admin
+                </button>
+            </div>
+
+            <!-- Conteúdo das Tabs -->
+            <div class="auth-content">
+                <!-- Tab de Login -->
+                <div id="loginTab" class="auth-tab-content active">
+                    <form onsubmit="handleLogin(event)" class="auth-form">
+                        <div class="auth-form-group">
+                            <label for="loginEmail">
+                                <i class="fas fa-envelope"></i>
+                                Email
+                            </label>
+                            <input type="email" id="loginEmail" placeholder="seu@email.com" required>
+                        </div>
+                        <div class="auth-form-group">
+                            <label for="loginPassword">
+                                <i class="fas fa-lock"></i>
+                                Senha
+                            </label>
+                            <input type="password" id="loginPassword" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="auth-btn auth-btn-primary">
+                            <i class="fas fa-sign-in-alt"></i>
+                            Entrar na Conta
+                        </button>
+                    </form>
+                    <div class="auth-footer">
+                        <p>Não tem conta? <a href="#" onclick="switchAuthTab('signup', event)">Cadastre-se aqui</a></p>
+                    </div>
+                </div>
+
+                <!-- Tab de Cadastro -->
+                <div id="signupTab" class="auth-tab-content">
+                    <form onsubmit="handleSignup(event)" class="auth-form">
+                        <div class="auth-form-row">
+                            <div class="auth-form-group">
+                                <label for="signupName">
+                                    <i class="fas fa-user"></i>
+                                    Nome Completo
+                                </label>
+                                <input type="text" id="signupName" placeholder="Seu nome completo" required>
+                            </div>
+                            <div class="auth-form-group">
+                                <label for="signupAge">
+                                    <i class="fas fa-calendar"></i>
+                                    Idade
+                                </label>
+                                <input type="number" id="signupAge" min="18" max="99" placeholder="18" required>
+                            </div>
+                        </div>
+
+                        <div class="auth-form-group">
+                            <label for="signupEmail">
+                                <i class="fas fa-envelope"></i>
+                                Email
+                            </label>
+                            <input type="email" id="signupEmail" placeholder="seu@email.com" required>
+                        </div>
+
+                        <div class="auth-form-group">
+                            <label for="signupPhone">
+                                <i class="fas fa-whatsapp"></i>
+                                WhatsApp
+                            </label>
+                            <input type="tel" id="signupPhone" placeholder="(67) 9 9999-9999" required>
+                        </div>
+
+                        <div class="auth-form-group">
+                            <label for="signupCategory">
+                                <i class="fas fa-venus-mars"></i>
+                                Categoria
+                            </label>
+                            <select id="signupCategory" required>
+                                <option value="">Selecione sua categoria...</option>
+                                <option value="mulher">👩 Mulher</option>
+                                <option value="homem">👨 Homem</option>
+                                <option value="trans">🏳️‍⚧️ Trans</option>
+                                <option value="casal">💑 Casal</option>
+                            </select>
+                        </div>
+
+                        <div class="auth-form-row">
+                            <div class="auth-form-group">
+                                <label for="signupPassword">
+                                    <i class="fas fa-lock"></i>
+                                    Senha
+                                </label>
+                                <input type="password" id="signupPassword" placeholder="••••••••" required>
+                            </div>
+                            <div class="auth-form-group">
+                                <label for="signupConfirmPassword">
+                                    <i class="fas fa-lock"></i>
+                                    Confirmar
+                                </label>
+                                <input type="password" id="signupConfirmPassword" placeholder="••••••••" required>
+                            </div>
+                        </div>
+
+                        <div class="auth-terms">
+                            <label class="auth-checkbox">
+                                <input type="checkbox" id="agreeTerms" required>
+                                <span class="checkmark"></span>
+                                Concordo com os <a href="#" target="_blank">Termos de Uso</a> e <a href="#" target="_blank">Política de Privacidade</a>
+                            </label>
+                        </div>
+
+                        <button type="submit" class="auth-btn auth-btn-primary">
+                            <i class="fas fa-user-plus"></i>
+                            Criar Conta
+                        </button>
+                    </form>
+                    <div class="auth-footer">
+                        <p>Já tem conta? <a href="#" onclick="switchAuthTab('login', event)">Entre aqui</a></p>
+                    </div>
+                </div>
+
+                <!-- Tab de Admin -->
+                <div id="adminTab" class="auth-tab-content">
+                    <div class="admin-warning">
+                        <i class="fas fa-shield-alt"></i>
+                        <p>Área restrita para administradores</p>
+                    </div>
+                    <form onsubmit="handleAdminLogin(event)" class="auth-form">
+                        <div class="auth-form-group">
+                            <label for="adminEmail">
+                                <i class="fas fa-crown"></i>
+                                Email do Administrador
+                            </label>
+                            <input type="email" id="adminEmail" placeholder="admin@desejosms.com.br" required>
+                        </div>
+                        <div class="auth-form-group">
+                            <label for="adminPassword">
+                                <i class="fas fa-key"></i>
+                                Senha Master
+                            </label>
+                            <input type="password" id="adminPassword" placeholder="••••••••••••" required>
+                        </div>
+                        <button type="submit" class="auth-btn auth-btn-admin">
+                            <i class="fas fa-sign-in-alt"></i>
+                            Acessar Painel Admin
+                        </button>
+                    </form>
+                    <div class="auth-footer">
+                        <p><i class="fas fa-info-circle"></i> Acesso apenas para administradores autorizados</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Anúncio -->
+    <div id="advertiseModal" class="auth-modal-overlay" style="display: none;">
+        <div class="auth-modal-container" style="max-width: 400px;">
+            <button class="auth-close-btn" onclick="closeAdvertiseModal()">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <i class="fas fa-plus-circle"></i>
+                </div>
+                <h1 class="auth-title">Anunciar na plataforma</h1>
+                <p class="auth-subtitle">Para criar anúncios, você precisa estar logado</p>
+            </div>
+
+            <div class="auth-content">
+                <button class="auth-btn auth-btn-primary" onclick="closeAdvertiseModal(); toggleAuthModal();">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Fazer Login
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Funções para o modal de autenticação
+        function toggleAuthModal() {
+            console.log('🔓 Tentando abrir/fechar modal de autenticação...');
+            const modal = document.getElementById('authModal');
+            const body = document.body;
+            console.log('📋 Modal encontrado:', modal);
+            console.log('👁️ Display atual:', modal.style.display);
+
+            if (modal.style.display === 'none' || modal.style.display === '') {
+                modal.style.display = 'flex';
+                body.classList.add('modal-open');
+                console.log('✅ Modal aberto');
+                // Garantir que inicie na tab login
+                setTimeout(() => switchAuthTab('login', null), 100);
+            } else {
+                modal.style.display = 'none';
+                body.classList.remove('modal-open');
+                console.log('❌ Modal fechado');
+            }
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModal').style.display = 'none';
+            document.body.classList.remove('modal-open');
+        }
+
+        // Adicionar eventos para fechar modal
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fechar modal clicando fora
+            const authModal = document.getElementById('authModal');
+            const advertiseModal = document.getElementById('advertiseModal');
+
+            if (authModal) {
+                authModal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeAuthModal();
+                    }
+                });
+            }
+
+            if (advertiseModal) {
+                advertiseModal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeAdvertiseModal();
+                    }
+                });
+            }
+
+            // Fechar modal com ESC
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    const authModalEl = document.getElementById('authModal');
+                    const advertiseModalEl = document.getElementById('advertiseModal');
+
+                    if (authModalEl && authModalEl.style.display === 'flex') {
+                        closeAuthModal();
+                    }
+                    if (advertiseModalEl && advertiseModalEl.style.display === 'flex') {
+                        closeAdvertiseModal();
+                    }
+                }
+            });
+        });
+
+        function closeAdvertiseModal() {
+            document.getElementById('advertiseModal').style.display = 'none';
+            document.body.classList.remove('modal-open');
+        }
+
+        function switchAuthTab(tabName, event) {
+            // Remove active de todas as tabs
+            document.querySelectorAll('.auth-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.auth-tab-content').forEach(content => content.classList.remove('active'));
+
+            // Adiciona active na tab clicada
+            if (event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                document.querySelector(`[onclick*="${tabName}"]`).classList.add('active');
+            }
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+
+        function showAdvertiseModal() {
+            document.getElementById('advertiseModal').style.display = 'flex';
+            document.body.classList.add('modal-open');
+        }
+
+        // ===== CREDENCIAIS DE ADMINISTRADOR =====
+        const ADMIN_CREDENTIALS = {
+            email: 'admin@desejosms.com.br',
+            password: 'DesejosMS2025@Admin'
+        };
+
+        // Função para mostrar notificações
+        function showNotification(message, type = 'info') {
+            // Criar elemento de notificação
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+                <button class="notification-close" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+
+            // Adicionar estilos se não existirem
+            if (!document.getElementById('notificationStyles')) {
+                const styles = document.createElement('style');
+                styles.id = 'notificationStyles';
+                styles.textContent = `
+                    .notification {
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        background: white;
+                        border-radius: 8px;
+                        padding: 15px 20px;
+                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+                        z-index: 10000;
+                        display: flex;
+                        align-items: center;
+                        gap: 15px;
+                        min-width: 300px;
+                        border-left: 4px solid #3498db;
+                        animation: slideIn 0.3s ease;
+                    }
+                    .notification-success { border-left-color: #28a745; }
+                    .notification-warning { border-left-color: #ffc107; }
+                    .notification-error { border-left-color: #dc3545; }
+                    .notification-content { display: flex; align-items: center; gap: 10px; flex: 1; }
+                    .notification-close { background: none; border: none; cursor: pointer; color: #6c757d; }
+                    @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+                `;
+                document.head.appendChild(styles);
+            }
+
+            // Adicionar ao DOM
+            document.body.appendChild(notification);
+
+            // Remover automaticamente após 5 segundos
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            // Verificar se o usuário existe
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const user = users.find(u => (u.email || '').toLowerCase() === email.toLowerCase() && u.password === password);
+
+            if (!user) {
+                alert('Email ou senha incorretos!');
+                return;
+            }
+
+            // Login bem-sucedido - salvar dados do usuário
+            const currentUser = {
+                email: user.email,
+                name: user.name,
+                phone: user.phone,
+                age: user.age,
+                category: user.category,
+                verified: !!user.verified
+            };
+
+            // Salvar no localStorage para compatibilidade com painel-anunciante
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            localStorage.setItem('userEmail', user.email);
+            localStorage.setItem('userName', user.name);
+            localStorage.setItem('userPhone', user.phone || '');
+            localStorage.setItem('userAge', String(user.age || ''));
+            localStorage.setItem('userCategory', user.category || '');
+            localStorage.setItem('userVerified', (!!user.verified).toString());
+            localStorage.setItem('ageVerified', 'true');
+
+            // Fechar modal e redirecionar
+            closeAuthModal();
+            alert('Login realizado com sucesso! Redirecionando...');
+            setTimeout(() => {
+                window.location.href = 'painel-anunciante.html';
+            }, 1000);
+        }
+
+        function handleAdminLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('adminEmail').value.trim();
+            const password = document.getElementById('adminPassword').value.trim();
+
+            // Verificar credenciais de admin
+            if (email.toLowerCase() === ADMIN_CREDENTIALS.email.toLowerCase() &&
+                password === ADMIN_CREDENTIALS.password) {
+
+                // Salvar sessão de admin
+                localStorage.setItem('adminUser', JSON.stringify({
+                    email: ADMIN_CREDENTIALS.email,
+                    name: 'Administrador',
+                    role: 'admin',
+                    loginTime: new Date().toISOString()
+                }));
+
+                // Fechar modal e redirecionar
+                closeAuthModal();
+
+                // Mostrar sucesso
+                showNotification('Login de administrador realizado com sucesso!', 'success');
+
+                setTimeout(() => {
+                    window.location.href = 'admin-panel.html';
+                }, 1500);
+
+            } else {
+                alert('❌ Credenciais de administrador inválidas!');
+
+                // Limpar campos por segurança
+                document.getElementById('adminEmail').value = '';
+                document.getElementById('adminPassword').value = '';
+            }
+        }
+
+        function testeCadastro() {
+            console.log('🧪 Função de teste chamada!');
+            alert('Função de teste funcionando!');
+        }
+
+        function executarCadastro() {
+            console.log('🚀 EXECUTAR CADASTRO - Função chamada diretamente!');
+
+            try {
+                // Coletando dados diretamente
+                const name = document.getElementById('signupName').value.trim();
+                const email = document.getElementById('signupEmail').value.trim();
+                const password = document.getElementById('signupPassword').value.trim();
+                const confirmPassword = document.getElementById('signupConfirmPassword').value.trim();
+                const phone = document.getElementById('signupPhone').value.trim();
+                const age = parseInt(document.getElementById('signupAge').value || '18', 10);
+                const category = document.getElementById('signupCategory').value;
+
+                console.log('📋 Dados coletados:', {
+                    name: name || 'VAZIO',
+                    email: email || 'VAZIO',
+                    phone: phone || 'VAZIO',
+                    age: age || 'VAZIO',
+                    category: category || 'VAZIO',
+                    password: password ? '***' : 'VAZIO',
+                    confirmPassword: confirmPassword ? '***' : 'VAZIO'
+                });
+
+                // Validações básicas
+                if (!name || !email || !password || !confirmPassword || !phone) {
+                    alert('❌ Todos os campos são obrigatórios!');
+                    console.log('❌ Campos obrigatórios em branco');
+                    return;
+                }
+
+                if (password !== confirmPassword) {
+                    alert('❌ As senhas não coincidem!');
+                    console.log('❌ Senhas diferentes');
+                    return;
+                }
+
+                if (password.length < 6) {
+                    alert('❌ Senha deve ter pelo menos 6 caracteres!');
+                    console.log('❌ Senha muito curta');
+                    return;
+                }
+
+                if (age < 18) {
+                    alert('❌ Você deve ter pelo menos 18 anos!');
+                    console.log('❌ Idade insuficiente:', age);
+                    return;
+                }
+
+                console.log('✅ Todas as validações passaram!');
+
+                // Verificar localStorage
+                let users = [];
+                try {
+                    users = JSON.parse(localStorage.getItem('users') || '[]');
+                    console.log('👥 Usuários existentes:', users.length);
+                } catch (e) {
+                    console.log('⚠️ Erro ao ler localStorage, criando array vazio');
+                    users = [];
+                }
+
+                // Verificar email duplicado
+                if (users.find(u => (u.email || '').toLowerCase() === email.toLowerCase())) {
+                    alert('❌ Este email já está cadastrado!');
+                    console.log('❌ Email duplicado:', email);
+                    return;
+                }
+
+                // Criar usuário
+                const newUser = {
+                    name,
+                    email,
+                    password,
+                    phone,
+                    age,
+                    category,
+                    verified: false,
+                    blocked: false,
+                    createdAt: new Date().toISOString()
+                };
+
+                console.log('👤 Criando novo usuário:', { ...newUser, password: '***' });
+
+                // Salvar usuário
+                users.push(newUser);
+                localStorage.setItem('users', JSON.stringify(users));
+                console.log('💾 Usuário salvo com sucesso!');
+
+                // Login automático
+                localStorage.setItem('currentUser', JSON.stringify({
+                    email, name, phone, age, category, verified: false
+                }));
+                localStorage.setItem('userEmail', email);
+                localStorage.setItem('userName', name);
+                localStorage.setItem('userPhone', phone);
+                localStorage.setItem('userAge', String(age));
+                localStorage.setItem('userCategory', category);
+                localStorage.setItem('userVerified', 'false');
+                localStorage.setItem('ageVerified', 'true');
+
+                console.log('🔐 Login automático configurado!');
+
+                // Fechar modal
+                closeAuthModal();
+
+                // Sucesso!
+                alert('🎉 Cadastro realizado com sucesso! Redirecionando para o painel...');
+                console.log('✅ CADASTRO CONCLUÍDO COM SUCESSO!');
+
+                // Redirecionar
+                setTimeout(() => {
+                    window.location.href = 'painel-anunciante.html';
+                }, 1500);
+
+            } catch (error) {
+                console.error('💥 ERRO NO CADASTRO:', error);
+                alert('❌ Erro interno no cadastro. Verifique o console.');
+            }
+        }
+
+        function handleSignup(event) {
+            event.preventDefault();
+            console.log('🔍 Iniciando cadastro via handleSignup...');
+
+            try {
+                // Verificar se o checkbox de termos está marcado
+                const agreeTerms = document.getElementById('agreeTerms');
+                console.log('📋 Checkbox de termos:', agreeTerms ? 'Encontrado' : 'NÃO ENCONTRADO');
+                console.log('📋 Checkbox marcado:', agreeTerms ? agreeTerms.checked : 'N/A');
+
+                if (!agreeTerms || !agreeTerms.checked) {
+                    alert('❌ Você deve concordar com os Termos de Uso e Política de Privacidade!');
+                    return;
+                }
+
+            const name = document.getElementById('signupName').value.trim();
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value.trim();
+            const confirmPassword = document.getElementById('signupConfirmPassword').value.trim();
+            const phone = document.getElementById('signupPhone').value.trim();
+            const age = parseInt(document.getElementById('signupAge').value || '18', 10);
+            const category = document.getElementById('signupCategory').value;
+
+            console.log('📝 Dados coletados:', { name, email, phone, age, category, password: password ? '***' : 'VAZIO' });
+
+            // Validações básicas
+            if (!name || !email || !password || !confirmPassword || !phone || !category) {
+                alert('❌ Por favor, preencha todos os campos obrigatórios!');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                console.log('❌ Senhas não coincidem');
+                alert('As senhas não coincidem!');
+                return;
+            }
+
+            if (password.length < 6) {
+                console.log('❌ Senha muito curta');
+                alert('❌ A senha deve ter pelo menos 6 caracteres!');
+                return;
+            }
+
+            if (age < 18) {
+                console.log('❌ Idade insuficiente:', age);
+                alert('Você deve ter pelo menos 18 anos para se cadastrar.');
+                return;
+            }
+
+            console.log('✅ Validações passaram');
+
+            // Verificar se email já existe
+            let users = JSON.parse(localStorage.getItem('users') || '[]');
+            console.log('👥 Usuários existentes:', users.length);
+
+            if (users.find(u => (u.email || '').toLowerCase() === email.toLowerCase())) {
+                console.log('❌ Email já cadastrado:', email);
+                alert('Email já cadastrado!');
+                return;
+            }
+
+            console.log('✅ Email único, criando usuário...');
+
+            // Criar novo usuário
+            const newUser = {
+                name,
+                email,
+                password,
+                phone,
+                age,
+                category,
+                verified: false,
+                blocked: false,
+                createdAt: new Date().toISOString()
+            };
+
+            console.log('👤 Novo usuário criado:', { ...newUser, password: '***' });
+
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+            console.log('💾 Usuário salvo no localStorage');
+
+            // Fazer login automático
+            const currentUser = { email, name, phone, age, category, verified: false };
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            localStorage.setItem('userEmail', email);
+            localStorage.setItem('userName', name);
+            localStorage.setItem('userPhone', phone);
+            localStorage.setItem('userAge', String(age));
+            localStorage.setItem('userCategory', category);
+            localStorage.setItem('userVerified', 'false');
+            localStorage.setItem('ageVerified', 'true');
+
+            console.log('🔐 Login automático configurado');
+
+            // Fechar modal e redirecionar
+            closeAuthModal();
+            console.log('✅ Modal fechado, redirecionando...');
+            alert('Cadastro realizado com sucesso! Redirecionando...');
+            setTimeout(() => {
+                window.location.href = 'painel-anunciante.html';
+            }, 1000);
+
+            } catch (error) {
+                console.error('💥 ERRO NO CADASTRO:', error);
+                alert('❌ Erro interno no cadastro: ' + error.message);
+            }
+        }
+
+
+    </script>
+    <script>
+        // Define a UF dinamicamente mantendo identidade visual
+        (function setBrandUF(){
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const fromQuery = (params.get('uf') || '').toUpperCase();
+                const fromStorage = (localStorage.getItem('siteUF') || '').toUpperCase();
+                const validUF = u => /^[A-Z]{2}$/.test(u);
+                const uf = validUF(fromQuery) ? fromQuery : (validUF(fromStorage) ? fromStorage : 'MS');
+                localStorage.setItem('siteUF', uf);
+                const ufSpan = document.getElementById('brandUF');
+                if (ufSpan) ufSpan.textContent = uf;
+            } catch(e) { /* silencioso */ }
+        })();
+    </script>
+    <script src="config.js"></script>
+    <script src="states-config.js"></script>
+    <script src="notifications.js"></script>
+    <script src="script.js"></script>
+
+    <script>
+        // Sincronização final: garante que títulos, subtítulos e rodapé
+        // reflitam o estado selecionado após todos os scripts carregarem
+        (function finalStateSync(){
+            try {
+                if (window.updateSiteForState) {
+                    // Aguarda o próximo frame para evitar corrida com outros inits
+                    requestAnimationFrame(() => {
+                        try { updateSiteForState(); } catch(e) { console.warn('Falha em updateSiteForState (final):', e); }
+                    });
+                }
+            } catch (e) { /* silencioso */ }
+        })();
+    </script>
+
+    <script>
+        // Controle de visibilidade do botão Admin
+        function toggleAdminButton() {
+            const adminBtn = document.querySelector('.admin-btn');
+            const adminUser = localStorage.getItem('adminUser');
+
+            if (adminUser) {
+                // Admin logado - mostrar botão
+                adminBtn.style.display = 'inline-flex';
+                adminBtn.href = 'admin-panel.html'; // Vai direto para o painel
+                adminBtn.innerHTML = '<i class="fas fa-cog"></i> Painel Admin';
+                adminBtn.title = 'Acessar Painel Administrativo';
+            } else {
+                // Usuário comum - esconder botão
+                adminBtn.style.display = 'none';
+            }
+        }
+
+        // Executar quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleAdminButton();
+            console.log('✅ Sistema de cadastro carregado e pronto!');
+            
+            // Aplicar configurações do estado selecionado
+            setTimeout(() => {
+                if (window.updateSiteForState) {
+                    console.log('🔄 Aplicando configurações do estado no DOMContentLoaded...');
+                    updateSiteForState();
+                    
+                    // Atualizar também o seletor de cidades
+                    if (window.updateCitySelector) {
+                        updateCitySelector();
+                    }
+                    
+                    console.log('✅ Configurações do estado aplicadas no DOMContentLoaded!');
+                }
+            }, 200);
+            
+            // Adicionar botões de teste se estiver em desenvolvimento
+            if (window.location.hostname === '' || window.location.hostname === 'localhost') {
+                const testContainer = document.createElement('div');
+                testContainer.style.cssText = 'position: fixed; top: 10px; right: 10px; z-index: 9999; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 5px; color: white;';
+                testContainer.innerHTML = `
+                    <div style="margin-bottom: 10px;">
+                        <button onclick="testStateChange()" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-right: 5px;">
+                            🔄 Testar Mudança de Estado
+                        </button>
+                        <button onclick="showCurrentState()" style="background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">
+                            📊 Estado Atual
+                        </button>
+                    </div>
+                    <div style="font-size: 12px;">
+                        Estado: <span id="currentStateDisplay">${localStorage.getItem('currentState') || 'MS'}</span>
+                    </div>
+                `;
+                document.body.appendChild(testContainer);
+                
+                // Atualizar display do estado
+                setInterval(() => {
+                    const display = document.getElementById('currentStateDisplay');
+                    if (display) {
+                        display.textContent = localStorage.getItem('currentState') || 'MS';
+                    }
+                }, 1000);
+            }
+        });
+
+        // Função para testar mudança de estado
+        function testStateChange() {
+            const currentState = localStorage.getItem('currentState') || 'MS';
+            const newState = currentState === 'MS' ? 'MG' : 'MS';
+            
+            console.log(`🔄 Testando mudança de estado: ${currentState} → ${newState}`);
+            
+            // Mudar estado
+            if (window.changeState) {
+                const success = window.changeState(newState);
+                if (success) {
+                    console.log(`✅ Estado mudou para ${newState}`);
+                    alert(`Estado mudou para ${newState}! Recarregue a página para ver as mudanças.`);
+                } else {
+                    console.log(`❌ Falha ao mudar estado para ${newState}`);
+                    alert(`❌ Falha ao mudar estado para ${newState}`);
+                }
+            } else {
+                console.log(`❌ Função changeState não encontrada`);
+                alert(`❌ Função changeState não encontrada`);
+            }
+        }
+
+        // Função para mostrar estado atual
+        function showCurrentState() {
+            const currentState = localStorage.getItem('currentState') || 'MS';
+            const stateConfig = window.getCurrentStateConfig ? window.getCurrentStateConfig() : null;
+            
+            if (stateConfig) {
+                alert(`Estado Atual: ${currentState}\nNome: ${stateConfig.name}\nMarca: ${stateConfig.siteName}\nTítulo: ${stateConfig.siteTitle}`);
+            } else {
+                alert(`Estado Atual: ${currentState}\nConfiguração não encontrada`);
+            }
+        }
+
+        // Verificar mudanças no localStorage (login/logout)
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'adminUser') {
+                toggleAdminButton();
+            }
+        });
+    </script>
+</body>
+</html>

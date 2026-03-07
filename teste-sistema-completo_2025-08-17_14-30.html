@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Completo do Sistema - DesejosMS (Atualizado)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #8B0000;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            color: #333;
+            margin-top: 0;
+        }
+        .test-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .btn-primary { background: #8B0000; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: #000; }
+        .btn-info { background: #17a2b8; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn:hover { opacity: 0.8; transform: translateY(-2px); }
+        .results {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.warning { background: #fff3cd; color: #856404; }
+        .navigation {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .nav-btn {
+            padding: 10px 15px;
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .nav-btn:hover { background: #5a6268; }
+        
+        /* Estilos para notificações */
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+        .notification {
+            background: white;
+            border-left: 4px solid #8B0000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 5px;
+            animation: slideIn 0.3s ease-out;
+        }
+        .notification.success { border-left-color: #28a745; }
+        .notification.warning { border-left-color: #ffc107; }
+        .notification.error { border-left-color: #dc3545; }
+        .notification.info { border-left-color: #17a2b8; }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .notification-title {
+            font-weight: bold;
+            color: #333;
+        }
+        .notification-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #666;
+        }
+        .notification-message {
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-cogs"></i> Teste Completo do Sistema DesejosMS (Atualizado)</h1>
+        
+        <div class="navigation">
+            <a href="index.html" class="nav-btn"><i class="fas fa-home"></i> Página Principal</a>
+            <a href="painel-anunciante.html" class="nav-btn"><i class="fas fa-user"></i> Painel Anunciante</a>
+            <a href="admin-panel.html" class="nav-btn"><i class="fas fa-cog"></i> Painel Admin</a>
+            <a href="verificacoes.html" class="nav-btn"><i class="fas fa-id-card"></i> Verificações</a>
+            <a href="melhorias-sistema.html" class="nav-btn"><i class="fas fa-rocket"></i> Melhorias</a>
+        </div>
+
+        <!-- Container de Notificações -->
+        <div class="notification-container" id="notificationContainer"></div>
+
+        <!-- Teste do Sistema de Notificações -->
+        <div class="test-section">
+            <h3><i class="fas fa-bell"></i> Sistema de Notificações (NOVO)</h3>
+            <p>Teste o sistema de notificações em tempo real implementado no projeto.</p>
+            
+            <div class="test-buttons">
+                <button class="btn btn-success" onclick="testNotification('success', 'Sucesso!', 'Operação realizada com sucesso.')">
+                    <i class="fas fa-check"></i> Notificação de Sucesso
+                </button>
+                <button class="btn btn-warning" onclick="testNotification('warning', 'Atenção!', 'Algo precisa de sua atenção.')">
+                    <i class="fas fa-exclamation-triangle"></i> Notificação de Aviso
+                </button>
+                <button class="btn btn-danger" onclick="testNotification('error', 'Erro!', 'Ocorreu um erro no sistema.')">
+                    <i class="fas fa-times"></i> Notificação de Erro
+                </button>
+                <button class="btn btn-info" onclick="testNotification('info', 'Informação', 'Nova funcionalidade disponível.')">
+                    <i class="fas fa-info-circle"></i> Notificação de Info
+                </button>
+                <button class="btn btn-primary" onclick="testNotificationSequence()">
+                    <i class="fas fa-play"></i> Sequência de Notificações
+                </button>
+                <button class="btn btn-warning" onclick="clearAllNotifications()">
+                    <i class="fas fa-trash"></i> Limpar Todas
+                </button>
+            </div>
+            
+            <div class="results" id="notificationResults">
+                Clique nos botões acima para testar o sistema de notificações...
+            </div>
+        </div>
+
+        <!-- Teste de Verificação -->
+        <div class="test-section">
+            <h3><i class="fas fa-id-card"></i> Teste de Sistema de Verificação</h3>
+            <p>Teste o fluxo completo de verificação de documentos.</p>
+            
+            <div class="test-buttons">
+                <button class="btn btn-primary" onclick="testVerificationFlow()">
+                    <i class="fas fa-play"></i> Testar Fluxo Completo
+                </button>
+                <button class="btn btn-info" onclick="checkVerificationStatus()">
+                    <i class="fas fa-search"></i> Verificar Status
+                </button>
+                <button class="btn btn-warning" onclick="simulateVerificationSubmission()">
+                    <i class="fas fa-upload"></i> Simular Envio
+                </button>
+            </div>
+            
+            <div class="results" id="verificationResults">
+                Clique nos botões acima para testar o sistema de verificação...
+            </div>
+        </div>
+
+        <!-- Teste de Anúncios -->
+        <div class="test-section">
+            <h3><i class="fas fa-ad"></i> Teste de Sistema de Anúncios</h3>
+            <p>Teste a criação, edição e gerenciamento de anúncios.</p>
+            
+            <div class="test-buttons">
+                <button class="btn btn-primary" onclick="testAnnouncementFlow()">
+                    <i class="fas fa-play"></i> Testar Fluxo Completo
+                </button>
+                <button class="btn btn-success" onclick="createTestAnnouncement()">
+                    <i class="fas fa-plus"></i> Criar Anúncio de Teste
+                </button>
+                <button class="btn btn-info" onclick="checkAnnouncements()">
+                    <i class="fas fa-search"></i> Verificar Anúncios
+                </button>
+                <button class="btn btn-warning" onclick="testAnnouncementFilters()">
+                    <i class="fas fa-filter"></i> Testar Filtros
+                </button>
+            </div>
+            
+            <div class="results" id="announcementResults">
+                Clique nos botões acima para testar o sistema de anúncios...
+            </div>
+        </div>
+
+        <!-- Teste de Usuários -->
+        <div class="test-section">
+            <h3><i class="fas fa-users"></i> Teste de Sistema de Usuários</h3>
+            <p>Teste o cadastro, login e gestão de usuários.</p>
+            
+            <div class="test-buttons">
+                <button class="btn btn-primary" onclick="testUserFlow()">
+                    <i class="fas fa-play"></i> Testar Fluxo Completo
+                </button>
+                <button class="btn btn-success" onclick="createTestUser()">
+                    <i class="fas fa-user-plus"></i> Criar Usuário de Teste
+                </button>
+                <button class="btn btn-warning" onclick="testUserBlocking()">
+                    <i class="fas fa-ban"></i> Testar Bloqueio
+                </button>
+                <button class="btn btn-info" onclick="checkUsers()">
+                    <i class="fas fa-search"></i> Verificar Usuários
+                </button>
+            </div>
+            
+            <div class="results" id="userResults">
+                Clique nos botões acima para testar o sistema de usuários...
+            </div>
+        </div>
+
+        <!-- Teste de Planos -->
+        <div class="test-section">
+            <h3><i class="fas fa-crown"></i> Teste de Sistema de Planos</h3>
+            <p>Teste a configuração e ordenação de planos de destaque.</p>
+            
+            <div class="test-buttons">
+                <button class="btn btn-primary" onclick="testPlanSystem()">
+                    <i class="fas fa-play"></i> Testar Sistema de Planos
+                </button>
+                <button class="btn btn-success" onclick="createTestPlans()">
+                    <i class="fas fa-plus"></i> Criar Planos de Teste
+                </button>
+                <button class="btn btn-info" onclick="checkPlans()">
+                    <i class="fas fa-search"></i> Verificar Planos
+                </button>
+                <button class="btn btn-warning" onclick="testPlanOrdering()">
+                    <i class="fas fa-sort"></i> Testar Ordenação
+                </button>
+            </div>
+            
+            <div class="results" id="planResults">
+                Clique nos botões acima para testar o sistema de planos...
+            </div>
+        </div>
+
+        <!-- Diagnóstico Geral -->
+        <div class="test-section">
+            <h3><i class="fas fa-stethoscope"></i> Diagnóstico Geral do Sistema</h3>
+            <p>Execute um diagnóstico completo de todas as funcionalidades.</p>
+            
+            <div class="test-buttons">
+                <button class="btn btn-primary" onclick="runFullDiagnostic()">
+                    <i class="fas fa-play"></i> Executar Diagnóstico Completo
+                </button>
+                <button class="btn btn-success" onclick="exportSystemData()">
+                    <i class="fas fa-download"></i> Exportar Dados
+                </button>
+                <button class="btn btn-warning" onclick="resetTestData()">
+                    <i class="fas fa-trash"></i> Resetar Dados de Teste
+                </button>
+                <button class="btn btn-info" onclick="checkSystemHealth()">
+                    <i class="fas fa-heartbeat"></i> Verificar Saúde do Sistema
+                </button>
+            </div>
+            
+            <div class="results" id="diagnosticResults">
+                Clique nos botões acima para executar diagnósticos...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sistema de Notificações
+        class NotificationSystem {
+            constructor() {
+                this.container = document.getElementById('notificationContainer');
+                this.notifications = [];
+            }
+
+            show(type, title, message, duration = 5000) {
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                
+                notification.innerHTML = `
+                    <div class="notification-header">
+                        <span class="notification-title">${title}</span>
+                        <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
+                    </div>
+                    <div class="notification-message">${message}</div>
+                `;
+                
+                this.container.appendChild(notification);
+                this.notifications.push(notification);
+                
+                // Auto-remove após duração
+                if (duration > 0) {
+                    setTimeout(() => {
+                        if (notification.parentElement) {
+                            notification.remove();
+                        }
+                    }, duration);
+                }
+                
+                return notification;
+            }
+
+            clear() {
+                this.notifications.forEach(notification => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                });
+                this.notifications = [];
+            }
+        }
+
+        // Instanciar sistema de notificações
+        const notificationSystem = new NotificationSystem();
+
+        // Funções de teste de notificações
+        function testNotification(type, title, message) {
+            notificationSystem.show(type, title, message);
+            updateResults('notificationResults', `Notificação ${type} exibida: ${title} - ${message}`);
+        }
+
+        function testNotificationSequence() {
+            const sequence = [
+                { type: 'info', title: 'Sistema Iniciado', message: 'Carregando funcionalidades...' },
+                { type: 'success', title: 'Verificação Concluída', message: 'Todos os testes passaram!' },
+                { type: 'warning', title: 'Atenção', message: 'Algumas configurações precisam ser revisadas.' },
+                { type: 'error', title: 'Erro Detectado', message: 'Problema encontrado no sistema.' }
+            ];
+
+            sequence.forEach((notification, index) => {
+                setTimeout(() => {
+                    notificationSystem.show(notification.type, notification.title, notification.message);
+                }, index * 1000);
+            });
+
+            updateResults('notificationResults', 'Sequência de notificações iniciada. Verifique o canto superior direito.');
+        }
+
+        function clearAllNotifications() {
+            notificationSystem.clear();
+            updateResults('notificationResults', 'Todas as notificações foram removidas.');
+        }
+
+        // Funções de teste de verificação
+        function testVerificationFlow() {
+            updateResults('verificationResults', 'Iniciando teste de fluxo de verificação...');
+            
+            // Simular envio de documentos
+            const testVerification = {
+                id: Date.now(),
+                userEmail: 'teste@exemplo.com',
+                documents: {
+                    rg: 'RG_123456789',
+                    cpf: 'CPF_12345678900',
+                    selfie: 'SELFIE_001'
+                },
+                status: 'pending',
+                submittedAt: new Date().toISOString()
+            };
+
+            // Salvar no localStorage
+            const pendingVerifications = JSON.parse(localStorage.getItem('pendingVerifications') || '[]');
+            pendingVerifications.push(testVerification);
+            localStorage.setItem('pendingVerifications', JSON.stringify(pendingVerifications));
+
+            notificationSystem.show('success', 'Verificação Enviada', 'Documentos enviados com sucesso!');
+            updateResults('verificationResults', '✅ Documentos enviados\n✅ Salvos em pendingVerifications\n✅ Status: pending\n\nPróximo passo: Aprovar em verificacoes.html');
+        }
+
+        function checkVerificationStatus() {
+            const pendingVerifications = JSON.parse(localStorage.getItem('pendingVerifications') || '[]');
+            const verifications = JSON.parse(localStorage.getItem('verifications') || '[]');
+            
+            let result = '=== STATUS DAS VERIFICAÇÕES ===\n\n';
+            result += `Pendentes: ${pendingVerifications.length}\n`;
+            result += `Aprovadas: ${verifications.filter(v => v.status === 'approved').length}\n`;
+            result += `Rejeitadas: ${verifications.filter(v => v.status === 'rejected').length}\n\n`;
+            
+            if (pendingVerifications.length > 0) {
+                result += 'DOCUMENTOS PENDENTES:\n';
+                pendingVerifications.forEach((v, i) => {
+                    result += `${i + 1}. ${v.userEmail} - ${v.submittedAt}\n`;
+                });
+            }
+            
+            updateResults('verificationResults', result);
+        }
+
+        function simulateVerificationSubmission() {
+            const emails = ['maria@exemplo.com', 'joana@exemplo.com', 'ana@exemplo.com'];
+            const randomEmail = emails[Math.floor(Math.random() * emails.length)];
+            
+            const verification = {
+                id: Date.now(),
+                userEmail: randomEmail,
+                documents: {
+                    rg: `RG_${Math.random().toString(36).substr(2, 9)}`,
+                    cpf: `CPF_${Math.random().toString(36).substr(2, 11)}`,
+                    selfie: `SELFIE_${Math.random().toString(36).substr(2, 6)}`
+                },
+                status: 'pending',
+                submittedAt: new Date().toISOString()
+            };
+
+            const pendingVerifications = JSON.parse(localStorage.getItem('pendingVerifications') || '[]');
+            pendingVerifications.push(verification);
+            localStorage.setItem('pendingVerifications', JSON.stringify(pendingVerifications));
+
+            notificationSystem.show('info', 'Documento Enviado', `Verificação de ${randomEmail} enviada com sucesso!`);
+            updateResults('verificationResults', `✅ Nova verificação criada para: ${randomEmail}\n✅ ID: ${verification.id}\n✅ Status: pending`);
+        }
+
+        // Funções de teste de anúncios
+        function testAnnouncementFlow() {
+            updateResults('announcementResults', 'Iniciando teste de fluxo de anúncios...');
+            
+            // Criar anúncio de teste
+            const testAnnouncement = {
+                id: Date.now(),
+                userEmail: 'teste@exemplo.com',
+                name: 'Maria Silva',
+                age: 25,
+                city: 'Campo Grande',
+                description: 'Anúncio de teste para verificação do sistema',
+                price: 'R$ 150',
+                phone: '(67) 99999-9999',
+                whatsapp: '(67) 99999-9999',
+                category: 'mulher',
+                services: ['Massagem', 'Companhia'],
+                status: 'active',
+                planType: 'basic',
+                paidAmount: 0,
+                views: 0,
+                rating: 5,
+                createdAt: new Date().toISOString(),
+                photos: []
+            };
+
+            // Salvar no localStorage
+            const announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
+            announcements.push(testAnnouncement);
+            localStorage.setItem('announcements', JSON.stringify(announcements));
+
+            notificationSystem.show('success', 'Anúncio Criado', 'Anúncio de teste criado com sucesso!');
+            updateResults('announcementResults', '✅ Anúncio criado\n✅ Categoria: mulher\n✅ Cidade: Campo Grande\n✅ Status: active\n✅ Plano: basic\n\nAnúncio aparecerá na página principal.');
+        }
+
+        function createTestAnnouncement() {
+            const categories = ['mulher', 'homem', 'travesti', 'massagista'];
+            const cities = ['Campo Grande', 'Dourados', 'Três Lagoas', 'Corumbá'];
+            const names = ['Maria', 'Joana', 'Ana', 'Paula', 'Carla'];
+            
+            const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+            const randomCity = cities[Math.floor(Math.random() * cities.length)];
+            const randomName = names[Math.floor(Math.random() * names.length)];
+            const randomAge = 20 + Math.floor(Math.random() * 20);
+
+            const announcement = {
+                id: Date.now(),
+                userEmail: `${randomName.toLowerCase()}@exemplo.com`,
+                name: `${randomName} Silva`,
+                age: randomAge,
+                city: randomCity,
+                description: `Anúncio de teste - ${randomCategory} em ${randomCity}`,
+                price: `R$ ${100 + Math.floor(Math.random() * 200)}`,
+                phone: `(67) 9${Math.floor(Math.random() * 9000) + 1000}-${Math.floor(Math.random() * 9000) + 1000}`,
+                whatsapp: `(67) 9${Math.floor(Math.random() * 9000) + 1000}-${Math.floor(Math.random() * 9000) + 1000}`,
+                category: randomCategory,
+                services: ['Massagem', 'Companhia'],
+                status: 'active',
+                planType: 'basic',
+                paidAmount: 0,
+                views: Math.floor(Math.random() * 100),
+                rating: 3 + Math.floor(Math.random() * 3),
+                createdAt: new Date().toISOString(),
+                photos: []
+            };
+
+            const announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
+            announcements.push(announcement);
+            localStorage.setItem('announcements', JSON.stringify(announcements));
+
+            notificationSystem.show('info', 'Anúncio Criado', `${randomName} - ${randomCategory} em ${randomCity}`);
+            updateResults('announcementResults', `✅ Novo anúncio criado:\n- Nome: ${randomName} Silva\n- Categoria: ${randomCategory}\n- Cidade: ${randomCity}\n- Idade: ${randomAge}\n- Visualizações: ${announcement.views}`);
+        }
+
+        function checkAnnouncements() {
+            const announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
+            
+            let result = '=== ANÚNCIOS NO SISTEMA ===\n\n';
+            result += `Total: ${announcements.length}\n`;
+            result += `Ativos: ${announcements.filter(a => a.status === 'active').length}\n`;
+            result += `Pendentes: ${announcements.filter(a => a.status === 'pending').length}\n`;
+            result += `Bloqueados: ${announcements.filter(a => a.status === 'blocked').length}\n\n`;
+            
+            // Estatísticas por categoria
+            const categories = ['mulher', 'homem', 'travesti', 'massagista'];
+            categories.forEach(category => {
+                const count = announcements.filter(a => a.category === category).length;
+                result += `${category}: ${count}\n`;
+            });
+            
+            result += '\n=== ÚLTIMOS 5 ANÚNCIOS ===\n';
+            announcements.slice(-5).forEach((a, i) => {
+                result += `${i + 1}. ${a.name} (${a.category}) - ${a.city}\n`;
+            });
+            
+            updateResults('announcementResults', result);
+        }
+
+        function testAnnouncementFilters() {
+            const announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
+            
+            let result = '=== TESTE DE FILTROS ===\n\n';
+            
+            // Teste filtro por categoria
+            const categories = ['mulher', 'homem', 'travesti', 'massagista'];
+            categories.forEach(category => {
+                const filtered = announcements.filter(a => a.category === category && a.status === 'active');
+                result += `${category}: ${filtered.length} anúncios\n`;
+            });
+            
+            result += '\n=== TESTE FILTRO POR CIDADE ===\n';
+            const cities = ['Campo Grande', 'Dourados', 'Três Lagoas', 'Corumbá'];
+            cities.forEach(city => {
+                const filtered = announcements.filter(a => a.city === city && a.status === 'active');
+                result += `${city}: ${filtered.length} anúncios\n`;
+            });
+            
+            updateResults('announcementResults', result);
+        }
+
+        // Funções de teste de usuários
+        function testUserFlow() {
+            updateResults('userResults', 'Iniciando teste de fluxo de usuários...');
+            
+            // Criar usuário de teste
+            const testUser = {
+                email: 'teste@exemplo.com',
+                password: '123456',
+                name: 'Usuário Teste',
+                verified: false,
+                blocked: false,
+                createdAt: new Date().toISOString()
+            };
+
+            // Salvar no localStorage
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            users.push(testUser);
+            localStorage.setItem('users', JSON.stringify(users));
+
+            notificationSystem.show('success', 'Usuário Criado', 'Usuário de teste criado com sucesso!');
+            updateResults('userResults', '✅ Usuário criado\n✅ Email: teste@exemplo.com\n✅ Verificado: false\n✅ Bloqueado: false\n\nUsuário pode criar anúncios normalmente.');
+        }
+
+        function createTestUser() {
+            const names = ['Maria', 'Joana', 'Ana', 'Paula', 'Carla', 'Roberto', 'João', 'Pedro'];
+            const randomName = names[Math.floor(Math.random() * names.length)];
+            const randomEmail = `${randomName.toLowerCase()}${Math.floor(Math.random() * 1000)}@exemplo.com`;
+
+            const user = {
+                email: randomEmail,
+                password: '123456',
+                name: randomName,
+                verified: Math.random() > 0.5,
+                blocked: Math.random() > 0.8,
+                createdAt: new Date().toISOString()
+            };
+
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            users.push(user);
+            localStorage.setItem('users', JSON.stringify(users));
+
+            const status = user.blocked ? 'BLOQUEADO' : (user.verified ? 'VERIFICADO' : 'PENDENTE');
+            notificationSystem.show('info', 'Usuário Criado', `${randomName} - ${status}`);
+            updateResults('userResults', `✅ Novo usuário criado:\n- Nome: ${randomName}\n- Email: ${randomEmail}\n- Verificado: ${user.verified}\n- Bloqueado: ${user.blocked}\n- Status: ${status}`);
+        }
+
+        function testUserBlocking() {
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            
+            if (users.length === 0) {
+                notificationSystem.show('warning', 'Nenhum Usuário', 'Crie usuários primeiro para testar o bloqueio.');
+                updateResults('userResults', '❌ Nenhum usuário encontrado. Crie usuários primeiro.');
+                return;
+            }
+
+            // Bloquear primeiro usuário
+            const userToBlock = users[0];
+            userToBlock.blocked = true;
+            localStorage.setItem('users', JSON.stringify(users));
+
+            // Bloquear anúncios do usuário
+            const announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
+            announcements.forEach(announcement => {
+                if (announcement.userEmail === userToBlock.email) {
+                    announcement.status = 'blocked';
+                }
+            });
+            localStorage.setItem('announcements', JSON.stringify(announcements));
+
+            notificationSystem.show('warning', 'Usuário Bloqueado', `${userToBlock.name} foi bloqueado.`);
+            updateResults('userResults', `✅ Usuário bloqueado: ${userToBlock.name}\n✅ Anúncios marcados como bloqueados\n✅ Usuário não pode criar novos anúncios\n\nTeste na página principal - anúncios não devem aparecer.`);
+        }
+
+        function checkUsers() {
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            
+            let result = '=== USUÁRIOS NO SISTEMA ===\n\n';
+            result += `Total: ${users.length}\n`;
+            result += `Verificados: ${users.filter(u => u.verified).length}\n`;
+            result += `Pendentes: ${users.filter(u => !u.verified).length}\n`;
+            result += `Bloqueados: ${users.filter(u => u.blocked).length}\n\n`;
+            
+            result += '=== LISTA DE USUÁRIOS ===\n';
+            users.forEach((user, i) => {
+                const status = user.blocked ? 'BLOQUEADO' : (user.verified ? 'VERIFICADO' : 'PENDENTE');
+                result += `${i + 1}. ${user.name} (${user.email}) - ${status}\n`;
+            });
+            
+            updateResults('userResults', result);
+        }
+
+        // Funções de teste de planos
+        function testPlanSystem() {
+            updateResults('planResults', 'Iniciando teste de sistema de planos...');
+            
+            // Configurar planos de teste
+            const plans = [
+                { id: 'basic', name: 'BÁSICO', price: 0, features: ['Anúncio básico', 'Edição permitida'] },
+                { id: 'top', name: 'TOP', price: 50, features: ['Destaque rosa', 'Pausar/reativar'] },
+                { id: 'supervip', name: 'SUPERVIP', price: 100, features: ['Destaque ouro', 'Tamanho maior', 'Aparece em páginas concorrentes'] }
+            ];
+
+            localStorage.setItem('plans', JSON.stringify(plans));
+
+            notificationSystem.show('success', 'Planos Configurados', 'Sistema de planos configurado com sucesso!');
+            updateResults('planResults', '✅ Planos configurados:\n- BÁSICO: R$ 0\n- TOP: R$ 50\n- SUPERVIP: R$ 100\n\nOrdenação: SUPERVIP > TOP > BÁSICO');
+        }
+
+        function createTestPlans() {
+            const plans = [
+                { id: 'basic', name: 'BÁSICO', price: 0, features: ['Anúncio básico', 'Edição permitida'], active: true },
+                { id: 'top', name: 'TOP', price: 50, features: ['Destaque rosa', 'Pausar/reativar'], active: true },
+                { id: 'supervip', name: 'SUPERVIP', price: 100, features: ['Destaque ouro', 'Tamanho maior'], active: true }
+            ];
+
+            localStorage.setItem('plans', JSON.stringify(plans));
+            notificationSystem.show('info', 'Planos Criados', 'Planos de teste criados com sucesso!');
+            updateResults('planResults', '✅ Planos de teste criados\n✅ 3 planos ativos\n✅ Preços configurados\n✅ Funcionalidades definidas');
+        }
+
+        function checkPlans() {
+            const plans = JSON.parse(localStorage.getItem('plans') || '[]');
+            
+            let result = '=== PLANOS CONFIGURADOS ===\n\n';
+            
+            if (plans.length === 0) {
+                result += '❌ Nenhum plano configurado\n';
+            } else {
+                plans.forEach((plan, i) => {
+                    result += `${i + 1}. ${plan.name} (${plan.id})\n`;
+                    result += `   Preço: R$ ${plan.price}\n`;
+                    result += `   Ativo: ${plan.active ? 'Sim' : 'Não'}\n`;
+                    result += `   Funcionalidades: ${plan.features.join(', ')}\n\n`;
+                });
+            }
+            
+            updateResults('planResults', result);
+        }
+
+        function testPlanOrdering() {
+            const announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
+            
+            // Simular anúncios com diferentes planos
+            const testAnnouncements = [
+                { name: 'Maria VIP', planType: 'supervip', category: 'mulher' },
+                { name: 'Joana Top', planType: 'top', category: 'mulher' },
+                { name: 'Ana Básica', planType: 'basic', category: 'mulher' }
+            ];
+
+            // Adicionar anúncios de teste se não existirem
+            testAnnouncements.forEach((test, index) => {
+                const exists = announcements.find(a => a.name === test.name);
+                if (!exists) {
+                    const announcement = {
+                        id: Date.now() + index,
+                        userEmail: `${test.name.toLowerCase().replace(' ', '')}@exemplo.com`,
+                        name: test.name,
+                        age: 25,
+                        city: 'Campo Grande',
+                        description: `Anúncio de teste - ${test.planType}`,
+                        price: 'R$ 150',
+                        phone: '(67) 99999-9999',
+                        whatsapp: '(67) 99999-9999',
+                        category: test.category,
+                        services: ['Massagem', 'Companhia'],
+                        status: 'active',
+                        planType: test.planType,
+                        paidAmount: test.planType === 'basic' ? 0 : (test.planType === 'top' ? 50 : 100),
+                        views: 0,
+                        rating: 5,
+                        createdAt: new Date().toISOString(),
+                        photos: []
+                    };
+                    announcements.push(announcement);
+                }
+            });
+
+            localStorage.setItem('announcements', JSON.stringify(announcements));
+
+            // Simular ordenação
+            const sorted = announcements.filter(a => a.status === 'active').sort((a, b) => {
+                const planOrder = { 'supervip': 3, 'top': 2, 'basic': 1 };
+                return planOrder[b.planType] - planOrder[a.planType];
+            });
+
+            let result = '=== TESTE DE ORDENAÇÃO ===\n\n';
+            result += 'Ordem esperada: SUPERVIP > TOP > BÁSICO\n\n';
+            
+            sorted.slice(0, 5).forEach((a, i) => {
+                result += `${i + 1}. ${a.name} (${a.planType.toUpperCase()})\n`;
+            });
+            
+            updateResults('planResults', result);
+        }
+
+        // Funções de diagnóstico
+        function runFullDiagnostic() {
+            updateResults('diagnosticResults', 'Iniciando diagnóstico completo do sistema...\n');
+            
+            let result = '=== DIAGNÓSTICO COMPLETO ===\n\n';
+            
+            // Verificar localStorage
+            const keys = Object.keys(localStorage);
+            result += `📊 Dados no localStorage: ${keys.length} chaves\n`;
+            
+            // Verificar usuários
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            result += `👥 Usuários: ${users.length}\n`;
+            
+            // Verificar anúncios
+            const announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
+            result += `📢 Anúncios: ${announcements.length}\n`;
+            
+            // Verificar verificações
+            const verifications = JSON.parse(localStorage.getItem('verifications') || '[]');
+            const pendingVerifications = JSON.parse(localStorage.getItem('pendingVerifications') || '[]');
+            result += `🆔 Verificações: ${verifications.length} (${pendingVerifications.length} pendentes)\n`;
+            
+            // Verificar planos
+            const plans = JSON.parse(localStorage.getItem('plans') || '[]');
+            result += `👑 Planos: ${plans.length}\n`;
+            
+            // Verificar problemas
+            result += '\n=== PROBLEMAS DETECTADOS ===\n';
+            let problems = 0;
+            
+            if (users.length === 0) {
+                result += '❌ Nenhum usuário cadastrado\n';
+                problems++;
+            }
+            
+            if (announcements.length === 0) {
+                result += '❌ Nenhum anúncio criado\n';
+                problems++;
+            }
+            
+            if (plans.length === 0) {
+                result += '❌ Nenhum plano configurado\n';
+                problems++;
+            }
+            
+            if (problems === 0) {
+                result += '✅ Nenhum problema detectado\n';
+            }
+            
+            result += `\n📈 Saúde do Sistema: ${Math.max(100 - (problems * 20), 0)}%\n`;
+            
+            updateResults('diagnosticResults', result);
+            notificationSystem.show('info', 'Diagnóstico Concluído', `Sistema ${problems === 0 ? 'saudável' : 'com problemas detectados'}`);
+        }
+
+        function exportSystemData() {
+            const data = {
+                timestamp: new Date().toISOString(),
+                users: JSON.parse(localStorage.getItem('users') || '[]'),
+                announcements: JSON.parse(localStorage.getItem('announcements') || '[]'),
+                verifications: JSON.parse(localStorage.getItem('verifications') || '[]'),
+                pendingVerifications: JSON.parse(localStorage.getItem('pendingVerifications') || '[]'),
+                plans: JSON.parse(localStorage.getItem('plans') || '[]')
+            };
+
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `desejosms_export_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+
+            notificationSystem.show('success', 'Dados Exportados', 'Exportação concluída com sucesso!');
+            updateResults('diagnosticResults', '✅ Dados exportados com sucesso\n✅ Arquivo JSON baixado\n✅ Backup completo do sistema');
+        }
+
+        function resetTestData() {
+            if (confirm('Tem certeza que deseja resetar todos os dados de teste? Esta ação não pode ser desfeita.')) {
+                const keysToKeep = ['plans']; // Manter configurações de planos
+                const keys = Object.keys(localStorage);
+                
+                keys.forEach(key => {
+                    if (!keysToKeep.includes(key)) {
+                        localStorage.removeItem(key);
+                    }
+                });
+
+                notificationSystem.show('warning', 'Dados Resetados', 'Todos os dados de teste foram removidos.');
+                updateResults('diagnosticResults', '✅ Dados de teste resetados\n✅ localStorage limpo\n✅ Configurações mantidas\n\nExecute os testes novamente para recriar os dados.');
+            }
+        }
+
+        function checkSystemHealth() {
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
+            const verifications = JSON.parse(localStorage.getItem('verifications') || '[]');
+            const plans = JSON.parse(localStorage.getItem('plans') || '[]');
+            
+            let health = 100;
+            let issues = [];
+            
+            if (users.length === 0) {
+                health -= 20;
+                issues.push('Nenhum usuário cadastrado');
+            }
+            
+            if (announcements.length === 0) {
+                health -= 20;
+                issues.push('Nenhum anúncio criado');
+            }
+            
+            if (plans.length === 0) {
+                health -= 15;
+                issues.push('Nenhum plano configurado');
+            }
+            
+            if (verifications.length === 0) {
+                health -= 10;
+                issues.push('Nenhuma verificação');
+            }
+            
+            const pendingVerifications = JSON.parse(localStorage.getItem('pendingVerifications') || '[]');
+            if (pendingVerifications.length > 0) {
+                health -= 5;
+                issues.push(`${pendingVerifications.length} verificações pendentes`);
+            }
+            
+            let result = '=== SAÚDE DO SISTEMA ===\n\n';
+            result += `🏥 Saúde Geral: ${Math.max(health, 0)}%\n\n`;
+            
+            if (issues.length > 0) {
+                result += '⚠️ Problemas Detectados:\n';
+                issues.forEach(issue => {
+                    result += `- ${issue}\n`;
+                });
+            } else {
+                result += '✅ Sistema saudável!\n';
+            }
+            
+            updateResults('diagnosticResults', result);
+            
+            const healthStatus = health >= 80 ? 'success' : (health >= 60 ? 'warning' : 'error');
+            notificationSystem.show(healthStatus, 'Saúde do Sistema', `${Math.max(health, 0)}% - ${health >= 80 ? 'Saudável' : (health >= 60 ? 'Atenção' : 'Crítico')}`);
+        }
+
+        // Função auxiliar para atualizar resultados
+        function updateResults(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.scrollTop = element.scrollHeight;
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            notificationSystem.show('info', 'Sistema Carregado', 'Página de testes carregada com sucesso!');
+            updateResults('diagnosticResults', '🚀 Sistema de testes carregado\n✅ Todas as funcionalidades disponíveis\n✅ Clique nos botões para testar\n\nBem-vindo ao DesejosMS!');
+        });
+    </script>
+</body>
+</html>

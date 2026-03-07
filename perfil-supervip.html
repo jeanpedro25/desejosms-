@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil Super VIP - DesejosMS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        :root {
+            --gold-primary: #D4AF37;
+            --gold-light: #FFD700;
+            --gold-dark: #AA8C2C;
+            --bg-dark: #050505;
+            --bg-card: rgba(20, 20, 20, 0.95);
+            --text-primary: #F0F0F0;
+            --text-secondary: #B0B0B0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image:
+                radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.15), transparent 70%),
+                linear-gradient(0deg, rgba(0, 0, 0, 0.8), transparent);
+            color: var(--text-primary);
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar Premium */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, var(--gold-dark), var(--gold-primary));
+            border-radius: 4px;
+        }
+
+        /* Header Simplificado e Elegante */
+        .supervip-header {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .brand-logo {
+            font-family: 'Cinzel', serif;
+            font-size: 1.8rem;
+            color: var(--gold-primary);
+            text-decoration: none;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(212, 175, 55, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .back-btn {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 8px 15px;
+            border-radius: 20px;
+        }
+
+        .back-btn:hover {
+            color: var(--gold-light);
+            border-color: var(--gold-light);
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        /* Container Principal */
+        .main-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 1fr 0.8fr;
+            gap: 40px;
+        }
+
+        @media (max-width: 968px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+        }
+
+        /* Galeria em Grid (Nova) */
+        .gallery-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .thumbnails-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 15px;
+        }
+
+        .thumb-item {
+            aspect-ratio: 1;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .thumb-item:hover {
+            border-color: var(--gold-primary);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(212, 175, 55, 0.2);
+        }
+
+        .thumb-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .thumb-item:hover img {
+            transform: scale(1.1);
+        }
+
+        /* Informações do Perfil */
+        .info-section {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .profile-title-card {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-title-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+        }
+
+        .vip-badge {
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold-light));
+            color: #000;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            display: inline-block;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .profile-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            margin: 0 0 10px 0;
+            background: linear-gradient(135deg, #FFF, var(--gold-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .profile-meta {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+        }
+
+        .profile-meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .profile-meta i {
+            color: var(--gold-primary);
+        }
+
+        /* Botões de Ação */
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn-premium {
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-whatsapp {
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            color: white;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.2);
+        }
+
+        .btn-phone {
+            background: linear-gradient(135deg, var(--gold-light), var(--gold-dark));
+            color: #000;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
+        }
+
+        .btn-premium:hover {
+            transform: translateY(-3px);
+            filter: brightness(1.1);
+        }
+
+        /* Cards de Detalhes */
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .detail-card {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .detail-label {
+            color: var(--gold-primary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .detail-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #FFF;
+        }
+
+        /* Seção Sobre */
+        .about-card {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            color: var(--gold-primary);
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(212, 175, 55, 0.3), transparent);
+        }
+
+        .bio-text {
+            line-height: 1.8;
+            color: #D0D0D0;
+            font-size: 1rem;
+        }
+
+        /* Serviços */
+        .services-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .service-tag {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            color: var(--gold-light);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .service-tag i {
+            font-size: 0.8rem;
+        }
+
+        /* Avaliações */
+        .reviews-section {
+            margin-top: 40px;
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 20px;
+            border-top: 3px solid var(--gold-primary);
+        }
+
+        .rating-overview {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .big-rating {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--gold-light);
+            font-family: 'Playfair Display', serif;
+        }
+
+        .stars-display {
+            color: var(--gold-light);
+            font-size: 1.2rem;
+            margin: 10px 0;
+        }
+
+        /* Marca d'água */
+        .wm {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-family: 'Cinzel', serif;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            pointer-events: none;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Modal de Imagem (Lightbox) */
+        .image-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .image-modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content-wrapper {
+            position: relative;
+            max-width: 90%;
+            max-height: 90vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-modal img {
+            max-width: 100%;
+            max-height: 90vh;
+            border: 2px solid var(--gold-primary);
+            box-shadow: 0 0 50px rgba(212, 175, 55, 0.2);
+            border-radius: 5px;
+            object-fit: contain;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: #FFF;
+            font-size: 40px;
+            cursor: pointer;
+            transition: color 0.3s;
+            z-index: 10001;
+        }
+
+        .close-modal:hover {
+            color: var(--gold-light);
+        }
+
+        /* Navegação do Lightbox */
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: var(--gold-light);
+            border: 1px solid var(--gold-primary);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.3s ease;
+            z-index: 10001;
+        }
+
+        .nav-btn:hover {
+            background: var(--gold-primary);
+            color: #000;
+        }
+
+        .nav-prev {
+            left: -70px;
+        }
+
+        .nav-next {
+            right: -70px;
+        }
+
+        @media (max-width: 768px) {
+            .nav-prev {
+                left: 10px;
+                background: rgba(0, 0, 0, 0.8);
+            }
+
+            .nav-next {
+                right: 10px;
+                background: rgba(0, 0, 0, 0.8);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header class="supervip-header">
+        <div class="header-content">
+            <a href="/" class="brand-logo">
+                <i class="fas fa-crown"></i> DesejosMS
+            </a>
+            <a href="index.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <div class="main-container">
+
+        <!-- Coluna da Esquerda: Galeria em Grid -->
+        <div class="gallery-section">
+            <div class="thumbnails-grid" id="thumbnailsGrid">
+                <!-- Fotos serão inseridas aqui -->
+            </div>
+        </div>
+
+        <!-- Coluna da Direita: Informações -->
+        <div class="info-section">
+
+            <!-- Card Título -->
+            <div class="profile-title-card">
+                <div class="vip-badge"><i class="fas fa-gem"></i> SUPER VIP</div>
+                <h1 class="profile-name" id="profileName">Carregando...</h1>
+
+                <div class="profile-meta">
+                    <span><i class="fas fa-birthday-cake"></i> <span id="profileAge">--</span> anos</span>
+                    <span><i class="fas fa-map-marker-alt"></i> <span id="profileCity">--</span></span>
+                    <span><i class="fas fa-star"></i> Ref: <span id="profileRef">--</span></span>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn-premium btn-phone" onclick="makeCall()">
+                        <i class="fas fa-phone-alt"></i> Ligar
+                    </button>
+                    <button class="btn-premium btn-whatsapp" onclick="openWhatsApp()">
+                        <i class="fab fa-whatsapp"></i> WhatsApp
+                    </button>
+                </div>
+            </div>
+
+            <!-- Detalhes Rápidos -->
+            <div class="details-grid">
+                <div class="detail-card">
+                    <span class="detail-label">Valor</span>
+                    <div class="detail-value" id="profileValue">A combinar</div>
+                </div>
+                <div class="detail-card">
+                    <span class="detail-label">Disponibilidade</span>
+                    <div class="detail-value" id="profileAvailability">Consultar</div>
+                </div>
+            </div>
+
+            <!-- Sobre -->
+            <div class="about-card">
+                <h3 class="section-title"><i class="fas fa-user-circle"></i> Sobre Mim</h3>
+                <div class="bio-text" id="profileBio">
+                    Carregando descrição...
+                </div>
+            </div>
+
+            <!-- Serviços -->
+            <div class="about-card">
+                <h3 class="section-title"><i class="fas fa-concierge-bell"></i> Serviços & Atendimento</h3>
+                <div class="services-grid" id="servicesList">
+                    <!-- Tags de serviços -->
+                </div>
+                <div style="margin-top: 15px;">
+                    <h4 style="color: var(--gold-primary); margin-bottom: 10px; font-size: 0.9rem;">LOCAIS DE
+                        ATENDIMENTO</h4>
+                    <div class="services-grid" id="atendimentoList">
+                        <!-- Tags de locais -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Avaliações -->
+            <div class="reviews-section">
+                <h3 class="section-title"><i class="fas fa-star"></i> Avaliações</h3>
+                <div class="rating-overview">
+                    <div class="big-rating">5.0</div>
+                    <div class="stars-display">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i
+                            class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                    <p style="color: #888;">Baseado em avaliações verificadas</p>
+                </div>
+                <div id="reviewsList">
+                    <!-- Lista de reviews -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modal de Imagem (Lightbox) -->
+    <div class="image-modal" id="imageModal">
+        <span class="close-modal" onclick="closeImageModal()">&times;</span>
+
+        <div class="modal-content-wrapper">
+            <button class="nav-btn nav-prev" onclick="changePhoto(-1)"><i class="fas fa-chevron-left"></i></button>
+            <img src="" alt="Zoom" id="modalImage">
+            <button class="nav-btn nav-next" onclick="changePhoto(1)"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer
+        style="background: #000; color: #555; text-align: center; padding: 30px; margin-top: 50px; border-top: 1px solid #222;">
+        <p>&copy; 2024 DesejosMS - Onde seus desejos ganham vida.</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Variáveis Globais
+        let currentPhotos = [];
+        let currentPhotoIndex = 0;
+
+        // Funções Globais
+        function getEffectiveProfileId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            let profileId = urlParams.get('id') || localStorage.getItem('selectedProfileId');
+
+            // Fallback se não tiver ID
+            if (!profileId) {
+                const announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
+                const firstSupervip = announcements.find(ad => ad.planType === 'supervip' && ad.status !== 'inactive');
+                if (firstSupervip) profileId = firstSupervip.id;
+            }
+            return profileId;
+        }
+
+        function findProfileById(announcements, profileId) {
+            return announcements.find(ad => String(ad.id) === String(profileId));
+        }
+
+        // Carregamento Principal
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProfileData();
+        });
+
+        function loadProfileData() {
+            const profileId = getEffectiveProfileId();
+            const announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
+            let profile = findProfileById(announcements, profileId);
+
+            if (!profile) {
+                // Tentar encontrar qualquer supervip se falhar
+                profile = announcements.find(ad => ad.planType === 'supervip');
+            }
+
+            if (!profile) {
+                alert('Perfil não encontrado!');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Preencher Dados
+            document.getElementById('profileName').textContent = profile.name;
+            document.getElementById('profileAge').textContent = profile.age;
+            document.getElementById('profileCity').textContent = profile.city;
+            document.getElementById('profileRef').textContent = profile.id;
+            document.getElementById('profileValue').textContent = profile.price || 'A combinar';
+            document.getElementById('profileAvailability').textContent = profile.availability || 'Consultar';
+            document.getElementById('profileBio').textContent = profile.description || profile.bio || 'Sem descrição disponível.';
+            document.title = `${profile.name} - Super VIP | DesejosMS`;
+
+            // Carregar Fotos
+            loadPhotos(profile);
+
+            // Carregar Serviços e Locais
+            loadTags(profile.services, 'servicesList', 'fa-check');
+            loadTags(profile.atendimento || extractLocais(profile.services), 'atendimentoList', 'fa-map-marker-alt');
+
+            // Configurar Botões
+            window.currentProfile = profile; // Salvar para uso nos botões
+        }
+
+        function loadPhotos(profile) {
+            let photos = profile.photos || [];
+            if (photos.length === 0 && profile.photo) photos = [profile.photo];
+            if (photos.length === 0 && profile.image) photos = [profile.image];
+
+            // Fallback images se não tiver fotos
+            if (photos.length === 0) {
+                photos = [
+                    'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800&h=1000&fit=crop',
+                    'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=800&h=1000&fit=crop',
+                    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&h=1000&fit=crop'
+                ];
+            }
+
+            // Salvar fotos globalmente para navegação
+            currentPhotos = photos;
+
+            // Renderizar Grid
+            const grid = document.getElementById('thumbnailsGrid');
+            grid.innerHTML = '';
+
+            photos.forEach((photo, index) => {
+                const div = document.createElement('div');
+                div.className = 'thumb-item';
+                div.innerHTML = `<img src="${photo}" alt="Foto ${index}">`;
+                div.onclick = () => openImageModal(index);
+                grid.appendChild(div);
+            });
+        }
+
+        function loadTags(items, elementId, iconClass) {
+            const container = document.getElementById(elementId);
+            container.innerHTML = '';
+
+            let list = [];
+            if (Array.isArray(items)) list = items;
+            else if (typeof items === 'string') list = items.split(',').map(s => s.trim());
+
+            list.forEach(item => {
+                if (!item) return;
+                const tag = document.createElement('div');
+                tag.className = 'service-tag';
+                tag.innerHTML = `<i class="fas ${iconClass}"></i> ${item}`;
+                container.appendChild(tag);
+            });
+        }
+
+        function extractLocais(services) {
+            // Tenta extrair locais de uma lista mista se não houver campo específico
+            const keywords = ['Motel', 'Hotel', 'Próprio', 'Residência', 'Domicílio'];
+            if (Array.isArray(services)) {
+                return services.filter(s => keywords.some(k => s.includes(k)));
+            }
+            return ['Local Próprio', 'Motel', 'Hotel']; // Default
+        }
+
+        // Ações de Contato
+        function makeCall() {
+            if (window.currentProfile && window.currentProfile.phone) {
+                window.location.href = `tel:${window.currentProfile.phone}`;
+            } else {
+                alert('Telefone não disponível');
+            }
+        }
+
+        function openWhatsApp() {
+            if (window.currentProfile && window.currentProfile.whatsapp) {
+                const phone = window.currentProfile.whatsapp.replace(/\D/g, '');
+                const msg = `Olá ${window.currentProfile.name}, vi seu perfil Super VIP no DesejosMS e gostaria de mais informações.`;
+                window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+            } else {
+                alert('WhatsApp não disponível');
+            }
+        }
+
+        // Modal de Imagem (Lightbox)
+        function openImageModal(index) {
+            currentPhotoIndex = index;
+            updateModalImage();
+
+            const modal = document.getElementById('imageModal');
+            modal.classList.add('active');
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.remove('active');
+        }
+
+        function changePhoto(direction) {
+            currentPhotoIndex += direction;
+
+            // Loop infinito
+            if (currentPhotoIndex >= currentPhotos.length) currentPhotoIndex = 0;
+            if (currentPhotoIndex < 0) currentPhotoIndex = currentPhotos.length - 1;
+
+            updateModalImage();
+        }
+
+        function updateModalImage() {
+            const img = document.getElementById('modalImage');
+            img.src = currentPhotos[currentPhotoIndex];
+        }
+
+        // Fechar modal com ESC e Navegar com Setas
+        document.addEventListener('keydown', (e) => {
+            const modal = document.getElementById('imageModal');
+            if (!modal.classList.contains('active')) return;
+
+            if (e.key === 'Escape') closeImageModal();
+            if (e.key === 'ArrowRight') changePhoto(1);
+            if (e.key === 'ArrowLeft') changePhoto(-1);
+        });
+
+        // Fechar ao clicar fora da imagem
+        document.getElementById('imageModal').addEventListener('click', (e) => {
+            if (e.target.id === 'imageModal') closeImageModal();
+        });
+    </script>
+</body>
+
+</html>

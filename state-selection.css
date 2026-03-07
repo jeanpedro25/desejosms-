@@ -1,0 +1,401 @@
+/* ===== PÁGINA DE SELEÇÃO DE ESTADO ===== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    overflow-x: hidden;
+}
+
+.state-selection-container {
+    min-height: 100vh;
+    position: relative;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.background-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 40%);
+    background-size: 200px 200px;
+    z-index: 1;
+}
+
+.state-main {
+    position: relative;
+    z-index: 2;
+    padding: 40px 20px;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.container {
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* Logo Principal */
+.main-logo {
+    text-align: center;
+    margin-bottom: 40px;
+    color: white;
+}
+
+.logo-icon {
+    font-size: 4rem;
+    color: #FFD700;
+    margin-bottom: 15px;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.main-logo h1 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    letter-spacing: 1px;
+}
+
+.tagline {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    font-style: italic;
+}
+
+/* Cards */
+.age-verification-card,
+.state-selection-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 40px;
+    margin-bottom: 30px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.age-content h2,
+.state-content h2 {
+    color: #333;
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.age-content h2 i {
+    color: #ff6b35;
+}
+
+.state-content h2 i {
+    color: #667eea;
+}
+
+/* Verificação de Idade */
+.age-warning {
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+.age-warning p {
+    margin-bottom: 15px;
+    color: #555;
+    font-size: 0.95rem;
+}
+
+.highlight {
+    background: #e8f4fd;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+    font-weight: 500;
+}
+
+.disclaimer {
+    background: #fff3cd;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #ffc107;
+    font-weight: 600;
+    color: #856404 !important;
+    text-align: center;
+}
+
+.age-buttons {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.btn-accept,
+.btn-decline {
+    flex: 1;
+    min-width: 200px;
+    padding: 15px 25px;
+    border: none;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-accept {
+    background: linear-gradient(135deg, #25D366, #128C7E);
+    color: white;
+}
+
+.btn-accept:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(37, 211, 102, 0.4);
+}
+
+.btn-decline {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+}
+
+.btn-decline:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(220, 53, 69, 0.4);
+}
+
+/* Seleção de Estado */
+.state-subtitle {
+    text-align: center;
+    color: #666;
+    font-size: 1.1rem;
+    margin-bottom: 30px;
+}
+
+.states-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.state-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.state-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    border-color: #667eea;
+}
+
+.state-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.state-info {
+    flex: 1;
+}
+
+.state-info h3 {
+    color: #333;
+    font-size: 1.3rem;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.state-info p {
+    color: #666;
+    font-size: 0.95rem;
+    margin-bottom: 5px;
+}
+
+.cities-count {
+    color: #667eea;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.state-arrow {
+    color: #667eea;
+    font-size: 1.2rem;
+}
+
+/* Estados indisponíveis */
+.no-states {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.no-states i {
+    font-size: 3rem;
+    color: #ffc107;
+    margin-bottom: 20px;
+}
+
+.coming-soon {
+    text-align: center;
+    margin-top: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 10px;
+    color: white;
+}
+
+.coming-soon i {
+    margin-right: 8px;
+}
+
+/* Footer */
+.footer-info {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+}
+
+.footer-links {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.footer-links a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+    color: #FFD700;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loading-content {
+    text-align: center;
+    color: white;
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #FFD700;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-content h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.loading-content p {
+    opacity: 0.8;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .state-main {
+        padding: 20px 15px;
+    }
+    
+    .age-verification-card,
+    .state-selection-card {
+        padding: 25px;
+    }
+    
+    .main-logo h1 {
+        font-size: 2.5rem;
+    }
+    
+    .logo-icon {
+        font-size: 3rem;
+    }
+    
+    .age-buttons {
+        flex-direction: column;
+    }
+    
+    .btn-accept,
+    .btn-decline {
+        min-width: 100%;
+    }
+    
+    .states-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .state-card {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-logo h1 {
+        font-size: 2rem;
+    }
+    
+    .age-content h2,
+    .state-content h2 {
+        font-size: 1.5rem;
+    }
+    
+    .state-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+}

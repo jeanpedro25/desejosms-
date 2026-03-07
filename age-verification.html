@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desejos Acompanhantes - Verificação de Idade</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="age-verification.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="age-verification-container">
+        <!-- Header -->
+        <header class="age-header">
+            <div class="container">
+                <div class="logo">
+                    <i class="fas fa-heart logo-icon"></i>
+                    <div class="logo-text">
+                        <h1>Desejos Acompanhantes</h1>
+                        <span>Onde seus desejos se transformam em prazer</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="age-main">
+            <div class="container">
+                <div class="age-content">
+                    <!-- Left Panel - States -->
+                    <div class="cities-panel">
+                        <div class="welcome-message">
+                            <h2>🎯 Bem-vindo ao Desejos!</h2>
+                            <p class="welcome-text">
+                                <strong>Para começar sua experiência personalizada:</strong>
+                            </p>
+                            <div class="steps-guide">
+                                <div class="step">
+                                    <span class="step-number">1</span>
+                                    <span class="step-text">Selecione seu estado abaixo</span>
+                                </div>
+                                <div class="step">
+                                    <span class="step-number">2</span>
+                                    <span class="step-text">Confirme que é maior de 18 anos</span>
+                                </div>
+                                <div class="step">
+                                    <span class="step-number">3</span>
+                                    <span class="step-text">Escolha sua cidade na próxima página</span>
+                                </div>
+                            </div>
+                            <p class="welcome-note">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Dica:</strong> Cada estado tem suas próprias acompanhantes e cidades disponíveis!
+                            </p>
+                        </div>
+                        
+                        <div class="states-list" id="statesList">
+                            <!-- Estados serão carregados dinamicamente -->
+                            <div class="loading-states">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>Carregando estados disponíveis...</span>
+                            </div>
+                        </div>
+
+                        <!-- Mensagem de estado selecionado -->
+                        <div class="selected-state-message" id="selectedStateMessage" style="display: none;">
+                            <div class="state-confirmation">
+                                <i class="fas fa-check-circle"></i>
+                                <h3>Estado Selecionado!</h3>
+                                <p>Clique em "Tenho 18 anos ou mais" para continuar</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel - Warning -->
+                    <div class="warning-panel">
+                        <div class="warning-content">
+                            <h2>Atenção!</h2>
+                            <div class="warning-text">
+                                <p>Informamos que o conteúdo do site é destinado a maiores de 18 anos. Portanto, se você não atingiu a maioridade e/ou considera este tipo de conteúdo inadequado ou ofensivo, pedimos a gentileza de não prosseguir.</p>
+
+                                <p>Salientamos que todas as acompanhantes do site são maiores de 18 anos. Todos os Dados informados no anuncio foram autorizados pelas anunciantes, e são de sua intera responsabilidade!</p>
+
+                                <p class="important-notice">GOSTARIAMOS DE DEIXAR CLARO QUE NÃO SOMOS AGENCIA!!!</p>
+
+                                <p class="site-description">DesejosMS Acompanhantes Garotas(o) de Programa p/ eles, elas e casais</p>
+                            </div>
+                            <div class="warning-buttons">
+                                <button class="btn-accept" onclick="acceptAge()">Tenho 18 anos ou mais</button>
+                                <button class="btn-decline" onclick="declineAge()">Sair do site</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="states-config.js"></script>
+    <script>
+        let selectedState = null;
+
+        // Verificar se já aceitou antes (permitir forçar re-seleção com ?force=true)
+        (function(){
+            const params = new URLSearchParams(window.location.search);
+            const force = params.get('force') === 'true';
+            // Se forçado, limpar seleção anterior
+            if (force) {
+                localStorage.removeItem('currentState');
+                localStorage.removeItem('selectedCity');
+                localStorage.removeItem('currentCity');
+            }
+            const ageVerified = localStorage.getItem('ageVerified') === 'true';
+            if (ageVerified && !force) {
+                window.location.href = 'index.html';
+            }
+        })();
+
+        // Carregar estados quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAvailableStates();
+        });
+
+        // Carregar estados disponíveis
+        function loadAvailableStates() {
+            console.log('🗺️ Carregando estados disponíveis...');
+
+            const statesList = document.getElementById('statesList');
+
+            // Verificar se o statesManager está disponível
+            if (typeof statesManager !== 'undefined') {
+                const activeStates = statesManager.getActiveStates();
+                console.log('Estados ativos:', Object.keys(activeStates));
+
+                if (Object.keys(activeStates).length > 0) {
+                    // Limpar loading
+                    statesList.innerHTML = '';
+
+                    // Ordenar estados alfabeticamente
+                    const sortedStates = Object.entries(activeStates).sort(([,a], [,b]) => a.name.localeCompare(b.name));
+
+                    // Criar botões para cada estado
+                    sortedStates.forEach(([stateCode, stateConfig]) => {
+                        const stateBtn = document.createElement('button');
+                        stateBtn.className = 'state-btn';
+                        stateBtn.innerHTML = `
+                            <div class="state-info">
+                                <span class="state-name">${stateConfig.name}</span>
+                                <span class="state-code">${stateCode}</span>
+                                <span class="state-brand">${stateConfig.brand}</span>
+                            </div>
+                        `;
+                        stateBtn.onclick = () => selectState(stateCode, stateConfig);
+                        statesList.appendChild(stateBtn);
+                    });
+                } else {
+                    statesList.innerHTML = `
+                        <div class="no-states">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Nenhum estado disponível no momento</span>
+                        </div>
+                    `;
+                }
+            } else {
+                // Fallback para MS se não conseguir carregar
+                console.log('⚠️ statesManager não disponível, usando fallback');
+                statesList.innerHTML = `
+                    <button class="state-btn" onclick="selectState('MS', {name: 'Mato Grosso do Sul', brand: 'DesejosMS'})">
+                        <div class="state-info">
+                            <span class="state-name">Mato Grosso do Sul</span>
+                            <span class="state-code">MS</span>
+                            <span class="state-brand">DesejosMS</span>
+                        </div>
+                    </button>
+                `;
+            }
+        }
+
+        // Selecionar estado
+        function selectState(stateCode, stateConfig) {
+            selectedState = stateCode;
+            console.log('Estado selecionado:', stateCode, stateConfig);
+
+            // Destacar estado selecionado
+            document.querySelectorAll('.state-btn').forEach(btn => btn.classList.remove('selected'));
+            event.target.closest('.state-btn').classList.add('selected');
+
+            // Mostrar mensagem de estado selecionado
+            document.getElementById('selectedStateMessage').style.display = 'block';
+        }
+
+        function acceptAge() {
+            if (!selectedState) {
+                alert('Por favor, selecione um estado primeiro!');
+                return;
+            }
+
+            // Salvar no localStorage que aceitou
+            localStorage.setItem('ageVerified', 'true');
+
+            // Salvar estado selecionado
+            localStorage.setItem('currentState', selectedState);
+
+            console.log('✅ Idade verificada, estado:', selectedState);
+
+            // Redirecionar para a página principal
+            window.location.href = 'index.html';
+        }
+
+        function declineAge() {
+            // Redirecionar para uma página de saída ou fechar
+            window.close();
+            // Se não conseguir fechar, redirecionar para Google
+            window.location.href = 'https://www.google.com';
+        }
+    </script>
+</body>
+</html>

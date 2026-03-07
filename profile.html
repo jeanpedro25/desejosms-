@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Melissa - DesejosMS Acompanhantes</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="profile.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Age Verification Check -->
+    <script>
+        if (localStorage.getItem('ageVerified') !== 'true') {
+            window.location.href = 'age-verification.html';
+        }
+    </script>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                                 <div class="logo" onclick="window.location.href='age-verification.html'" style="cursor: pointer;">
+                     <i class="fas fa-heart logo-icon"></i>
+                     <div class="logo-text">
+                         <h1>DesejosMS</h1>
+                         <span>Acompanhantes</span>
+                     </div>
+                 </div>
+                
+                <div class="header-right">
+                    <div class="location-selector">
+                        <select id="locationSelect">
+                            <option value="aquidauana">Aquidauana - MS</option>
+                            <option value="dourados">Dourados - MS</option>
+                            <option value="campo-grande">Campo Grande - MS</option>
+                            <option value="tres-lagoas">Três Lagoas - MS</option>
+                            <option value="corumba">Corumbá - MS</option>
+                            <option value="ponta-pora">Ponta Porã - MS</option>
+                        </select>
+                    </div>
+                    <button class="announce-btn">
+                        <i class="fas fa-plus"></i>
+                        Anunciar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="profile-container">
+                <!-- Left Side - Images -->
+                <div class="profile-images">
+                    <div class="image-grid">
+                        <!-- Fotos reais para teste -->
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=1" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=2" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=3" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=4" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=5" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=6" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=7" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=8" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=9" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=10" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=11" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=12" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=13" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=14" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=15" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=16" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=17" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=18" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=19" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=20" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=21" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=22" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=23" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=24" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=25" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=26" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=27" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=28" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=29" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=30" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=31" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=32" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=33" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=34" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=35" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=36" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=37" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=38" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=39" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                        <div class="image-item">
+                            <img src="https://picsum.photos/150/150?random=40" alt="Melissa" oncontextmenu="return false;">
+                        </div>
+                    </div>
+
+                    <!-- Video Players -->
+                    <div class="video-players">
+                        <div class="video-player">
+                            <video controls>
+                                <source src="#" type="video/mp4">
+                                Seu navegador não suporta vídeos.
+                            </video>
+                            <span class="video-time">0:00</span>
+                        </div>
+                        <div class="video-player">
+                            <video controls>
+                                <source src="#" type="video/mp4">
+                                Seu navegador não suporta vídeos.
+                            </video>
+                            <span class="video-time">0:00</span>
+                        </div>
+                        <div class="video-player">
+                            <video controls>
+                                <source src="#" type="video/mp4">
+                                Seu navegador não suporta vídeos.
+                            </video>
+                            <span class="video-time">0:00</span>
+                        </div>
+                        <div class="video-player">
+                            <video controls>
+                                <source src="#" type="video/mp4">
+                                Seu navegador não suporta vídeos.
+                            </video>
+                            <span class="video-time">0:00</span>
+                        </div>
+                        <div class="video-player">
+                            <video controls>
+                                <source src="#" type="video/mp4">
+                                Seu navegador não suporta vídeos.
+                            </video>
+                            <span class="video-time">0:00</span>
+                        </div>
+                        <div class="video-player">
+                            <video controls>
+                                <source src="#" type="video/mp4">
+                                Seu navegador não suporta vídeos.
+                            </video>
+                            <span class="video-time">0:00</span>
+                        </div>
+                        <div class="video-player">
+                            <video controls>
+                                <source src="#" type="video/mp4">
+                                Seu navegador não suporta vídeos.
+                            </video>
+                            <span class="video-time">0:00</span>
+                        </div>
+                        <div class="video-player">
+                            <video controls>
+                                <source src="#" type="video/mp4">
+                                Seu navegador não suporta vídeos.
+                            </video>
+                            <span class="video-time">0:00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Side - Profile Info -->
+                <div class="profile-info">
+                    <div class="profile-header">
+                        <h1>Melissa</h1>
+                        <div class="profile-stats">
+                            <span>30 Anos Aquidauana MS</span>
+                            <span>Mulher</span>
+                            <span>Ref 19824</span>
+                        </div>
+                    </div>
+
+                    <div class="contact-section">
+                        <div class="contact-box">
+                            <i class="fas fa-phone"></i>
+                            <span>(67) 9-9909-0483</span>
+                        </div>
+                        <div class="contact-box whatsapp">
+                            <i class="fab fa-whatsapp"></i>
+                            <span>(67) 9-9909-0483</span>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <div class="info-item">
+                            <strong>Disponível:</strong> 24h
+                        </div>
+                        <div class="info-item">
+                            <strong>Valor:</strong> A COMBINAR
+                        </div>
+                    </div>
+
+                                         <div class="warning-section">
+                         <p class="warning-text">"Para evitar enganação, não faça pagamento adiantado."</p>
+                         <p class="warning-text">SEMPRE MENCIONE: DesejosMS</p>
+                     </div>
+
+                    <div class="services-section">
+                        <h3>ONDE ATENDO:</h3>
+                        <div class="services-list">
+                            <div class="service-item">
+                                <i class="fas fa-check"></i>
+                                <span>Motel</span>
+                            </div>
+                            <div class="service-item">
+                                <i class="fas fa-check"></i>
+                                <span>Hotel</span>
+                            </div>
+                            <div class="service-item">
+                                <i class="fas fa-check"></i>
+                                <span>Local Próprio</span>
+                            </div>
+                            <div class="service-item">
+                                <i class="fas fa-check"></i>
+                                <span>Residência do Cliente</span>
+                            </div>
+                        </div>
+
+                        <h3>Quem Atendo:</h3>
+                        <div class="services-list">
+                            <div class="service-item">
+                                <i class="fas fa-check"></i>
+                                <span>Homem</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="description-section">
+                        <h3>DESCRIÇÃO:</h3>
+                        <p>Olá meus queridos! Me chamo Melissa sou catarinense e estou passando uma temporada no MS. Sou morena de corpo violão, bunduda, siliconada sem exageros e barriguinha chapada.</p>
+                        <p>Sou muito cheirosa e amo me cuidar faço academia e bebo muito pouco. Sou bem estilosa e discreta. Na cama sou bem safada, adoro um sexo de qualidade. Gosto de tratar bem meus clientes. sou atenciosa e carinhosa.</p>
+                        <p>Não preciso de fotos fakes, sou linda de verdade, ainda mais pessoalmente. Venham ter seus momentos de prazer comigo. Tenho local, lugar discreto. Anal tem adicional no valor. Não atendo menor, favor não insistir.</p>
+                    </div>
+
+                    <!-- Seção de Anúncios SUPERVIP -->
+                    <div class="supervip-ads-section">
+                        <h3><i class="fas fa-crown"></i> Anúncios SUPERVIP</h3>
+                        <div class="supervip-ads-grid" id="supervipAdsGrid">
+                            <!-- Anúncios SUPERVIP serão carregados aqui via JavaScript -->
+                        </div>
+                                         </div>
+                 </div>
+             </div>
+         </div>
+     </main>
+
+     <!-- Modal para visualização de imagens -->
+     <div id="imageModal" class="image-modal">
+         <span class="close-modal" onclick="closeImageModal()">&times;</span>
+         <div class="image-counter" id="imageCounter">1 / 40</div>
+         <div class="modal-content">
+             <img class="modal-image" id="modalImage" src="" alt="Imagem">
+         </div>
+         <a class="prev-image" onclick="changeImage(-1)">&#10094;</a>
+         <a class="next-image" onclick="changeImage(1)">&#10095;</a>
+     </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Informações sobre anunciantes</h3>
+                    <p>Informações sobre anunciantes, somente na página do mesmo ou via contato telefônico direto no número do anunciante. Não temos nenhum vínculo com os anunciantes, nosso objetivo é somente aluguel de espaço para anúncios.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Política DesejosMS</h3>
+                    <p>Este é um site de classificados para acompanhantes. Não temos envolvimento em contatos ou negócios entre interessados e anunciantes. NÃO FAZEMOS NENHUM TIPO DE INDICAÇÃO.</p>
+                    <p>Os contatos são feitos diretamente com os anunciantes. Não somos agência.</p>
+                    <p>Todos os acompanhantes do site autorizaram a publicação de seus anúncios com informações de sua própria autoria e total responsabilidade.</p>
+                    <p>O www.desejosms.com.br não promove prática sexual infantil, respeitando o estatuto de menores e adolescentes. Todos os anunciantes confirmam ser maiores de idade.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Função para carregar dados da anunciante específica
+        function loadProfileData() {
+            const selectedProfileId = localStorage.getItem('selectedProfileId');
+            
+            if (!selectedProfileId) {
+                // Se não há ID selecionado, usar dados padrão (Melissa)
+                return;
+            }
+            
+            // Buscar anúncios no localStorage
+            const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
+            const selectedProfile = announcements.find(ad => ad.id == selectedProfileId);
+            
+            if (selectedProfile) {
+                // Atualizar dados da página com os dados da anunciante selecionada
+                updateProfilePage(selectedProfile);
+            }
+        }
+        
+        // Função para atualizar a página com dados da anunciante
+        function updateProfilePage(profile) {
+                         // Atualizar título da página (sem sufixos de plano)
+             const cleanName = profile.name.replace(/\s*-\s*(Super\s*VIP|Plano\s*TOP|Básico|SUPERVIP|TOP|BASICO)/i, '');
+             document.title = `${cleanName} - DesejosMS Acompanhantes`;
+            
+                         // Atualizar nome da anunciante (sem sufixos de plano)
+             const profileName = document.querySelector('.profile-header h1');
+             if (profileName) {
+                 // Remover qualquer sufixo de plano do nome
+                 const cleanName = profile.name.replace(/\s*-\s*(Super\s*VIP|Plano\s*TOP|Básico|SUPERVIP|TOP|BASICO)/i, '');
+                 profileName.textContent = cleanName;
+             }
+            
+            // Atualizar estatísticas do perfil
+            const profileStats = document.querySelector('.profile-stats');
+            if (profileStats) {
+                profileStats.innerHTML = `
+                    <span>${profile.age || 25} Anos ${profile.city}, MS</span>
+                    <span>${profile.category === 'mulher' ? 'Mulher' : profile.category}</span>
+                    <span>Ref ${profile.id}</span>
+                `;
+            }
+            
+            // Atualizar informações de contato
+            const phoneElements = document.querySelectorAll('.contact-box span');
+            phoneElements.forEach(element => {
+                element.textContent = profile.whatsapp || profile.phone || '(67) 9-9909-0483';
+            });
+            
+            // Atualizar seção de informações
+            const infoSection = document.querySelector('.info-section');
+            if (infoSection) {
+                infoSection.innerHTML = `
+                    <div class="info-item">
+                        <strong>Disponível:</strong> 24h
+                    </div>
+                    <div class="info-item">
+                        <strong>Valor:</strong> ${profile.price || 'A COMBINAR'}
+                    </div>
+                `;
+            }
+            
+            // Atualizar seção de serviços
+            const servicesSection = document.querySelector('.services-section');
+            if (servicesSection && profile.services) {
+                const servicesList = servicesSection.querySelector('.services-list');
+                if (servicesList) {
+                    servicesList.innerHTML = profile.services.map(service => `
+                        <div class="service-item">
+                            <i class="fas fa-check"></i>
+                            <span>${service}</span>
+                        </div>
+                    `).join('');
+                }
+            }
+            
+            // Atualizar descrição
+            const descriptionSection = document.querySelector('.description-section p');
+            if (descriptionSection) {
+                descriptionSection.textContent = profile.description || 'Descrição não disponível.';
+            }
+            
+                         // Atualizar função do WhatsApp
+             window.openWhatsAppProfile = function() {
+                 const phone = profile.whatsapp || profile.phone || '(67) 9-9909-0483';
+                 const cleanName = profile.name.replace(/\s*-\s*(Super\s*VIP|Plano\s*TOP|Básico|SUPERVIP|TOP|BASICO)/i, '') || 'Melissa';
+                 const message = `Olá ${cleanName}! Vi seu anúncio no DesejosMS. Gostaria de mais informações sobre seus serviços.`;
+                 const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+                 window.open(whatsappUrl, '_blank');
+             };
+        }
+        
+                 // Função para carregar anúncios SUPERVIP de forma aleatória e limitada
+         function loadRandomSupervipAds() {
+             const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
+             const selectedProfileId = localStorage.getItem('selectedProfileId');
+             
+             // Filtrar anúncios SUPERVIP, excluindo a anunciante atual
+             const supervipAds = announcements.filter(ad => 
+                 ad.planType === 'supervip' && 
+                 ad.status === 'active' &&
+                 ad.category === 'mulher' && // Filtrar apenas mulheres
+                 ad.id != selectedProfileId // Excluir a anunciante atual
+             );
+
+             // Embaralhar array para mostrar aleatoriamente
+             const shuffledAds = supervipAds.sort(() => Math.random() - 0.5);
+             
+             // Limitar a 2 anúncios (não mostrar muitos)
+             const limitedAds = shuffledAds.slice(0, 2);
+
+             const supervipGrid = document.getElementById('supervipAdsGrid');
+             
+             if (limitedAds.length === 0) {
+                 supervipGrid.innerHTML = `
+                     <div style="text-align: center; color: #ccc; padding: 20px;">
+                         <i class="fas fa-crown" style="font-size: 24px; margin-bottom: 10px; color: #ffd700;"></i>
+                         <p style="font-size: 12px;">Nenhum anúncio SUPERVIP disponível</p>
+                     </div>
+                 `;
+                 return;
+             }
+
+             supervipGrid.innerHTML = limitedAds.map(ad => `
+                 <div class="supervip-ad-card">
+                     <div class="supervip-ad-image">
+                         <img src="${ad.photos && ad.photos.length > 0 ? ad.photos[0] : 'https://via.placeholder.com/200x120/FFB6C1/FFFFFF?text=Foto'}" 
+                              alt="${ad.name}" 
+                              oncontextmenu="return false;">
+                         <div class="supervip-badge">SUPERVIP</div>
+                     </div>
+                     <div class="supervip-ad-info">
+                         <div class="supervip-ad-name">${ad.name}</div>
+                         <div class="supervip-ad-location">${ad.city}, MS</div>
+                         <div class="supervip-ad-description">${ad.description ? ad.description.substring(0, 60) + '...' : 'Descrição não disponível'}</div>
+                         <button class="supervip-ad-contact" onclick="openSupervipProfile('${ad.id}')">
+                             <i class="fas fa-user"></i>
+                             Ver Perfil
+                         </button>
+                     </div>
+                 </div>
+             `).join('');
+         }
+
+        // Função para abrir WhatsApp dos anúncios SUPERVIP
+        function openWhatsAppSupervip(phone, name) {
+            const message = `Olá! Vi seu anúncio SUPERVIP no DesejosMS. Gostaria de mais informações sobre seus serviços.`;
+            const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+                 // Função para abrir WhatsApp do perfil principal
+         function openWhatsAppProfile() {
+             const selectedProfileId = localStorage.getItem('selectedProfileId');
+             const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
+             const selectedProfile = announcements.find(ad => ad.id == selectedProfileId);
+             
+             const phone = selectedProfile ? (selectedProfile.whatsapp || selectedProfile.phone) : '(67) 9-9909-0483';
+             const cleanName = selectedProfile ? selectedProfile.name.replace(/\s*-\s*(Super\s*VIP|Plano\s*TOP|Básico|SUPERVIP|TOP|BASICO)/i, '') : 'Melissa';
+             const message = `Olá ${cleanName}! Vi seu anúncio no DesejosMS. Gostaria de mais informações sobre seus serviços.`;
+             const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+             window.open(whatsappUrl, '_blank');
+         }
+
+                 // Função para abrir perfil SUPERVIP
+         function openSupervipProfile(profileId) {
+             // Salvar o ID do perfil SUPERVIP no localStorage
+             localStorage.setItem('selectedProfileId', profileId);
+             
+             // Recarregar a página para mostrar o novo perfil
+             window.location.reload();
+         }
+
+         // Variáveis para o modal de imagens
+         let currentImageIndex = 0;
+         let totalImages = 40;
+
+         // Função para abrir modal de imagem
+         function openImageModal(imageIndex) {
+             currentImageIndex = imageIndex;
+             const modal = document.getElementById('imageModal');
+             const modalImage = document.getElementById('modalImage');
+             const imageCounter = document.getElementById('imageCounter');
+             
+             // Pegar a imagem exata que foi clicada
+             const clickedImage = document.querySelectorAll('.image-item img')[imageIndex];
+             const imageSrc = clickedImage.src;
+             
+             // Usar a mesma imagem, mas em tamanho maior
+             modalImage.src = imageSrc.replace('/150/150', '/800/600');
+             imageCounter.textContent = `${imageIndex + 1} / ${totalImages}`;
+             
+             modal.style.display = 'block';
+         }
+
+         // Função para fechar modal
+         function closeImageModal() {
+             const modal = document.getElementById('imageModal');
+             modal.style.display = 'none';
+         }
+
+         // Função para navegar entre imagens
+         function changeImage(direction) {
+             currentImageIndex += direction;
+             
+             if (currentImageIndex >= totalImages) {
+                 currentImageIndex = 0;
+             } else if (currentImageIndex < 0) {
+                 currentImageIndex = totalImages - 1;
+             }
+             
+             const modalImage = document.getElementById('modalImage');
+             const imageCounter = document.getElementById('imageCounter');
+             
+             // Pegar a imagem correspondente ao índice atual
+             const currentImage = document.querySelectorAll('.image-item img')[currentImageIndex];
+             const imageSrc = currentImage.src;
+             
+             // Usar a mesma imagem, mas em tamanho maior
+             modalImage.src = imageSrc.replace('/150/150', '/800/600');
+             imageCounter.textContent = `${currentImageIndex + 1} / ${totalImages}`;
+         }
+
+         // Adicionar evento de clique no botão WhatsApp do perfil
+         document.addEventListener('DOMContentLoaded', function() {
+             // Carregar dados da anunciante específica
+             loadProfileData();
+             
+             const whatsappButton = document.querySelector('.contact-box.whatsapp');
+             if (whatsappButton) {
+                 whatsappButton.addEventListener('click', openWhatsAppProfile);
+             }
+             
+             // Adicionar eventos de clique nas imagens
+             const imageItems = document.querySelectorAll('.image-item');
+             imageItems.forEach((item, index) => {
+                 item.addEventListener('click', () => openImageModal(index));
+             });
+             
+             // Carregar anúncios SUPERVIP
+             loadRandomSupervipAds();
+             
+             // Fechar modal ao clicar fora da imagem
+             const modal = document.getElementById('imageModal');
+             modal.addEventListener('click', function(e) {
+                 if (e.target === modal) {
+                     closeImageModal();
+                 }
+             });
+             
+             // Navegação com teclado
+             document.addEventListener('keydown', function(e) {
+                 if (modal.style.display === 'block') {
+                     if (e.key === 'Escape') {
+                         closeImageModal();
+                     } else if (e.key === 'ArrowLeft') {
+                         changeImage(-1);
+                     } else if (e.key === 'ArrowRight') {
+                         changeImage(1);
+                     }
+                 }
+             });
+         });
+    </script>
+</body>
+</html> 

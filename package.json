@@ -1,0 +1,16 @@
+{
+  "name": "desejosms",
+  "version": "1.0.0",
+  "description": "Sistema de Acompanhantes DesejoSMS",
+  "main": "server-fixed.js",
+  "scripts": {
+    "start": "node server-fixed.js",
+    "dev": "node server-fixed.js"
+  },
+  "keywords": ["acompanhantes", "desejosms"],
+  "author": "",
+  "license": "ISC",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

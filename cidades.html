@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cidades Disponíveis - DesejosMS Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="cidades.css">
+    <link rel="stylesheet" href="notifications.css">
+</head>
+<body>
+    <!-- Age Verification Check -->
+    <script>
+        if (localStorage.getItem('ageVerified') !== 'true') {
+            window.location.href = 'age-verification.html';
+        }
+    </script>
+
+    <div class="cities-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <a href="admin-panel.html" class="back-btn">
+                        <i class="fas fa-arrow-left"></i>
+                        Voltar ao Painel
+                    </a>
+                    <h1><i class="fas fa-map-marker-alt"></i> Cidades Disponíveis</h1>
+                    <p>Gerencie as cidades onde o serviço está disponível</p>
+                </div>
+                
+                <div class="header-right">
+                    <div class="stats-summary">
+                        <div class="stat-item">
+                            <span class="stat-number" id="totalCities">0</span>
+                            <span class="stat-label">Cidades</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="activeCities">0</span>
+                            <span class="stat-label">Ativas</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="totalUsers">0</span>
+                            <span class="stat-label">Usuários</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Add City Section -->
+        <div class="add-section">
+            <div class="add-content">
+                <h2><i class="fas fa-plus"></i> Adicionar Nova Cidade</h2>
+                
+                <div class="city-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nome da Cidade *</label>
+                            <input type="text" id="cityName" placeholder="Ex: Campo Grande" maxlength="50">
+                            <small>Nome completo da cidade</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Estado *</label>
+                            <select id="cityState">
+                                <option value="">Selecione o Estado</option>
+                                <option value="AC">Acre</option>
+                                <option value="AL">Alagoas</option>
+                                <option value="AP">Amapá</option>
+                                <option value="AM">Amazonas</option>
+                                <option value="BA">Bahia</option>
+                                <option value="CE">Ceará</option>
+                                <option value="DF">Distrito Federal</option>
+                                <option value="ES">Espírito Santo</option>
+                                <option value="GO">Goiás</option>
+                                <option value="MA">Maranhão</option>
+                                <option value="MT">Mato Grosso</option>
+                                <option value="MS">Mato Grosso do Sul</option>
+                                <option value="MG">Minas Gerais</option>
+                                <option value="PA">Pará</option>
+                                <option value="PB">Paraíba</option>
+                                <option value="PR">Paraná</option>
+                                <option value="PE">Pernambuco</option>
+                                <option value="PI">Piauí</option>
+                                <option value="RJ">Rio de Janeiro</option>
+                                <option value="RN">Rio Grande do Norte</option>
+                                <option value="RS">Rio Grande do Sul</option>
+                                <option value="RO">Rondônia</option>
+                                <option value="RR">Roraima</option>
+                                <option value="SC">Santa Catarina</option>
+                                <option value="SP">São Paulo</option>
+                                <option value="SE">Sergipe</option>
+                                <option value="TO">Tocantins</option>
+                            </select>
+                            <small>Estado onde a cidade está localizada</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select id="cityStatus">
+                                <option value="active">Ativa</option>
+                                <option value="inactive">Inativa</option>
+                                <option value="coming_soon">Em Breve</option>
+                            </select>
+                            <small>Status de disponibilidade da cidade</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Data de Lançamento</label>
+                            <input type="date" id="cityLaunchDate">
+                            <small>Data prevista para lançamento (opcional)</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Preço Base (R$)</label>
+                            <input type="number" id="cityBasePrice" placeholder="149.90" min="0" step="0.01">
+                            <small>Preço base para serviços nesta cidade</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Taxa de Entrega (R$)</label>
+                            <input type="number" id="cityDeliveryFee" placeholder="0.00" min="0" step="0.01">
+                            <small>Taxa adicional para entrega (se aplicável)</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Descrição</label>
+                        <textarea id="cityDescription" placeholder="Descreva informações sobre a cidade, áreas de cobertura, etc..." rows="3"></textarea>
+                        <small>Informações adicionais sobre a cidade</small>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button class="btn btn-primary" onclick="addCity()">
+                            <i class="fas fa-plus"></i>
+                            Adicionar Cidade
+                        </button>
+                        <button class="btn btn-secondary" onclick="clearForm()">
+                            <i class="fas fa-eraser"></i>
+                            Limpar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cities List Section -->
+        <div class="cities-section">
+            <div class="section-header">
+                <h2><i class="fas fa-list"></i> Cidades Cadastradas</h2>
+                
+                <div class="filters">
+                    <div class="filter-group">
+                        <label>Status:</label>
+                        <select id="statusFilter" onchange="filterCities()">
+                            <option value="all">Todas</option>
+                            <option value="active">Ativas</option>
+                            <option value="inactive">Inativas</option>
+                            <option value="coming_soon">Em Breve</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Estado:</label>
+                        <select id="stateFilter" onchange="filterCities()">
+                            <option value="all">Todos</option>
+                            <option value="MS">Mato Grosso do Sul</option>
+                            <option value="SP">São Paulo</option>
+                            <option value="RJ">Rio de Janeiro</option>
+                            <option value="MG">Minas Gerais</option>
+                            <option value="PR">Paraná</option>
+                            <option value="RS">Rio Grande do Sul</option>
+                            <option value="SC">Santa Catarina</option>
+                            <option value="GO">Goiás</option>
+                            <option value="DF">Distrito Federal</option>
+                            <option value="BA">Bahia</option>
+                            <option value="CE">Ceará</option>
+                            <option value="PE">Pernambuco</option>
+                            <option value="PA">Pará</option>
+                            <option value="AM">Amazonas</option>
+                            <option value="MT">Mato Grosso</option>
+                            <option value="ES">Espírito Santo</option>
+                            <option value="PI">Piauí</option>
+                            <option value="RN">Rio Grande do Norte</option>
+                            <option value="AL">Alagoas</option>
+                            <option value="PB">Paraíba</option>
+                            <option value="SE">Sergipe</option>
+                            <option value="RO">Rondônia</option>
+                            <option value="TO">Tocantins</option>
+                            <option value="AC">Acre</option>
+                            <option value="AP">Amapá</option>
+                            <option value="RR">Roraima</option>
+                            <option value="MA">Maranhão</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Buscar:</label>
+                        <input type="text" id="searchInput" placeholder="Nome da cidade..." onkeyup="searchCities()">
+                    </div>
+                    
+                    <div class="filter-actions">
+                        <button class="btn btn-success" onclick="exportCities()">
+                            <i class="fas fa-download"></i>
+                            Exportar
+                        </button>
+                        <button class="btn btn-primary" onclick="importCities()">
+                            <i class="fas fa-upload"></i>
+                            Importar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="cities-grid" id="citiesGrid">
+                <!-- Cidades serão carregadas aqui -->
+            </div>
+        </div>
+    </div>
+
+    <!-- City Details Modal -->
+    <div class="modal" id="cityModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Detalhes da Cidade</h2>
+                <button class="close-btn" onclick="closeModal('cityModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div id="cityDetails">
+                    <!-- Detalhes da cidade serão carregados aqui -->
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('cityModal')">Fechar</button>
+                <button class="btn btn-success" onclick="activateCity()" id="activateBtn">
+                    <i class="fas fa-check"></i>
+                    Ativar
+                </button>
+                <button class="btn btn-warning" onclick="deactivateCity()" id="deactivateBtn">
+                    <i class="fas fa-ban"></i>
+                    Desativar
+                </button>
+                <button class="btn btn-danger" onclick="deleteCity()" id="deleteBtn">
+                    <i class="fas fa-trash"></i>
+                    Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Cities Modal -->
+    <div class="modal" id="importModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Importar Cidades</h2>
+                <button class="close-btn" onclick="closeModal('importModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="import-section">
+                    <h3>Selecionar Arquivo</h3>
+                    <p>Selecione um arquivo JSON com a lista de cidades para importar.</p>
+                    
+                    <div class="file-input">
+                        <input type="file" id="importFile" accept=".json" onchange="handleFileSelect()">
+                        <label for="importFile" class="file-label">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            Escolher Arquivo
+                        </label>
+                    </div>
+                    
+                    <div id="importPreview" style="display: none;">
+                        <h4>Preview da Importação:</h4>
+                        <div id="importPreviewContent"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('importModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="confirmImport()" id="confirmImportBtn" style="display: none;">
+                    <i class="fas fa-upload"></i>
+                    Importar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="notifications.js"></script>
+    <script src="cidades.js"></script>
+</body>
+</html>
+
+

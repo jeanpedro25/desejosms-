@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Cadastro - DesejoSMS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #8B0000;
+        }
+        button {
+            background: #8B0000;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #DC143C;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background: #f0f0f0;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Teste do Sistema de Cadastro</h1>
+        
+        <h2>Testes Disponíveis:</h2>
+        
+        <button onclick="testarCadastro()">1. Testar Cadastro Completo</button>
+        <button onclick="verificarLocalStorage()">2. Verificar localStorage</button>
+        <button onclick="listarUsuarios()">3. Listar Usuários</button>
+        <button onclick="limparDados()">4. Limpar Todos os Dados</button>
+        <button onclick="criarUsuarioTeste()">5. Criar Usuário de Teste</button>
+        
+        <div id="resultado" class="result" style="display:none;"></div>
+    </div>
+
+    <script>
+        function mostrarResultado(mensagem, tipo = 'success') {
+            const resultado = document.getElementById('resultado');
+            resultado.style.display = 'block';
+            resultado.className = `result ${tipo}`;
+            resultado.innerHTML = mensagem;
+        }
+
+        function testarCadastro() {
+            console.log('🧪 Iniciando teste de cadastro...');
+            
+            const testUser = {
+                name: 'Teste Usuario',
+                email: 'teste@teste.com',
+                password: '123456',
+                phone: '67999990000',
+                age: 25,
+                category: 'mulher',
+                verified: false,
+                blocked: false,
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                // Obter usuários existentes
+                let users = JSON.parse(localStorage.getItem('users') || '[]');
+                console.log('👥 Usuários antes:', users.length);
+
+                // Verificar se já existe
+                const exists = users.find(u => u.email === testUser.email);
+                if (exists) {
+                    mostrarResultado('❌ Usuário de teste já existe! Use "Limpar Dados" primeiro.', 'error');
+                    return;
+                }
+
+                // Adicionar usuário
+                users.push(testUser);
+                localStorage.setItem('users', JSON.stringify(users));
+                
+                console.log('✅ Usuário adicionado');
+                console.log('👥 Usuários depois:', users.length);
+
+                mostrarResultado(`
+                    <h3>✅ Cadastro de Teste Realizado!</h3>
+                    <p><strong>Nome:</strong> ${testUser.name}</p>
+                    <p><strong>Email:</strong> ${testUser.email}</p>
+                    <p><strong>Senha:</strong> ${testUser.password}</p>
+                    <p><strong>Total de usuários:</strong> ${users.length}</p>
+                `, 'success');
+
+            } catch (error) {
+                console.error('💥 Erro:', error);
+                mostrarResultado(`❌ Erro: ${error.message}`, 'error');
+            }
+        }
+
+        function verificarLocalStorage() {
+            const dados = {
+                users: localStorage.getItem('users'),
+                currentUser: localStorage.getItem('currentUser'),
+                userEmail: localStorage.getItem('userEmail'),
+                ageVerified: localStorage.getItem('ageVerified'),
+                currentState: localStorage.getItem('currentState')
+            };
+
+            let html = '<h3>📦 Dados no localStorage:</h3>';
+            for (let [key, value] of Object.entries(dados)) {
+                html += `<p><strong>${key}:</strong> ${value || 'null'}</p>`;
+            }
+
+            mostrarResultado(html, 'success');
+        }
+
+        function listarUsuarios() {
+            try {
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                
+                if (users.length === 0) {
+                    mostrarResultado('📭 Nenhum usuário cadastrado', 'error');
+                    return;
+                }
+
+                let html = `<h3>👥 Usuários Cadastrados (${users.length}):</h3>`;
+                html += '<pre>' + JSON.stringify(users, null, 2) + '</pre>';
+                
+                mostrarResultado(html, 'success');
+            } catch (error) {
+                mostrarResultado(`❌ Erro ao listar: ${error.message}`, 'error');
+            }
+        }
+
+        function limparDados() {
+            if (confirm('⚠️ Tem certeza que deseja limpar TODOS os dados?')) {
+                localStorage.clear();
+                mostrarResultado('🗑️ Todos os dados foram limpos!', 'success');
+                console.log('🗑️ localStorage limpo');
+            }
+        }
+
+        function criarUsuarioTeste() {
+            const usuarios = [
+                {
+                    name: 'Maria Silva',
+                    email: 'maria@teste.com',
+                    password: '123456',
+                    phone: '67999991111',
+                    age: 28,
+                    category: 'mulher',
+                    verified: true,
+                    blocked: false,
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    name: 'João Santos',
+                    email: 'joao@teste.com',
+                    password: '123456',
+                    phone: '67999992222',
+                    age: 32,
+                    category: 'homem',
+                    verified: false,
+                    blocked: false,
+                    createdAt: new Date().toISOString()
+                }
+            ];
+
+            try {
+                let users = JSON.parse(localStorage.getItem('users') || '[]');
+                
+                usuarios.forEach(user => {
+                    const exists = users.find(u => u.email === user.email);
+                    if (!exists) {
+                        users.push(user);
+                    }
+                });
+
+                localStorage.setItem('users', JSON.stringify(users));
+                
+                mostrarResultado(`
+                    <h3>✅ Usuários de Teste Criados!</h3>
+                    <p><strong>Total de usuários:</strong> ${users.length}</p>
+                    <h4>Credenciais para teste:</h4>
+                    <p>Email: maria@teste.com | Senha: 123456</p>
+                    <p>Email: joao@teste.com | Senha: 123456</p>
+                `, 'success');
+
+            } catch (error) {
+                mostrarResultado(`❌ Erro: ${error.message}`, 'error');
+            }
+        }
+
+        // Executar verificação inicial
+        window.onload = function() {
+            console.log('🔍 Página de teste carregada');
+            console.log('📦 localStorage disponível:', typeof(Storage) !== "undefined");
+        };
+    </script>
+</body>
+</html>

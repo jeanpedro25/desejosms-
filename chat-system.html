@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - DesejosMS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="chat-system.css">
+</head>
+<body>
+    <!-- Age Verification Check -->
+    <script>
+        if (localStorage.getItem('ageVerified') !== 'true') {
+            window.location.href = 'age-verification.html';
+        }
+    </script>
+
+    <!-- Header -->
+    <header class="chat-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-heart"></i>
+                    <div class="logo-text">
+                        <h1>DesejosMS</h1>
+                        <span>Chat</span>
+                    </div>
+                </div>
+                
+                <div class="header-actions">
+                    <a href="index.html" class="btn btn-secondary">
+                        <i class="fas fa-home"></i>
+                        Voltar ao Site
+                    </a>
+                    <button class="btn btn-primary" onclick="showNewChatModal()">
+                        <i class="fas fa-plus"></i>
+                        Nova Conversa
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Chat Container -->
+    <main class="chat-container">
+        <div class="chat-sidebar">
+            <!-- User Profile -->
+            <div class="user-profile">
+                <div class="profile-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="profile-info">
+                    <h3 id="currentUserName">Visitante</h3>
+                    <span class="status online">Online</span>
+                </div>
+            </div>
+
+            <!-- Search -->
+            <div class="chat-search">
+                <div class="search-input">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Buscar conversas..." id="searchConversations">
+                </div>
+            </div>
+
+            <!-- Conversations List -->
+            <div class="conversations-list" id="conversationsList">
+                <!-- Conversations will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Chat Main Area -->
+        <div class="chat-main">
+            <!-- No Chat Selected -->
+            <div class="no-chat-selected" id="noChatSelected">
+                <div class="no-chat-content">
+                    <i class="fas fa-comments"></i>
+                    <h2>Selecione uma conversa</h2>
+                    <p>Escolha uma conversa da lista ou inicie uma nova</p>
+                    <button class="btn btn-primary" onclick="showNewChatModal()">
+                        <i class="fas fa-plus"></i>
+                        Iniciar Conversa
+                    </button>
+                </div>
+            </div>
+
+            <!-- Active Chat -->
+            <div class="active-chat" id="activeChat" style="display: none;">
+                <!-- Chat Header -->
+                <div class="chat-header-info">
+                    <div class="chat-contact-info">
+                        <div class="contact-avatar">
+                            <img id="contactAvatar" src="" alt="Avatar">
+                        </div>
+                        <div class="contact-details">
+                            <h3 id="contactName">Nome do Contato</h3>
+                            <span id="contactStatus">Online</span>
+                        </div>
+                    </div>
+                    <div class="chat-actions">
+                        <button class="btn-icon" onclick="showContactInfo()">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                        <button class="btn-icon" onclick="toggleChatMenu()">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Messages Container -->
+                <div class="messages-container" id="messagesContainer">
+                    <!-- Messages will be loaded here -->
+                </div>
+
+                <!-- Message Input -->
+                <div class="message-input-container">
+                    <div class="message-input-wrapper">
+                        <button class="btn-icon" onclick="toggleEmojiPicker()">
+                            <i class="fas fa-smile"></i>
+                        </button>
+                        <input type="text" placeholder="Digite sua mensagem..." id="messageInput" onkeypress="handleMessageKeyPress(event)">
+                        <button class="btn-icon" onclick="attachFile()">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+                        <button class="btn-send" onclick="sendMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- New Chat Modal -->
+    <div class="modal" id="newChatModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nova Conversa</h2>
+                <button class="close-btn" onclick="closeNewChatModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="search-section">
+                    <input type="text" placeholder="Buscar anunciantes..." id="searchAnnouncements">
+                </div>
+                <div class="announcements-list" id="announcementsList">
+                    <!-- Announcements will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Info Modal -->
+    <div class="modal" id="contactInfoModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Informações do Contato</h2>
+                <button class="close-btn" onclick="closeContactInfoModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="contact-info-content" id="contactInfoContent">
+                    <!-- Contact info will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emoji Picker -->
+    <div class="emoji-picker" id="emojiPicker">
+        <div class="emoji-grid">
+            <span onclick="insertEmoji('😊')">😊</span>
+            <span onclick="insertEmoji('😍')">😍</span>
+            <span onclick="insertEmoji('😘')">😘</span>
+            <span onclick="insertEmoji('😉')">😉</span>
+            <span onclick="insertEmoji('😋')">😋</span>
+            <span onclick="insertEmoji('😎')">😎</span>
+            <span onclick="insertEmoji('🤗')">🤗</span>
+            <span onclick="insertEmoji('😴')">😴</span>
+            <span onclick="insertEmoji('😭')">😭</span>
+            <span onclick="insertEmoji('😡')">😡</span>
+            <span onclick="insertEmoji('👍')">👍</span>
+            <span onclick="insertEmoji('👎')">👎</span>
+            <span onclick="insertEmoji('❤️')">❤️</span>
+            <span onclick="insertEmoji('💋')">💋</span>
+            <span onclick="insertEmoji('🔥')">🔥</span>
+            <span onclick="insertEmoji('💯')">💯</span>
+            <span onclick="insertEmoji('✨')">✨</span>
+            <span onclick="insertEmoji('🎉')">🎉</span>
+            <span onclick="insertEmoji('💕')">💕</span>
+        </div>
+    </div>
+
+    <script src="chat-system.js"></script>
+</body>
+</html>

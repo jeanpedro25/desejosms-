@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso Negado - DesejosMS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh; 
+            background: linear-gradient(135deg, #8B0000 0%, #800020 50%, #8B0000 100%);
+            margin: 0;
+            font-family: 'Poppins', Arial, sans-serif;
+            color: #333;
+        }
+        
+        .access-denied-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .error-icon {
+            font-size: 80px;
+            color: #dc3545;
+            margin-bottom: 20px;
+            animation: shake 0.5s ease-in-out infinite;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .error-title {
+            font-family: 'Cinzel', serif;
+            font-weight: 800;
+            font-size: 32px;
+            color: #dc3545;
+            margin: 0 0 15px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .error-message {
+            font-size: 18px;
+            color: #666;
+            margin: 0 0 25px 0;
+            line-height: 1.5;
+        }
+        
+        .error-details {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 25px 0;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .error-details h3 {
+            color: #dc3545;
+            margin: 0 0 10px 0;
+            font-size: 18px;
+        }
+        
+        .error-details p {
+            color: #666;
+            margin: 0;
+            font-size: 14px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 14px 30px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 16px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #8B0000, #800020);
+            color: white;
+            box-shadow: 0 4px 15px rgba(139, 0, 0, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 0, 0, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #666;
+            border: 2px solid #ddd;
+        }
+        
+        .btn-secondary:hover {
+            background: #e9ecef;
+            border-color: #8B0000;
+            color: #8B0000;
+        }
+        
+        .admin-login-link {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .admin-login-link a {
+            color: #8B0000;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .admin-login-link a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 480px) {
+            .access-denied-container {
+                margin: 20px;
+                padding: 30px 20px;
+            }
+            
+            .error-title {
+                font-size: 26px;
+            }
+            
+            .error-icon {
+                font-size: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Logo DesejosMS -->
+    <div style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000;">
+        <div style="display: flex; align-items: center; gap: 16px; background: rgba(139, 0, 0, 0.9); padding: 12px 20px; border-radius: 15px; border: 1px solid rgba(255, 215, 0, 0.3);">
+            <svg class="logo-heart" viewBox="0 0 120 110" width="48" height="48" aria-hidden="true">
+                <defs>
+                    <linearGradient id="heartGrad" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#FF3B55"/>
+                        <stop offset="55%" stop-color="#E1062C"/>
+                        <stop offset="100%" stop-color="#8A0017"/>
+                    </linearGradient>
+                    <filter id="heartGlow" x="-40%" y="-40%" width="180%" height="180%">
+                        <feGaussianBlur stdDeviation="4" result="blur"/>
+                        <feMerge>
+                            <feMergeNode in="blur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                </defs>
+                <!-- Glow suave vermelho -->
+                <path fill="rgba(225,6,44,0.55)" d="M60 108c40-28 56-46 56-69C116 21 102 7 86 7c-9 0-18 5-26 15C52 12 43 7 34 7 18 7 4 21 4 39c0 23 16 41 56 69z"/>
+                <!-- Coração principal -->
+                <path filter="url(#heartGlow)" fill="url(#heartGrad)" d="M60 98c35-24 50-39 50-58 0-13-10-23-22-23-8 0-16 4-22 13-6-9-14-13-22-13C32 17 22 27 22 40c0 19 15 34 38 58z"/>
+            </svg>
+
+            <div style="display: flex; flex-direction: column; line-height: 1.1; gap: 3px;">
+                <span style="font-family: 'Cinzel', 'Playfair Display', serif; font-weight: 900; font-size: 24px; color: #FFFFFF; text-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 2px 2px 4px rgba(0, 0, 0, 0.6);">DesejosMS</span>
+                <span style="font-family: 'Playfair Display', 'Georgia', serif; font-style: italic; font-weight: 500; font-size: 12px; background: linear-gradient(135deg, #FFF2B0 0%, #FFD76A 25%, #D4AF37 50%, #8A6B21 75%, #D4AF37 100%); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);">Onde seus desejos ganham vida</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="access-denied-container">
+        <div class="error-icon">
+            <i class="fas fa-ban"></i>
+        </div>
+        
+        <h1 class="error-title">Acesso Negado</h1>
+        <p class="error-message">
+            Você não tem permissão para acessar esta área administrativa.
+        </p>
+        
+        <div class="error-details">
+            <h3>Por que isso aconteceu?</h3>
+            <p>• Você não está logado como administrador</p>
+            <p>• Sua sessão administrativa expirou</p>
+            <p>• Você não possui privilégios de administrador</p>
+        </div>
+        
+        <div class="actions">
+            <a href="index.html" class="btn btn-primary">
+                <i class="fas fa-home"></i> Voltar ao Site
+            </a>
+            <a href="login.html" class="btn btn-secondary">
+                <i class="fas fa-sign-in-alt"></i> Fazer Login
+            </a>
+        </div>
+        
+        <div class="admin-login-link">
+            <p>É administrador? <a href="admin-login.html">Clique aqui para fazer login</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Verificação de idade
+        if (localStorage.getItem('ageVerified') !== 'true') {
+            window.location.href = 'age-verification.html';
+        }
+        
+        // Se for admin, redirecionar para o painel
+        if (localStorage.getItem('adminUser')) {
+            window.location.href = 'admin-panel.html';
+        }
+    </script>
+</body>
+</html>
+
+
+
+

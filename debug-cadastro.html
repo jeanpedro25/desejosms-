@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Cadastro - DesejosMS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .debug-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: #8B0000;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background: #A0001C;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .checkbox-group input {
+            width: auto;
+        }
+        .debug-info {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #007bff;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h1>🔧 Debug Cadastro DesejosMS</h1>
+        
+        <div class="debug-info">
+            <h3>📊 Status do Sistema</h3>
+            <p><strong>LocalStorage:</strong> <span id="localStorageStatus">Verificando...</span></p>
+            <p><strong>Usuários cadastrados:</strong> <span id="usersCount">0</span></p>
+            <p><strong>Último erro:</strong> <span id="lastError">Nenhum</span></p>
+        </div>
+
+        <form id="debugForm">
+            <div class="form-group">
+                <label for="name">Nome Completo:</label>
+                <input type="text" id="name" value="João Silva" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" value="joao@teste.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">WhatsApp:</label>
+                <input type="tel" id="phone" value="(67) 99999-9999" required>
+            </div>
+
+            <div class="form-group">
+                <label for="age">Idade:</label>
+                <input type="number" id="age" value="25" min="18" required>
+            </div>
+
+            <div class="form-group">
+                <label for="category">Categoria:</label>
+                <select id="category" required>
+                    <option value="">Selecione...</option>
+                    <option value="mulher" selected>👩 Mulher</option>
+                    <option value="homem">👨 Homem</option>
+                    <option value="trans">🏳️‍⚧️ Trans</option>
+                    <option value="casal">💑 Casal</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Senha:</label>
+                <input type="password" id="password" value="123456" required>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">Confirmar Senha:</label>
+                <input type="password" id="confirmPassword" value="123456" required>
+            </div>
+
+            <div class="form-group">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="agreeTerms" checked required>
+                    <label for="agreeTerms">Concordo com os Termos de Uso</label>
+                </div>
+            </div>
+
+            <button type="submit">🚀 Testar Cadastro</button>
+        </form>
+
+        <div id="result"></div>
+
+        <hr style="margin: 30px 0;">
+        
+        <h3>🛠️ Ferramentas de Debug</h3>
+        <button onclick="clearStorage()" style="background: #dc3545; margin: 5px 0;">🗑️ Limpar LocalStorage</button>
+        <button onclick="showUsers()" style="background: #28a745; margin: 5px 0;">👥 Mostrar Usuários</button>
+        <button onclick="testLocalStorage()" style="background: #17a2b8; margin: 5px 0;">🧪 Testar LocalStorage</button>
+    </div>
+
+    <script>
+        // Atualizar status na inicialização
+        updateStatus();
+
+        // Event listener para o formulário
+        document.getElementById('debugForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            console.log('🔍 Formulário submetido!');
+            
+            try {
+                testCadastro();
+            } catch (error) {
+                console.error('💥 Erro no teste:', error);
+                showResult('error', `Erro: ${error.message}`);
+            }
+        });
+
+        function testCadastro() {
+            console.log('🚀 Iniciando teste de cadastro...');
+            
+            // Coletar dados
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const confirmPassword = document.getElementById('confirmPassword').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const age = parseInt(document.getElementById('age').value || '18', 10);
+            const category = document.getElementById('category').value;
+            const agreeTerms = document.getElementById('agreeTerms').checked;
+
+            console.log('📝 Dados coletados:', {
+                name, email, phone, age, category, 
+                password: password ? '***' : 'VAZIO',
+                agreeTerms
+            });
+
+            // Validações
+            if (!agreeTerms) {
+                throw new Error('Você deve concordar com os termos');
+            }
+
+            if (!name || !email || !password || !confirmPassword || !phone || !category) {
+                throw new Error('Todos os campos são obrigatórios');
+            }
+
+            if (password !== confirmPassword) {
+                throw new Error('As senhas não coincidem');
+            }
+
+            if (password.length < 6) {
+                throw new Error('Senha deve ter pelo menos 6 caracteres');
+            }
+
+            if (age < 18) {
+                throw new Error('Idade deve ser 18 anos ou mais');
+            }
+
+            // Verificar localStorage
+            let users = [];
+            try {
+                users = JSON.parse(localStorage.getItem('users') || '[]');
+                console.log('👥 Usuários existentes:', users.length);
+            } catch (e) {
+                console.log('⚠️ Erro ao ler localStorage, criando array vazio');
+                users = [];
+            }
+
+            // Verificar email duplicado
+            if (users.find(u => (u.email || '').toLowerCase() === email.toLowerCase())) {
+                throw new Error('Este email já está cadastrado');
+            }
+
+            // Criar usuário
+            const newUser = {
+                name,
+                email,
+                password,
+                phone,
+                age,
+                category,
+                verified: false,
+                blocked: false,
+                createdAt: new Date().toISOString()
+            };
+
+            console.log('👤 Criando usuário:', { ...newUser, password: '***' });
+
+            // Salvar usuário
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+            console.log('💾 Usuário salvo!');
+
+            // Login automático
+            const currentUser = {
+                email: newUser.email,
+                name: newUser.name,
+                phone: newUser.phone,
+                age: newUser.age,
+                category: newUser.category,
+                verified: false
+            };
+
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            localStorage.setItem('userEmail', newUser.email);
+            localStorage.setItem('userName', newUser.name);
+            localStorage.setItem('userPhone', newUser.phone);
+            localStorage.setItem('userAge', String(newUser.age));
+            localStorage.setItem('userCategory', newUser.category);
+            localStorage.setItem('userVerified', 'false');
+            localStorage.setItem('ageVerified', 'true');
+
+            console.log('🔐 Login automático configurado');
+            console.log('✅ CADASTRO CONCLUÍDO COM SUCESSO!');
+
+            showResult('success', '✅ Cadastro realizado com sucesso!');
+            updateStatus();
+        }
+
+        function updateStatus() {
+            try {
+                // Testar localStorage
+                localStorage.setItem('test', 'ok');
+                localStorage.removeItem('test');
+                document.getElementById('localStorageStatus').textContent = '✅ Funcionando';
+                document.getElementById('localStorageStatus').style.color = 'green';
+            } catch (e) {
+                document.getElementById('localStorageStatus').textContent = '❌ Erro';
+                document.getElementById('localStorageStatus').style.color = 'red';
+            }
+
+            // Contar usuários
+            try {
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                document.getElementById('usersCount').textContent = users.length;
+            } catch (e) {
+                document.getElementById('usersCount').textContent = 'Erro';
+            }
+        }
+
+        function showResult(type, message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `<div class="${type}">${message}</div>`;
+        }
+
+        function clearStorage() {
+            localStorage.clear();
+            showResult('success', '🗑️ LocalStorage limpo!');
+            updateStatus();
+        }
+
+        function showUsers() {
+            try {
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                if (users.length === 0) {
+                    showResult('error', '📭 Nenhum usuário cadastrado');
+                } else {
+                    const userList = users.map((u, i) => 
+                        `${i+1}. ${u.name} (${u.email}) - ${u.category}`
+                    ).join('\n');
+                    alert(`👥 Usuários cadastrados:\n\n${userList}`);
+                }
+            } catch (e) {
+                showResult('error', `❌ Erro ao ler usuários: ${e.message}`);
+            }
+        }
+
+        function testLocalStorage() {
+            try {
+                // Teste básico
+                localStorage.setItem('test', 'funcionando');
+                const test = localStorage.getItem('test');
+                localStorage.removeItem('test');
+                
+                if (test === 'funcionando') {
+                    showResult('success', '✅ LocalStorage funcionando perfeitamente!');
+                } else {
+                    showResult('error', '❌ LocalStorage não está funcionando corretamente');
+                }
+            } catch (e) {
+                showResult('error', `❌ Erro no LocalStorage: ${e.message}`);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Modal - DesejosMS</title>
+    <link rel="stylesheet" href="auth-modal.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0b132b 0%, #1e3c72 100%);
+            font-family: Arial, sans-serif;
+            color: white;
+            min-height: 100vh;
+        }
+        .test-container {
+            text-align: center;
+            padding: 50px 20px;
+        }
+        .test-btn {
+            background: #8B0000;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .test-btn:hover {
+            background: #A0001C;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Teste do Modal de Autenticação</h1>
+        <p>Clique nos botões abaixo para testar o modal:</p>
+        
+        <button class="test-btn" onclick="openModal()">
+            <i class="fas fa-sign-in-alt"></i>
+            Abrir Modal
+        </button>
+        
+        <button class="test-btn" onclick="openModalLogin()">
+            <i class="fas fa-user"></i>
+            Abrir Login
+        </button>
+        
+        <button class="test-btn" onclick="openModalSignup()">
+            <i class="fas fa-user-plus"></i>
+            Abrir Cadastro
+        </button>
+        
+        <button class="test-btn" onclick="openModalAdmin()">
+            <i class="fas fa-crown"></i>
+            Abrir Admin
+        </button>
+    </div>
+
+    <!-- Modal de Autenticação -->
+    <div id="authModal" class="auth-modal-overlay" style="display: none;">
+        <div class="auth-modal-container">
+            <button class="auth-close-btn" onclick="closeModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <!-- Logo e Título -->
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <h1 class="auth-title">DesejosMS</h1>
+                <p class="auth-subtitle">Acesse sua conta ou crie uma nova</p>
+            </div>
+            
+            <!-- Tabs de Navegação -->
+            <div class="auth-tabs">
+                <button class="auth-tab-btn active" onclick="switchTab('login', event)">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Entrar
+                </button>
+                <button class="auth-tab-btn" onclick="switchTab('signup', event)">
+                    <i class="fas fa-user-plus"></i>
+                    Cadastrar
+                </button>
+                <button class="auth-tab-btn" onclick="switchTab('admin', event)">
+                    <i class="fas fa-crown"></i>
+                    Admin
+                </button>
+            </div>
+            
+            <!-- Conteúdo das Tabs -->
+            <div class="auth-content">
+                <!-- Tab de Login -->
+                <div id="loginTab" class="auth-tab-content active">
+                    <form class="auth-form">
+                        <div class="auth-form-group">
+                            <label>
+                                <i class="fas fa-envelope"></i>
+                                Email
+                            </label>
+                            <input type="email" placeholder="seu@email.com" required>
+                        </div>
+                        <div class="auth-form-group">
+                            <label>
+                                <i class="fas fa-lock"></i>
+                                Senha
+                            </label>
+                            <input type="password" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="auth-btn auth-btn-primary">
+                            <i class="fas fa-sign-in-alt"></i>
+                            Entrar na Conta
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Tab de Cadastro -->
+                <div id="signupTab" class="auth-tab-content">
+                    <form class="auth-form">
+                        <div class="auth-form-group">
+                            <label>
+                                <i class="fas fa-user"></i>
+                                Nome Completo
+                            </label>
+                            <input type="text" placeholder="Seu nome completo" required>
+                        </div>
+                        <div class="auth-form-group">
+                            <label>
+                                <i class="fas fa-envelope"></i>
+                                Email
+                            </label>
+                            <input type="email" placeholder="seu@email.com" required>
+                        </div>
+                        <button type="submit" class="auth-btn auth-btn-primary">
+                            <i class="fas fa-user-plus"></i>
+                            Criar Conta
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Tab de Admin -->
+                <div id="adminTab" class="auth-tab-content">
+                    <div class="admin-warning">
+                        <i class="fas fa-shield-alt"></i>
+                        <p>Área restrita para administradores</p>
+                    </div>
+                    <form class="auth-form">
+                        <div class="auth-form-group">
+                            <label>
+                                <i class="fas fa-crown"></i>
+                                Email do Administrador
+                            </label>
+                            <input type="email" placeholder="admin@desejosms.com.br" required>
+                        </div>
+                        <div class="auth-form-group">
+                            <label>
+                                <i class="fas fa-key"></i>
+                                Senha Master
+                            </label>
+                            <input type="password" placeholder="••••••••••••" required>
+                        </div>
+                        <button type="submit" class="auth-btn auth-btn-admin">
+                            <i class="fas fa-sign-in-alt"></i>
+                            Acessar Painel Admin
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openModal() {
+            const modal = document.getElementById('authModal');
+            modal.style.display = 'flex';
+            document.body.classList.add('modal-open');
+            switchTab('login', null);
+        }
+        
+        function openModalLogin() {
+            openModal();
+            switchTab('login', null);
+        }
+        
+        function openModalSignup() {
+            openModal();
+            switchTab('signup', null);
+        }
+        
+        function openModalAdmin() {
+            openModal();
+            switchTab('admin', null);
+        }
+        
+        function closeModal() {
+            document.getElementById('authModal').style.display = 'none';
+            document.body.classList.remove('modal-open');
+        }
+        
+        function switchTab(tabName, event) {
+            // Remove active de todas as tabs
+            document.querySelectorAll('.auth-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.auth-tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Adiciona active na tab clicada
+            if (event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                document.querySelector(`[onclick*="${tabName}"]`).classList.add('active');
+            }
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+        
+        // Fechar modal clicando fora
+        document.getElementById('authModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+        
+        // Fechar modal com ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

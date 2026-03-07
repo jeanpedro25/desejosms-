@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DesejosMS - Localhost</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #8B0000, #DC143C);
+            color: white;
+            text-align: center;
+        }
+        .container {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            color: #FFD700;
+            margin-bottom: 30px;
+        }
+        .link {
+            display: inline-block;
+            background: #FFD700;
+            color: #8B0000;
+            padding: 15px 30px;
+            margin: 10px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .link:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(255,215,0,0.3);
+        }
+        .instructions {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 DesejosMS - Servidor Local</h1>
+        
+        <div class="instructions">
+            <h3>📋 Como acessar o projeto:</h3>
+            <div class="step">
+                <strong>1.</strong> Abra o terminal/PowerShell na pasta do projeto
+            </div>
+            <div class="step">
+                <strong>2.</strong> Execute: <code>node server-fixed.js</code>
+            </div>
+            <div class="step">
+                <strong>3.</strong> Ou execute: <code>python -m http.server 3025</code>
+            </div>
+            <div class="step">
+                <strong>4.</strong> Acesse: <code>http://localhost:3025</code>
+            </div>
+        </div>
+
+        <h3>🔗 Links Diretos:</h3>
+        <a href="http://localhost:3025" class="link">🏠 Página Principal</a>
+        <a href="http://localhost:3025/index.html" class="link">📄 Index.html</a>
+        <a href="http://localhost:3025/painel-anunciante.html" class="link">👤 Painel Anunciante</a>
+        <a href="http://localhost:3025/verificacoes.html" class="link">✅ Verificações</a>
+        <a href="http://localhost:3025/admin-panel.html" class="link">⚙️ Admin Panel</a>
+
+        <div class="instructions">
+            <h3>💡 Dicas:</h3>
+            <p>• Se os links não funcionarem, verifique se o servidor está rodando</p>
+            <p>• Use Ctrl+C no terminal para parar o servidor</p>
+            <p>• O projeto está na pasta: <code>Projeto/Teste/</code></p>
+        </div>
+    </div>
+
+    <script>
+        // Tentar abrir automaticamente o localhost
+        setTimeout(() => {
+            window.open('http://localhost:3025', '_blank');
+        }, 2000);
+    </script>
+</body>
+</html>
