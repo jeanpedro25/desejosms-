@@ -3123,27 +3123,6 @@ window.processDynamicPayment = async function (gatewayId, paymentBtn) {
     }, 2000);
 };
 
-// Função para processar pagamento (fallback antigo simulado)
-window.processPayment = function () {
-    console.log('=== PROCESSANDO PAGAMENTO PADRÃO ===');
-    const paymentBtn = document.getElementById('paymentBtn');
-    if (paymentBtn) {
-        paymentBtn.disabled = true;
-        paymentBtn.textContent = 'Processando...';
-    }
-
-    setTimeout(() => {
-        alert('Pagamento processado com sucesso! Seu anúncio será ativado em breve.');
-        closeModal('paymentModal');
-        createAd();
-    }, 2000);
-};
-
-// Função para gerar PIX (fallback estático antigo)
-window.generatePIX = function () {
-    console.log('Gerando PIX...');
-    alert('PIX gerado! (Simulação)');
-};
 
 // Função para testar verificação
 window.testVerification = function () {
