@@ -10,11 +10,19 @@
       "dest": "/api/$1"
     },
     {
+      "src": "/sitemap.xml",
+      "dest": "/api/seo/sitemap"
+    },
+    {
+      "src": "/acompanhantes-([a-zA-Z-]+)/([a-zA-Z0-9-]+)",
+      "dest": "/api/seo/render-city?state=$1&city=$2"
+    },
+    {
       "src": "/(.*\\.(html|css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|webp))",
       "dest": "/$1"
     },
     {
-      "src": "/",
+      "src": "/(.*)",
       "dest": "/index.html"
     }
   ],

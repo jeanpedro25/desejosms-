@@ -1079,7 +1079,27 @@ document.addEventListener('DOMContentLoaded', async function () {
                 // Aplicar filtro inicial para mostrar todos os anúncios
                 setTimeout(() => {
                     console.log('Aplicando filtro inicial...');
-                    filterProfiles('all');
+                    
+                    if (window.AUTOMATIC_SEO_CITY) {
+                        const rawName = window.AUTOMATIC_SEO_CITY;
+                        const cityParam = rawName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-');
+                        console.log('Filtro Automático de SEO detectado:', rawName);
+                        
+                        // Procurar o id do <select> para travar nele
+                        const citySelector = document.getElementById('citySelector');
+                        if (citySelector) {
+                            Array.from(citySelector.options).forEach(opt => {
+                                if (opt.value === cityParam || opt.text.toLowerCase() === rawName.toLowerCase()) {
+                                    opt.selected = true;
+                                    if(typeof setCurrentCity === 'function') setCurrentCity(opt.value);
+                                }
+                            });
+                        }
+                        
+                        filterProfiles('all', '', cityParam);
+                    } else {
+                        filterProfiles('all');
+                    }
                 }, 1000);
 
             } else {
