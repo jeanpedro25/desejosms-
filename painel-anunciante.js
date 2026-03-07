@@ -1645,6 +1645,9 @@ function showPaymentModal() {
 
     // Atualizar detalhes do plano
     updatePlanDetails();
+    
+    // Renderizar opções dinâmicas do Gateway (Mercadopago/Pix configurados no admin)
+    renderPaymentGateways();
 
     // Configurar aplicação de cupom
     const applyBtn = document.getElementById('applyCouponBtn');
@@ -1658,6 +1661,58 @@ function showPaymentModal() {
         if (msg) msg.textContent = '';
     }
 }
+
+// Função para renderizar gateways configurados
+function renderPaymentGateways() {
+    const gateways = JSON.parse(localStorage.getItem('paymentGateways')) || [];
+    const activeGateways = gateways.filter(g => g.status === 'active');
+    
+    const tabsContainer = document.querySelector('.payment-tabs');
+    const contentContainer = document.querySelector('.payment-content');
+    
+    if (!tabsContainer || !contentContainer || activeGateways.length === 0) return;
+    
+    tabsContainer.innerHTML = '';
+    contentContainer.innerHTML = '';
+    
+    activeGateways.forEach((gateway, index) => {
+        const isActive = index === 0;
+        
+        const tab = document.createElement('button');
+        tab.className = `tab-btn ${isActive ? 'active' : ''}`;
+        tab.setAttribute('data-method', gateway.id);
+        tab.setAttribute('onclick', `switchPaymentMethod(this)`);
+        
+        let icon = 'fa-credit-card';
+        if(gateway.type === 'pix') icon = 'fa-qrcode';
+        if(gateway.type === 'mercadopago') icon = 'fa-handshake';
+        
+        tab.innerHTML = `<i class="fas ${icon}"></i> ${gateway.name}`;
+        tabsContainer.appendChild(tab);
+        
+        const content = document.createElement('div');
+        content.className = `payment-method ${isActive ? 'active' : ''}`;
+        content.id = `${gateway.id}-method`;
+        
+        let btnText = 'Ir para Pagar';
+        let subTitle = gateway.type === 'pix' ? `Chave: ${gateway.publicKey}` : 'Você será redirecionado ou a cobrança será gerada via integração configurada.';
+        if (gateway.type === 'pix') btnText = 'Confirmar PIX e Finalizar';
+        else if (gateway.type === 'mercadopago') btnText = 'Pagar com Mercado Pago';
+
+        content.innerHTML = `
+            <div class="pix-info">
+                <i class="fas ${icon}"></i>
+                <h4>${gateway.name}</h4>
+                <p>${subTitle}</p>
+            </div>
+            <button class="btn btn-primary" onclick="processDynamicPayment(${gateway.id}, this)" style="margin-top: 10px;">
+                <i class="fas fa-check"></i> ${btnText}
+            </button>
+        `;
+        contentContainer.appendChild(content);
+    });
+}
+
 
 // Função para atualizar detalhes do plano
 function updatePlanDetails() {
@@ -1782,14 +1837,17 @@ function applyCouponCode(code) {
 }
 
 // Função para alternar método de pagamento
-function switchPaymentMethod(tabBtn) {
+window.switchPaymentMethod = function(tabBtn) {
     document.querySelectorAll('.payment-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.payment-method').forEach(method => method.classList.remove('active'));
 
     tabBtn.classList.add('active');
     const method = tabBtn.getAttribute('data-method');
-    document.getElementById(`${method}-method`).classList.add('active');
-}
+    const methodContainer = document.getElementById(`${method}-method`);
+    if (methodContainer) {
+        methodContainer.classList.add('active');
+    }
+};
 
 // Função para gerar PIX
 function generatePIX() {
@@ -2832,13 +2890,58 @@ window.checkAvailableCities = function () {
     }
 };
 
-// Função para processar pagamento (simulada)
-window.processPayment = function () {
-    console.log('=== PROCESSANDO PAGAMENTO ===');
-    console.log('Dados do anúncio:', adData);
-    console.log('Plano selecionado:', selectedPlan);
+// Função para processar pagamento dinâmico (configurado pelo painel admin)
+window.processDynamicPayment = async function (gatewayId, paymentBtn) {
+    console.log('=== PROCESSANDO PAGAMENTO ' + gatewayId + ' ===');
+    
+    if (paymentBtn) {
+        paymentBtn.disabled = true;
+        const originalText = paymentBtn.innerHTML;
+        paymentBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+    }
 
-    // Simular processamento
+    const gateways = JSON.parse(localStorage.getItem('paymentGateways')) || [];
+    const gateway = gateways.find(g => g.id === gatewayId);
+    
+    // Simula uma resposta ou envia ao Webhook
+    if (gateway && gateway.webhook) {
+        try {
+            const priceVal = document.getElementById('total').textContent.replace('R$ ', '').replace(',', '.').trim();
+            const response = await fetch(gateway.webhook, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: 'payment_request',
+                    gateway: gateway.type,
+                    plan: selectedPlan,
+                    price: priceVal,
+                    userEmail: localStorage.getItem('userEmail')
+                })
+            });
+            const result = await response.json().catch(e => ({}));
+            if (result.paymentUrl) {
+                // Redirecionamento dinâmico se a API/Webhook responder com link
+                alert('Você será redirecionado para o pagamento.');
+                setTimeout(() => createAd(), 1000); // Já criamos e deixamos pendente caso o retorno do webhook atualize localstorage
+                window.location.href = result.paymentUrl;
+                return;
+            }
+        } catch (e) {
+            console.warn('Erro ao chamar webhook, caindo para fallback', e);
+        }
+    }
+
+    // Fallback: se não tiver webhook ou falhar, criamos em tela apenas informando o gateway (como mock para funcionamento final em modo manual)
+    setTimeout(() => {
+        alert(`Obrigado! Solicitação de pagamento via ${gateway ? gateway.name : 'Gateway'} recebida. O sistema processará o seu anúncio.`);
+        closeModal('paymentModal');
+        createAd();
+    }, 2000);
+};
+
+// Função para processar pagamento (fallback antigo simulado)
+window.processPayment = function () {
+    console.log('=== PROCESSANDO PAGAMENTO PADRÃO ===');
     const paymentBtn = document.getElementById('paymentBtn');
     if (paymentBtn) {
         paymentBtn.disabled = true;
@@ -2846,14 +2949,13 @@ window.processPayment = function () {
     }
 
     setTimeout(() => {
-        console.log('Pagamento simulado com sucesso. Criando anúncio...');
         alert('Pagamento processado com sucesso! Seu anúncio será ativado em breve.');
         closeModal('paymentModal');
         createAd();
     }, 2000);
 };
 
-// Função para gerar PIX
+// Função para gerar PIX (fallback estático antigo)
 window.generatePIX = function () {
     console.log('Gerando PIX...');
     alert('PIX gerado! (Simulação)');
