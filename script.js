@@ -241,8 +241,6 @@ function loadTopAnnouncements() {
 
     // FILTRAR POR ESTADO ATUAL
     if (config) {
-        // Normalizar cidades do estado para fallback
-        const stateCities = (config.cities || []).map(city => normalize(city.name));
         const currentStateShort = config.shortName || 'MS';
 
         filteredAnnouncements = filteredAnnouncements.filter(ad => {
@@ -252,44 +250,25 @@ function loadTopAnnouncements() {
             }
 
             // 2. Fallback: verificar se a cidade pertence ao estado (para anúncios antigos)
-            const adCity = normalize(ad.city);
-            const belongsToState = stateCities.some(stateCity =>
-                adCity.includes(stateCity) || stateCity.includes(adCity)
-            );
-
-            console.log(`Anúncio (Fallback): ${ad.name} | Cidade: ${ad.city} | Pertence ao estado: ${belongsToState}`);
-            return belongsToState;
+            if (config.cities && config.cities.length > 0) {
+                const stateCities = config.cities.map(city => normalize(city.name));
+                const adCity = normalize(ad.city);
+                const belongsToState = stateCities.some(stateCity =>
+                    adCity.includes(stateCity) || stateCity.includes(adCity)
+                );
+                return belongsToState;
+            }
+            return true;
         });
     }
 
     // Filtrar por cidade se uma cidade estiver selecionada
-    if (currentCity) {
+    if (currentCity && currentCity !== 'all') {
         const currentCitySlug = normalize(currentCity);
-
-        // Primeiro, tentar encontrar no sistema de cidades do admin
-        const adminCities = JSON.parse(localStorage.getItem('cities')) || [];
-        const cityConfig = adminCities.find(city =>
-            normalize(city.name) === currentCitySlug
-        );
-
-        if (cityConfig) {
-            filteredAnnouncements = filteredAnnouncements.filter(ad =>
-                normalize(ad.city).includes(normalize(cityConfig.name))
-            );
-        } else {
-            // Fallback para cidades do config.js
-            const configCity = config.cities.find(city => normalize(city.id) === currentCitySlug || normalize(city.name) === currentCitySlug);
-            if (configCity) {
-                filteredAnnouncements = filteredAnnouncements.filter(ad =>
-                    normalize(ad.city).includes(normalize(configCity.name))
-                );
-            } else {
-                // Tentativa direta de comparação se não achou config
-                filteredAnnouncements = filteredAnnouncements.filter(ad =>
-                    normalize(ad.city).includes(currentCitySlug)
-                );
-            }
-        }
+        filteredAnnouncements = filteredAnnouncements.filter(ad => {
+            const adCitySlug = normalize(ad.city);
+            return adCitySlug.includes(currentCitySlug) || currentCitySlug.includes(adCitySlug);
+        });
     }
 
     // Ordenar SUPER VIP por valor pago (maior primeiro)
@@ -400,8 +379,6 @@ function loadRegularAnnouncements() {
 
     // FILTRAR POR ESTADO ATUAL
     if (config) {
-        // Normalizar cidades do estado para fallback
-        const stateCities = (config.cities || []).map(city => normalize(city.name));
         const currentStateShort = config.shortName || 'MS';
 
         activeAnnouncements = activeAnnouncements.filter(ad => {
@@ -411,44 +388,25 @@ function loadRegularAnnouncements() {
             }
 
             // 2. Fallback: verificar se a cidade pertence ao estado (para anúncios antigos)
-            const adCity = normalize(ad.city);
-            const belongsToState = stateCities.some(stateCity =>
-                adCity.includes(stateCity) || stateCity.includes(adCity)
-            );
-
-            console.log(`Anúncio Regular (Fallback): ${ad.name} | Cidade: ${ad.city} | Pertence ao estado: ${belongsToState}`);
-            return belongsToState;
+            if (config.cities && config.cities.length > 0) {
+                const stateCities = config.cities.map(city => normalize(city.name));
+                const adCity = normalize(ad.city);
+                const belongsToState = stateCities.some(stateCity =>
+                    adCity.includes(stateCity) || stateCity.includes(adCity)
+                );
+                return belongsToState;
+            }
+            return true;
         });
     }
 
     // Filtrar por cidade se uma cidade estiver selecionada
-    if (currentCity) {
+    if (currentCity && currentCity !== 'all') {
         const currentCitySlug = normalize(currentCity);
-
-        // Primeiro, tentar encontrar no sistema de cidades do admin
-        const adminCities = JSON.parse(localStorage.getItem('cities')) || [];
-        const cityConfig = adminCities.find(city =>
-            normalize(city.name) === currentCitySlug
-        );
-
-        if (cityConfig) {
-            activeAnnouncements = activeAnnouncements.filter(ad =>
-                normalize(ad.city).includes(normalize(cityConfig.name))
-            );
-        } else {
-            // Fallback para cidades do config.js
-            const configCity = config.cities.find(city => normalize(city.id) === currentCitySlug || normalize(city.name) === currentCitySlug);
-            if (configCity) {
-                activeAnnouncements = activeAnnouncements.filter(ad =>
-                    normalize(ad.city).includes(normalize(configCity.name))
-                );
-            } else {
-                // Tentativa direta
-                activeAnnouncements = activeAnnouncements.filter(ad =>
-                    normalize(ad.city).includes(currentCitySlug)
-                );
-            }
-        }
+        activeAnnouncements = activeAnnouncements.filter(ad => {
+            const adCitySlug = normalize(ad.city);
+            return adCitySlug.includes(currentCitySlug) || currentCitySlug.includes(adCitySlug);
+        });
     }
 
     // Ordenar anúncios pela regra de planos (SUPERVIP > TOP > BÁSICO) e por relevância
@@ -808,18 +766,27 @@ function filterProfiles(category = 'all', searchTerm = '', city = '') {
 
         // FILTRO POR ESTADO ATUAL
         const config = getCurrentStateConfig();
-        if (config && config.cities) {
-            const stateCities = config.cities.map(city => city.name.toLowerCase());
-            const adCity = (ad.city || '').toLowerCase();
-            const belongsToState = stateCities.some(stateCity =>
-                adCity.includes(stateCity) || stateCity.includes(adCity)
-            );
+        if (config) {
+            const currentStateShort = config.shortName || 'MS';
 
-            if (!belongsToState) {
-                console.log(`❌ Rejeitado ${ad.name}: cidade "${ad.city}" não pertence ao estado atual`);
-                return false;
-            } else {
-                console.log(`✅ Estado correto: ${ad.name} - cidade "${ad.city}" pertence ao estado`);
+            // 1. Verificar propriedade state
+            if (ad.state) {
+                if (ad.state !== currentStateShort) {
+                    console.log(`❌ Rejeitado ${ad.name}: estado "${ad.state}" != "${currentStateShort}"`);
+                    return false;
+                }
+            } else if (config.cities && config.cities.length > 0) {
+                // 2. Fallback
+                const stateCities = config.cities.map(city => normalize(city.name));
+                const adCity = normalize(ad.city);
+                const belongsToState = stateCities.some(stateCity =>
+                    adCity.includes(stateCity) || stateCity.includes(adCity)
+                );
+
+                if (!belongsToState) {
+                    console.log(`❌ Rejeitado ${ad.name}: cidade "${ad.city}" não pertence ao estado atual`);
+                    return false;
+                }
             }
         }
 
