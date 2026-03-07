@@ -9,12 +9,16 @@
     "vercel-build": "echo 'Static site - no build required'"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.0"
+    "@supabase/supabase-js": "^2.39.0",
+    "resend": "^6.9.3"
   },
   "engines": {
     "node": ">=18.0.0"
   },
-  "keywords": ["acompanhantes", "desejosms"],
+  "keywords": [
+    "acompanhantes",
+    "desejosms"
+  ],
   "author": "",
   "license": "ISC"
 }

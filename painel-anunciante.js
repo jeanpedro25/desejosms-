@@ -210,7 +210,57 @@ document.addEventListener('DOMContentLoaded', async function () {
     console.log('🎉 Painel do anunciante inicializado com sucesso!');
 
     loadUserNotifications();
+
+    // -------------------------------------------------------------
+    // RENOVAÇÃO AUTOMÁTICA (Link do E-mail/WhatsApp)
+    // -------------------------------------------------------------
+    const urlParams = new URLSearchParams(window.location.search);
+    const renewId = urlParams.get('renew');
+    if (renewId) {
+        console.log(`⏳ Link de renovação detectado para o ID: ${renewId}`);
+        setTimeout(() => triggerRenewalProtocol(renewId), 1500);
+    }
 });
+
+// Protocolo de Renovação Rápida
+async function triggerRenewalProtocol(adId) {
+    if (!window.supabaseClient) return;
+    try {
+        const { data: ad, error } = await window.supabaseClient
+            .from('announcements')
+            .select('*')
+            .eq('id', adId)
+            .single();
+            
+        if (error || !ad) {
+            alert('Anúncio não encontrado para renovação.');
+            return;
+        }
+
+        // Abastecer os dados globais para que o gerador de PIX saiba o que cobrar
+        adData = {
+            id: ad.id,
+            name: ad.name,
+            city: ad.city,
+            category: ad.category
+        };
+        selectedPlan = ad.plan_type || 'premium';
+
+        // Exibir modal de confirmação e pagamento logo de cara
+        alert(`Bem-vindo de volta! Prontos para renovar o anúncio "${ad.name}" em ${ad.city}?`);
+        const modal = document.getElementById('paymentModal');
+        if(modal) {
+            modal.style.display = 'block';
+            modal.classList.add('active'); // caso use class
+            // Gerar o QR code imediatamente
+            if (typeof generatePIX === 'function') {
+                generatePIX();
+            }
+        }
+    } catch (err) {
+        console.error('Erro na renovação rápida:', err);
+    }
+}
 
 // Configurar event listeners
 function setupEventListeners() {

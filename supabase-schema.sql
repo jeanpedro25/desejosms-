@@ -25,6 +25,10 @@ CREATE TABLE IF NOT EXISTS announcements (
     paid_amount NUMERIC(10,2) DEFAULT 0,
     payment_id TEXT,
     payment_status TEXT DEFAULT 'pending',
+    expires_at TIMESTAMPTZ,
+    notified_expiry_3d BOOLEAN DEFAULT false,
+    notified_expiry_1d BOOLEAN DEFAULT false,
+    notified_expired BOOLEAN DEFAULT false,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -35,8 +39,12 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'announcements' AND column_name = 'payment_id') THEN
         ALTER TABLE announcements ADD COLUMN payment_id TEXT;
     END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'announcements' AND column_name = 'payment_status') THEN
-        ALTER TABLE announcements ADD COLUMN payment_status TEXT DEFAULT 'pending';
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'announcements' AND column_name = 'expires_at') THEN
+        ALTER TABLE announcements 
+        ADD COLUMN expires_at TIMESTAMPTZ,
+        ADD COLUMN notified_expiry_3d BOOLEAN DEFAULT false,
+        ADD COLUMN notified_expiry_1d BOOLEAN DEFAULT false,
+        ADD COLUMN notified_expired BOOLEAN DEFAULT false;
     END IF;
 END $$;
 

@@ -3,6 +3,8 @@
 
 const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
+import { sendAdApprovedEmail } from '../_lib/emailService.js';
+import { sendAdApprovedWhatsApp } from '../_lib/whatsappService.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -88,11 +90,18 @@ module.exports = async function handler(req, res) {
         // Se pagamento aprovado: ativar anúncio
         if (payment.status === 'approved') {
             const userEmail = payment.payer?.email || payment.metadata?.user_email;
-            const planType = payment.metadata?.plan_type;
+            const planType = payment.metadata?.plan_type || 'basic'; // TODO: passar planType no body de criar PIX
+            const adDataName = payment.metadata?.ad_name || 'Anúncio VIP';
+            const userPhone = payment.payer?.phone?.number || payment.metadata?.user_phone || '';
 
             console.log(`✅ Pagamento aprovado! User: ${userEmail}, Plano: ${planType}`);
 
             if (userEmail) {
+                // Calcular data de expiração (30 dias padrão, se for basic 7)
+                const days = planType.toLowerCase() === 'basic' ? 7 : (planType.toLowerCase() === 'premium' ? 15 : 30);
+                const expiresAt = new Date();
+                expiresAt.setDate(expiresAt.getDate() + days);
+
                 // Ativar anúncio mais recente pendente deste usuário
                 const { data: updatedAds, error: updateError } = await supabase
                     .from('announcements')
@@ -100,6 +109,8 @@ module.exports = async function handler(req, res) {
                         status: 'active',
                         payment_id: paymentId,
                         payment_status: 'approved',
+                        plan_type: planType,
+                        expires_at: expiresAt.toISOString(),
                         updated_at: new Date().toISOString()
                     })
                     .eq('user_email', userEmail)
@@ -110,8 +121,18 @@ module.exports = async function handler(req, res) {
 
                 if (updateError) {
                     console.error('Erro ao ativar anúncio:', updateError);
-                } else {
-                    console.log(`🎉 Anúncio ativado para ${userEmail}:`, updatedAds?.length, 'registro(s)');
+                } else if (updatedAds && updatedAds.length > 0) {
+                    console.log(`🎉 Anúncio ativado para ${userEmail}:`, updatedAds.length, 'registro(s)');
+                    
+                    const ad = updatedAds[0];
+                    const phoneToUse = userPhone || ad.whatsapp || ad.phone;
+
+                    // Disparar Notificações Reais (Email e WhatsApp) assincronamente (não bloquear o request do MP)
+                    sendAdApprovedEmail(userEmail, ad.name, planType).catch(e => console.error('Erro Email_Approve:', e.message));
+                    
+                    if (phoneToUse) {
+                        sendAdApprovedWhatsApp(phoneToUse, ad.name, planType).catch(e => console.error('Erro Wapp_Approve:', e.message));
+                    }
                 }
             }
         }

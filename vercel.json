@@ -45,5 +45,11 @@
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
       ]
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/check-expiring-ads",
+      "schedule": "0 11 * * *"
+    }
   ]
 }
