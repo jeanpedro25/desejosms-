@@ -223,15 +223,15 @@ function loadTopAnnouncements() {
     const users = JSON.parse(localStorage.getItem('users') || '[]');
     const blockedMap = users.reduce((acc, u) => { if (u.blocked) acc[u.email] = true; return acc; }, {});
 
-    // TOP ANÚNCIOS: apenas SUPER VIP
+    // TOP ANÚNCIOS: SuperVIP, Top, Premium, VIP
     let filteredAnnouncements = announcements.filter(ad => {
-        const isSupervip = ad.planType === 'supervip';
+        const isTopTier = ['supervip', 'top', 'premium', 'vip'].includes(ad.planType);
         const isActive = ad.status === 'active';
         const notBlocked = !blockedMap[ad.userEmail];
 
-        console.log(`Anúncio: ${ad.name} | Plano: ${ad.planType} | Status: ${ad.status} | SUPER VIP: ${isSupervip} | Ativo: ${isActive} | Não bloqueado: ${notBlocked}`);
+        console.log(`Anúncio: ${ad.name} | Plano: ${ad.planType} | Status: ${ad.status} | TopTier: ${isTopTier} | Ativo: ${isActive} | Não bloqueado: ${notBlocked}`);
 
-        return isSupervip && isActive && notBlocked;
+        return isTopTier && isActive && notBlocked;
     });
 
     // Filtrar por categoria ativa, se houver

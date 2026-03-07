@@ -1943,7 +1943,7 @@ async function createAd() {
         status: adStatus,
         createdAt: new Date().toISOString(),
         isVip: selectedPlan !== 'basic',
-        planType: selectedPlan,
+        planType: typeof selectedPlan === 'object' ? selectedPlan.type : selectedPlan,
         paymentRequired: false,
         needsVerification: !isVerified,
         paidAmount: (function () {
