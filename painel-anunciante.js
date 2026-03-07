@@ -1674,12 +1674,18 @@ function renderPaymentGateways() {
     const tabsContainer = document.querySelector('.payment-tabs');
     const contentContainer = document.querySelector('.payment-content');
     
-    if (!tabsContainer || !contentContainer || activeGateways.length === 0) return;
+    if (!tabsContainer || !contentContainer) return;
+    
+    // Usar gateways padrão se nenhum estiver configurado
+    const gatewaysToShow = activeGateways.length > 0 ? activeGateways : [
+        { id: 'pix_default', type: 'pix', name: 'PIX', status: 'active', publicKey: 'Chave configurada pelo administrador' },
+        { id: 'local_default', type: 'local', name: 'Pagamento no Ato', status: 'active', publicKey: '' }
+    ];
     
     tabsContainer.innerHTML = '';
     contentContainer.innerHTML = '';
     
-    activeGateways.forEach((gateway, index) => {
+    gatewaysToShow.forEach((gateway, index) => {
         const isActive = index === 0;
         
         const tab = document.createElement('button');
@@ -1690,6 +1696,7 @@ function renderPaymentGateways() {
         let icon = 'fa-credit-card';
         if(gateway.type === 'pix') icon = 'fa-qrcode';
         if(gateway.type === 'mercadopago') icon = 'fa-handshake';
+        if(gateway.type === 'local') icon = 'fa-money-bill-wave';
         
         tab.innerHTML = `<i class="fas ${icon}"></i> ${gateway.name}`;
         tabsContainer.appendChild(tab);
@@ -1698,10 +1705,17 @@ function renderPaymentGateways() {
         content.className = `payment-method ${isActive ? 'active' : ''}`;
         content.id = `${gateway.id}-method`;
         
-        let btnText = 'Ir para Pagar';
-        let subTitle = gateway.type === 'pix' ? `Chave: ${gateway.publicKey}` : 'Você será redirecionado ou a cobrança será gerada via integração configurada.';
-        if (gateway.type === 'pix') btnText = 'Confirmar PIX e Finalizar';
-        else if (gateway.type === 'mercadopago') btnText = 'Pagar com Mercado Pago';
+        let btnText = 'Finalizar e Aguardar Aprovação';
+        let subTitle = 'Finalize a criação do anúncio. Um administrador entrará em contato com instruções de pagamento.';
+        if (gateway.type === 'pix') {
+            btnText = 'Confirmar e Aguardar PIX';
+            subTitle = gateway.publicKey && gateway.publicKey !== 'Chave configurada pelo administrador'
+                ? `Chave PIX: ${gateway.publicKey}` 
+                : 'O administrador irá informar a chave PIX para pagamento.';
+        } else if (gateway.type === 'mercadopago') {
+            btnText = 'Pagar com Mercado Pago';
+            subTitle = 'Você será redirecionado para o Mercado Pago.';
+        }
 
         content.innerHTML = `
             <div class="pix-info">
@@ -1709,7 +1723,7 @@ function renderPaymentGateways() {
                 <h4>${gateway.name}</h4>
                 <p>${subTitle}</p>
             </div>
-            <button class="btn btn-primary" onclick="processDynamicPayment(${gateway.id}, this)" style="margin-top: 10px;">
+            <button class="btn btn-primary" onclick="processDynamicPayment('${gateway.id}', this)" style="margin-top: 10px;">
                 <i class="fas fa-check"></i> ${btnText}
             </button>
         `;
@@ -2041,19 +2055,31 @@ async function createAd() {
                 if (supaResult && supaResult.id) {
                     insertedId = supaResult.id;
                 }
+                // Limpar rascunho após criação bem-sucedida
+                localStorage.removeItem('tempAdCreation');
+                localStorage.removeItem('tempSelectedPlan');
             } catch (err) {
                 console.error("Falha ao injetar no supabase:", err);
+                // Fallback: salvar localmente se Supabase falhar
+                const announcements2 = JSON.parse(localStorage.getItem('announcements')) || [];
+                announcements2.push(newAd);
+                try {
+                    localStorage.setItem('announcements', JSON.stringify(announcements2));
+                    localStorage.removeItem('tempAdCreation');
+                } catch (e) { console.warn('Quota local também excedida', e); }
             }
         } else {
             // fallback se não tiver inicializado o script do DB
-            announcements.push(newAd);
+            const announcements2 = JSON.parse(localStorage.getItem('announcements')) || [];
+            announcements2.push(newAd);
             try {
-                localStorage.setItem('announcements', JSON.stringify(announcements));
+                localStorage.setItem('announcements', JSON.stringify(announcements2));
             } catch (e) {
                 console.warn('Quota excedida ao salvar anúncio local');
-                const slim = announcements.map(a => ({ ...a, photos: [] }));
+                const slim = announcements2.map(a => ({ ...a, photos: [] }));
                 try { localStorage.setItem('announcements', JSON.stringify(slim)); } catch (_) { }
             }
+            localStorage.removeItem('tempAdCreation');
         }
 
         loadDashboardStats();
