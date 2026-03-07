@@ -230,7 +230,12 @@ function loadCustomLogo() {
 }
 
 // Inicialização
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    // Sincronizar com Banco de Dados Supabase local
+    if (window.syncSupabaseToLocal) {
+        await window.syncSupabaseToLocal();
+    }
+
     // Carregar logo personalizada
     loadCustomLogo();
     
@@ -691,19 +696,34 @@ function approveAd(adId) {
     }
     
     if (selectedAd) {
-        selectedAd.status = 'active';
-        
-        const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
-        const index = announcements.findIndex(a => a.id === selectedAd.id);
-        
-        if (index !== -1) {
-            announcements[index] = selectedAd;
-            localStorage.setItem('announcements', JSON.stringify(announcements));
+        // Atualizar no Supabase se disponível
+        if (window.updateAdInSupabase) {
+            window.updateAdInSupabase(selectedAd.id, { status: 'active' })
+                .then(() => {
+                    alert('Anúncio aprovado com sucesso!');
+                    closeModal('adDetailsModal');
+                    loadAdsData();
+                    loadDashboardData();
+                })
+                .catch(err => {
+                    console.error("Erro ao aprovar no Supabase", err);
+                    alert("Erro ao aprovar. Verifique o console.");
+                });
+        } else {
+            selectedAd.status = 'active';
             
-            alert('Anúncio aprovado com sucesso!');
-            closeModal('adDetailsModal');
-            loadAdsData();
-            loadDashboardData();
+            const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
+            const index = announcements.findIndex(a => a.id === selectedAd.id);
+            
+            if (index !== -1) {
+                announcements[index] = selectedAd;
+                localStorage.setItem('announcements', JSON.stringify(announcements));
+                
+                alert('Anúncio aprovado com sucesso!');
+                closeModal('adDetailsModal');
+                loadAdsData();
+                loadDashboardData();
+            }
         }
     }
 }
@@ -715,38 +735,68 @@ function rejectAd(adId) {
     }
     
     if (selectedAd) {
-        selectedAd.status = 'rejected';
-        
-        const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
-        const index = announcements.findIndex(a => a.id === selectedAd.id);
-        
-        if (index !== -1) {
-            announcements[index] = selectedAd;
-            localStorage.setItem('announcements', JSON.stringify(announcements));
+        // Atualizar no Supabase se disponível
+        if (window.updateAdInSupabase) {
+            window.updateAdInSupabase(selectedAd.id, { status: 'rejected' })
+                .then(() => {
+                    alert('Anúncio rejeitado.');
+                    closeModal('adDetailsModal');
+                    loadAdsData();
+                    loadDashboardData();
+                })
+                .catch(err => {
+                    console.error("Erro ao rejeitar no Supabase", err);
+                    alert("Erro ao rejeitar. Verifique o console.");
+                });
+        } else {
+            selectedAd.status = 'rejected';
             
-            alert('Anúncio rejeitado.');
-            closeModal('adDetailsModal');
-            loadAdsData();
-            loadDashboardData();
+            const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
+            const index = announcements.findIndex(a => a.id === selectedAd.id);
+            
+            if (index !== -1) {
+                announcements[index] = selectedAd;
+                localStorage.setItem('announcements', JSON.stringify(announcements));
+                
+                alert('Anúncio rejeitado.');
+                closeModal('adDetailsModal');
+                loadAdsData();
+                loadDashboardData();
+            }
         }
     }
 }
 
-function approveAllAds() {
+async function approveAllAds() {
     if (confirm('Tem certeza que deseja aprovar todos os anúncios pendentes?')) {
         const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
+        const pendingAds = announcements.filter(ad => ad.status === 'pending');
         
-        announcements.forEach(ad => {
-            if (ad.status === 'pending') {
-                ad.status = 'active';
+        if (window.updateAdInSupabase && pendingAds.length > 0) {
+            try {
+                for (let ad of pendingAds) {
+                    await window.updateAdInSupabase(ad.id, { status: 'active' });
+                }
+                alert('Todos os anúncios pendentes foram aprovados no banco de dados!');
+                loadAdsData();
+                loadDashboardData();
+            } catch (err) {
+                console.error("Erro ao aprovar em lote no Supabase", err);
+                alert("Houve um erro na aprovação em massa. Verifique o console.");
             }
-        });
-        
-        localStorage.setItem('announcements', JSON.stringify(announcements));
-        
-        alert('Todos os anúncios pendentes foram aprovados!');
-        loadAdsData();
-        loadDashboardData();
+        } else {
+            announcements.forEach(ad => {
+                if (ad.status === 'pending') {
+                    ad.status = 'active';
+                }
+            });
+            
+            localStorage.setItem('announcements', JSON.stringify(announcements));
+            
+            alert('Todos os anúncios pendentes foram aprovados!');
+            loadAdsData();
+            loadDashboardData();
+        }
     }
 }
 

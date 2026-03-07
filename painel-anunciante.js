@@ -117,8 +117,12 @@ function updatePlanCard(plan) {
 
 
 // Inicialização
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
     console.log('=== INICIALIZAÇÃO DO PAINEL DO ANUNCIANTE ===');
+
+    if (window.syncSupabaseToLocal) {
+        await window.syncSupabaseToLocal();
+    }
 
     // RESET INICIAL: não apagar rascunho; apenas normalizar se corrompido
     console.log('🧹 Executando reset inicial...');
@@ -2029,18 +2033,31 @@ async function createAd() {
         localStorage.removeItem('appliedCoupon');
     }
 
-    announcements.push(newAd);
-    try {
-        localStorage.setItem('announcements', JSON.stringify(announcements));
-    } catch (e) {
-        console.warn('Quota excedida ao salvar anúncio; salvando sem fotos', e);
-        // fallback: salvar sem fotos
-        const slim = announcements.map(a => ({ ...a, photos: [] }));
-        try { localStorage.setItem('announcements', JSON.stringify(slim)); } catch (_) { }
-    }
+        // Criar no Supabase se não estivermos simulando
+        let insertedId = Date.now();
+        if (window.createAdInSupabase) {
+            try {
+                const supaResult = await window.createAdInSupabase(newAd);
+                if (supaResult && supaResult.id) {
+                    insertedId = supaResult.id;
+                }
+            } catch (err) {
+                console.error("Falha ao injetar no supabase:", err);
+            }
+        } else {
+            // fallback se não tiver inicializado o script do DB
+            announcements.push(newAd);
+            try {
+                localStorage.setItem('announcements', JSON.stringify(announcements));
+            } catch (e) {
+                console.warn('Quota excedida ao salvar anúncio local');
+                const slim = announcements.map(a => ({ ...a, photos: [] }));
+                try { localStorage.setItem('announcements', JSON.stringify(slim)); } catch (_) { }
+            }
+        }
 
-    loadDashboardStats();
-    loadUserAds();
+        loadDashboardStats();
+        loadUserAds();
 
     if (isVerified) {
         alert('Anúncio criado com sucesso! Seu anúncio está ATIVO e visível para todos os visitantes.');

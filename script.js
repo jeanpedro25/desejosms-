@@ -1038,8 +1038,13 @@ function loadProfiles() {
 }
 
 // Inicializar quando o DOM estiver pronto - CORRIGIDO
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
     console.log('=== INICIALIZAÇÃO DO SISTEMA ===');
+
+    // Sincronizar com Banco de Dados Oficial na nuvem (Supabase) antes de renderizar
+    if (window.syncSupabaseToLocal) {
+        await window.syncSupabaseToLocal();
+    }
 
     // Aguardar um pouco para garantir que todos os scripts foram carregados
     setTimeout(() => {
