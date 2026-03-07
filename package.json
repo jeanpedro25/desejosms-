@@ -1,16 +1,20 @@
 {
   "name": "desejosms",
-  "version": "1.0.0",
-  "description": "Sistema de Acompanhantes DesejoSMS",
-  "main": "server-fixed.js",
+  "version": "2.0.0",
+  "description": "Sistema de Acompanhantes DesejoMS - Produção",
+  "main": "server.js",
   "scripts": {
-    "start": "node server-fixed.js",
-    "dev": "node server-fixed.js"
+    "start": "node server.js",
+    "dev": "node server.js",
+    "vercel-build": "echo 'Static site - no build required'"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "keywords": ["acompanhantes", "desejosms"],
   "author": "",
-  "license": "ISC",
-  "engines": {
-    "node": ">=14.0.0"
-  }
+  "license": "ISC"
 }

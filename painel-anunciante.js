@@ -1867,33 +1867,124 @@ window.switchPaymentMethod = function(tabBtn) {
     }
 };
 
-// Função para gerar PIX
-function generatePIX() {
+// Função para gerar PIX REAL via Mercado Pago
+async function generatePIX() {
     const pixQR = document.getElementById('pixQR');
+    const userEmail = localStorage.getItem('userEmail') || 'usuario@desejosms.com';
+    const planType = typeof selectedPlan === 'string' ? selectedPlan : (selectedPlan?.type || 'basic');
+
+    // Calcular valor do plano
+    let amount = 149.90;
+    try {
+        const storedPlans = JSON.parse(localStorage.getItem('pricingPlans') || '[]');
+        const planFound = storedPlans.find(p => p.type === planType && p.status === 'active') || storedPlans.find(p => p.type === planType);
+        if (planFound && planFound.price != null) amount = Number(String(planFound.price).replace(',', '.')) || amount;
+    } catch (e) {}
+
+    // Aplicar desconto de cupom se houver
+    const appliedCoupon = JSON.parse(localStorage.getItem('appliedCoupon') || 'null');
+    if (appliedCoupon?.discountValue) {
+        amount = Math.max(0.01, amount - appliedCoupon.discountValue);
+    }
+
+    // Mostrar loading
     pixQR.innerHTML = `
-        <div style="background: white; padding: 20px; border-radius: 8px; display: inline-block;">
-            <div style="width: 200px; height: 200px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
-                <i class="fas fa-qrcode" style="font-size: 48px; color: #666;"></i>
+        <div style="background: white; padding: 20px; border-radius: 8px; display: inline-block; text-align: center;">
+            <div style="width: 200px; height: 200px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 48px; color: #666;"></i>
             </div>
-            <div style="font-size: 12px; color: #666;">
-                QR Code PIX<br>
-                (Simulado)
-            </div>
+            <div style="font-size: 13px; color: #555;">Gerando QR Code PIX real...</div>
         </div>
     `;
 
-    // Simular processamento de pagamento
-    setTimeout(() => {
-        // Aplicar cupom (se houver) antes de criar o anúncio
-        const applied = JSON.parse(localStorage.getItem('appliedCoupon') || 'null');
-        if (applied) {
-            adData.appliedCoupon = applied;
+    try {
+        // Chamar API real (Vercel Function)
+        const response = await fetch('/api/payment/pix', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                planType,
+                userEmail,
+                amount: amount.toFixed(2),
+                adData: { name: adData.name || '', city: adData.city || '' }
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || result.error) {
+            throw new Error(result.error || 'Erro ao gerar PIX');
         }
-        alert('Pagamento processado com sucesso! Seu anúncio será ativado em breve.');
-        closeModal('paymentModal');
-        createAd();
-    }, 2000);
+
+        // Exibir QR Code real
+        const qrImage = result.qr_code_base64 ? `data:image/png;base64,${result.qr_code_base64}` : null;
+        pixQR.innerHTML = `
+            <div style="background: white; padding: 20px; border-radius: 8px; display: inline-block; text-align: center; max-width: 300px;">
+                ${qrImage
+                    ? `<img src="${qrImage}" style="width: 220px; height: 220px; margin-bottom: 10px; border: 2px solid #eee; border-radius: 8px;" alt="QR Code PIX">`
+                    : `<div style="width:220px;height:220px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;"><i class="fas fa-qrcode" style="font-size:48px;color:#333;"></i></div>`
+                }
+                <div style="font-size: 13px; color: #333; margin-bottom: 8px;"><strong>R$ ${amount.toFixed(2)}</strong> — Plano ${planType.toUpperCase()}</div>
+                ${result.qr_code ? `
+                <div style="margin-top: 8px;">
+                    <p style="font-size: 11px; color: #666; margin-bottom: 4px;">Ou copie o código PIX:</p>
+                    <textarea style="width:100%;font-size:10px;padding:6px;border:1px solid #ddd;border-radius:4px;resize:none;height:60px;" readonly onclick="this.select()">${result.qr_code}</textarea>
+                    <button onclick="navigator.clipboard.writeText('${result.qr_code}').then(()=>this.textContent='✅ Copiado!').catch(()=>{})" style="margin-top:4px;padding:6px 12px;background:#00a650;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;">
+                        <i class="fas fa-copy"></i> Copiar código PIX
+                    </button>
+                </div>` : ''}
+                <div style="font-size: 11px; color: #888; margin-top: 10px;">
+                    <i class="fas fa-clock"></i> Aguardando pagamento...
+                </div>
+            </div>
+        `;
+
+        // Polling: verificar status a cada 5 segundos (máximo 5 minutos)
+        const paymentId = result.payment_id;
+        if (paymentId) {
+            let attempts = 0;
+            const maxAttempts = 60;
+            const pollInterval = setInterval(async () => {
+                attempts++;
+                if (attempts > maxAttempts) {
+                    clearInterval(pollInterval);
+                    return;
+                }
+                try {
+                    const statusResponse = await fetch(`/api/payment/status?id=${paymentId}`);
+                    const statusData = await statusResponse.json();
+                    if (statusData.status === 'approved') {
+                        clearInterval(pollInterval);
+                        const applied = JSON.parse(localStorage.getItem('appliedCoupon') || 'null');
+                        if (applied) adData.appliedCoupon = applied;
+                        closeModal('paymentModal');
+                        alert('✅ Pagamento PIX confirmado! Seu anúncio foi ativado automaticamente.');
+                        createAd();
+                    } else if (statusData.status === 'rejected' || statusData.status === 'cancelled') {
+                        clearInterval(pollInterval);
+                        pixQR.innerHTML += `<div style="color:red;margin-top:10px;">❌ Pagamento ${statusData.status}. Tente novamente.</div>`;
+                    }
+                } catch (e) {}
+            }, 5000);
+        }
+
+    } catch (error) {
+        console.error('Erro ao gerar PIX:', error);
+        // Fallback amigável
+        pixQR.innerHTML = `
+            <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 20px; border-radius: 8px; text-align: center; max-width: 300px;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 32px; color: #856404; margin-bottom: 10px;"></i>
+                <div style="font-size: 14px; color: #856404; margin-bottom: 8px;"><strong>Gateway não configurado</strong></div>
+                <div style="font-size: 12px; color: #664d03;">
+                    Configure as chaves do Mercado Pago em:<br>
+                    <strong>Painel Admin → Config. Pagamentos → Adicionar Gateway</strong>
+                </div>
+                <div style="font-size: 11px; color: #999; margin-top: 8px;">${error.message}</div>
+            </div>
+        `;
+    }
 }
+
 
 // Utilitário para gerar miniatura
 function generateThumbnail(dataUrl, maxW = 320, quality = 0.8) {

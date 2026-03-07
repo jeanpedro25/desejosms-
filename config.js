@@ -208,8 +208,8 @@ function updateSiteForState() {
     // Atualizar categorias
     updateCategories();
 
-    // Atualizar estatísticas
-    updateStatistics();
+    // Atualizar estatísticas (função existe apenas no index.html)
+    if (typeof updateStatistics === 'function') updateStatistics();
 }
 
 // Função para atualizar seletor de cidade
@@ -328,8 +328,8 @@ function setCurrentCity(cityId) {
     console.log('🏙️ Definindo cidade atual:', cityId);
     localStorage.setItem('currentCity', cityId);
 
-    // Atualizar estatísticas
-    updateStatistics();
+    // Atualizar estatísticas (função existe apenas no index.html)
+    if (typeof updateStatistics === 'function') updateStatistics();
 
     // Filtrar anúncios por cidade
     filterAnnouncementsByCity(cityId);

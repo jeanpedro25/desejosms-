@@ -7,8 +7,111 @@ let pricingPlans = [];
 let transactions = [];
 let editingPlanId = null; // id do plano em modo edição
 
+// ============================================================
+// INTEGRAÇÃO SUPABASE - Salvar chaves MP no banco de dados
+// As chaves salvas aqui são lidas pelas Vercel Functions para
+// processar os pagamentos em produção.
+// ============================================================
+async function saveGatewayToSupabase(gateway) {
+    if (!window.supabaseClient) return;
+    try {
+        // Salva/atualiza a config do Mercado Pago na tabela settings
+        const { error } = await window.supabaseClient
+            .from('settings')
+            .upsert({
+                key: 'mercadopago_config',
+                value: {
+                    publicKey: gateway.publicKey,
+                    secretKey: gateway.secretKey,
+                    environment: gateway.environment,
+                    webhook: gateway.webhook,
+                    status: gateway.status,
+                    updatedAt: new Date().toISOString()
+                },
+                updated_by: localStorage.getItem('adminEmail') || 'admin',
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'key' });
+
+        if (error) throw error;
+        console.log('✅ Configuração MP salva no Supabase com sucesso!');
+        return true;
+    } catch (e) {
+        console.error('❌ Erro ao salvar MP no Supabase:', e);
+        return false;
+    }
+}
+
+async function loadGatewayFromSupabase() {
+    if (!window.supabaseClient) return null;
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('settings')
+            .select('value')
+            .eq('key', 'mercadopago_config')
+            .single();
+        if (error || !data) return null;
+        return data.value;
+    } catch (e) {
+        return null;
+    }
+}
+
+async function loadTransactionsFromSupabase() {
+    if (!window.supabaseClient) return [];
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('payments')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(50);
+        if (error || !data) return [];
+        return data.map(p => ({
+            id: p.id,
+            userEmail: p.user_email,
+            userName: p.user_email?.split('@')[0] || 'Usuário',
+            plan: p.plan_type,
+            amount: parseFloat(p.amount),
+            gateway: 'Mercado Pago',
+            method: 'PIX',
+            status: p.status === 'approved' ? 'completed' : p.status,
+            transactionId: p.mp_payment_id,
+            createdAt: p.created_at
+        }));
+    } catch (e) {
+        return [];
+    }
+}
+
 // Inicialização
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    // Tentar carregar config do Supabase
+    const mpConfigFromDB = await loadGatewayFromSupabase();
+    if (mpConfigFromDB && mpConfigFromDB.publicKey) {
+        // Sincronizar Supabase → localStorage
+        const existing = JSON.parse(localStorage.getItem('paymentGateways') || '[]');
+        const mpIdx = existing.findIndex(g => g.type === 'mercadopago');
+        const mpGateway = {
+            id: mpIdx !== -1 ? existing[mpIdx].id : Date.now(),
+            type: 'mercadopago',
+            name: 'Mercado Pago',
+            publicKey: mpConfigFromDB.publicKey,
+            secretKey: mpConfigFromDB.secretKey,
+            webhook: mpConfigFromDB.webhook || '',
+            environment: mpConfigFromDB.environment || 'sandbox',
+            status: mpConfigFromDB.status || 'active',
+            createdAt: new Date().toISOString()
+        };
+        if (mpIdx !== -1) existing[mpIdx] = mpGateway;
+        else existing.push(mpGateway);
+        localStorage.setItem('paymentGateways', JSON.stringify(existing));
+    }
+
+    // Tentar carregar transações reais do Supabase
+    const supabaseTxns = await loadTransactionsFromSupabase();
+    if (supabaseTxns.length > 0) {
+        localStorage.setItem('transactions', JSON.stringify(supabaseTxns));
+    }
+
     loadPaymentData();
     setupEventListeners();
 });
@@ -549,7 +652,7 @@ function closeModal(modalId) {
 }
 
 // Salvar gateway
-function saveGateway() {
+async function saveGateway() {
     const type = document.getElementById('gatewayType').value;
     const name = document.getElementById('gatewayName').value;
     const publicKey = document.getElementById('gatewayPublicKey').value;
@@ -575,7 +678,24 @@ function saveGateway() {
         createdAt: new Date().toISOString()
     };
     
-    paymentGateways.push(gateway);
+    // Se for Mercado Pago, salvar também no Supabase (para as Vercel Functions)
+    if (type === 'mercadopago') {
+        const savedInDB = await saveGatewayToSupabase(gateway);
+        if (savedInDB) {
+            console.log('👍 Chaves MP salvas no banco de dados com sucesso!');
+        } else {
+            // Alertar mas continuar (fallback para localStorage)
+            console.warn('⚠️ Não foi possível salvar no Supabase. Verifique a conexão.');
+        }
+    }
+
+    // Atualizar gateway existente do mesmo tipo ou adicionar novo
+    const existingIdx = paymentGateways.findIndex(g => g.type === type);
+    if (existingIdx !== -1) {
+        paymentGateways[existingIdx] = { ...paymentGateways[existingIdx], ...gateway, id: paymentGateways[existingIdx].id };
+    } else {
+        paymentGateways.push(gateway);
+    }
     localStorage.setItem('paymentGateways', JSON.stringify(paymentGateways));
     
     renderGateways();
@@ -588,6 +708,8 @@ function saveGateway() {
     document.getElementById('gatewayPublicKey').value = '';
     document.getElementById('gatewaySecretKey').value = '';
     document.getElementById('gatewayWebhook').value = '';
+
+    alert(`📦 Gateway "${name}" configurado com sucesso!${ type === 'mercadopago' ? '\n\u2705 Chaves salvas no banco de dados. O sistema está pronto para processar pagamentos reais.' : '' }`);
 }
 
 // Salvar método

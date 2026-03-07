@@ -105,9 +105,7 @@ function queueEmailsLocally(recipients, subject, body){
     closeModal('bulkEmailModal');
 }
 
-// Placeholders
-function approveAd(id){ /* impl futura */ alert('Aprovar '+id); }
-function rejectAd(id){ /* impl futura */ alert('Rejeitar '+id); }
+// approveAd e rejectAd são definidas abaixo com integração Supabase
 
 function selectAllFiltered(){
     document.querySelectorAll('.ad-select').forEach(i=>{ i.checked = true; });
@@ -604,6 +602,7 @@ function loadReportsData() {
             const supervipAds = announcements.filter(ad => ad.planType === 'supervip' && ad.status === 'active').length;
         const topAds = announcements.filter(ad => ad.planType === 'top' && ad.status === 'active').length;
         const basicAds = announcements.filter(ad => ad.planType === 'basic' && ad.status === 'active').length;
+        const premiumAds = supervipAds + topAds;
     const vipAds = announcements.filter(ad => ad.planType === 'vip' && ad.status === 'active').length;
     
     document.getElementById('activeAdvertisers').textContent = activeAdvertisers;
