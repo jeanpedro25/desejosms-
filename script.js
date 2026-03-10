@@ -249,15 +249,8 @@ function loadTopAnnouncements() {
                 return ad.state === currentStateShort;
             }
 
-            // 2. Fallback: verificar se a cidade pertence ao estado (para anúncios antigos)
-            if (config.cities && config.cities.length > 0) {
-                const stateCities = config.cities.map(city => normalize(city.name));
-                const adCity = normalize(ad.city);
-                const belongsToState = stateCities.some(stateCity =>
-                    adCity.includes(stateCity) || stateCity.includes(adCity)
-                );
-                return belongsToState;
-            }
+            // 2. Fallback: Assumir que o anúncio pertence ao estado atual
+            // (Isso permite que cidades não listadas no config.cities, como Maracaju, apareçam)
             return true;
         });
     }
@@ -387,15 +380,7 @@ function loadRegularAnnouncements() {
                 return ad.state === currentStateShort;
             }
 
-            // 2. Fallback: verificar se a cidade pertence ao estado (para anúncios antigos)
-            if (config.cities && config.cities.length > 0) {
-                const stateCities = config.cities.map(city => normalize(city.name));
-                const adCity = normalize(ad.city);
-                const belongsToState = stateCities.some(stateCity =>
-                    adCity.includes(stateCity) || stateCity.includes(adCity)
-                );
-                return belongsToState;
-            }
+            // 2. Fallback: Assumir que o anúncio pertence ao estado atual
             return true;
         });
     }
@@ -775,18 +760,9 @@ function filterProfiles(category = 'all', searchTerm = '', city = '') {
                     console.log(`❌ Rejeitado ${ad.name}: estado "${ad.state}" != "${currentStateShort}"`);
                     return false;
                 }
-            } else if (config.cities && config.cities.length > 0) {
-                // 2. Fallback
-                const stateCities = config.cities.map(city => normalize(city.name));
-                const adCity = normalize(ad.city);
-                const belongsToState = stateCities.some(stateCity =>
-                    adCity.includes(stateCity) || stateCity.includes(adCity)
-                );
-
-                if (!belongsToState) {
-                    console.log(`❌ Rejeitado ${ad.name}: cidade "${ad.city}" não pertence ao estado atual`);
-                    return false;
-                }
+            } else {
+                // 2. Fallback: aceitar no estado atual, permitindo cidades como Maracaju
+                return true;
             }
         }
 

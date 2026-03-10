@@ -259,27 +259,12 @@ function updateCitySelector() {
 // Função para obter cidades que têm anúncios ativos
 function getCitiesWithActiveAds() {
     const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
-    const config = getCurrentStateConfig();
-
-    if (!config || !config.cities) {
-        return [];
-    }
-
-    // Filtrar anúncios ativos do estado atual
-    const activeAds = announcements.filter(ad => {
-        if (ad.status !== 'active') return false;
-
-        // Verificar se a cidade do anúncio pertence ao estado atual
-        const stateCities = config.cities.map(city => city.name.toLowerCase());
-        const adCity = (ad.city || '').toLowerCase();
-
-        return stateCities.some(stateCity =>
-            adCity.includes(stateCity) || stateCity.includes(adCity)
-        );
-    });
+    
+    // Filtrar anúncios ativos
+    const activeAds = announcements.filter(ad => ad.status === 'active');
 
     // Extrair cidades únicas dos anúncios ativos
-    const citiesWithAds = [...new Set(activeAds.map(ad => ad.city))].filter(city => city);
+    const citiesWithAds = [...new Set(activeAds.map(ad => ad.city))].filter(city => city && city.trim() !== '');
 
     // Ordenar alfabeticamente
     return citiesWithAds.sort();
@@ -356,31 +341,15 @@ function setCurrentCity(cityId) {
 // Função para obter estatísticas baseadas na cidade
 function getCityStatistics(cityId = '') {
     const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
-    const config = getCurrentStateConfig();
 
     let filteredAnnouncements = announcements.filter(ad => ad.status === 'active');
 
     // Filtrar por cidade específica
     if (cityId) {
-        // Primeiro, tentar encontrar no sistema de cidades do admin
-        const adminCities = JSON.parse(localStorage.getItem('cities')) || [];
-        const cityConfig = adminCities.find(city =>
-            city.name.toLowerCase().replace(/\s+/g, '-') === cityId
-        );
-
-        if (cityConfig) {
-            filteredAnnouncements = filteredAnnouncements.filter(ad =>
-                ad.city.toLowerCase().includes(cityConfig.name.toLowerCase())
-            );
-        } else {
-            // Fallback para cidades do config.js
-            const configCity = config.cities.find(city => city.id === cityId);
-            if (configCity) {
-                filteredAnnouncements = filteredAnnouncements.filter(ad =>
-                    ad.city.toLowerCase().includes(configCity.name.toLowerCase())
-                );
-            }
-        }
+        filteredAnnouncements = filteredAnnouncements.filter(ad => {
+            const adCitySlug = ad.city.toLowerCase().replace(/\s+/g, '-');
+            return adCitySlug === cityId;
+        });
     }
 
     return {
@@ -393,31 +362,15 @@ function getCityStatistics(cityId = '') {
 // Função para filtrar anúncios por cidade
 function filterAnnouncementsByCity(cityId) {
     const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
-    const config = getCurrentStateConfig();
 
     let filteredAnnouncements = announcements.filter(ad => ad.status === 'active');
 
     // Filtrar por cidade específica
     if (cityId) {
-        // Primeiro, tentar encontrar no sistema de cidades do admin
-        const adminCities = JSON.parse(localStorage.getItem('cities')) || [];
-        const cityConfig = adminCities.find(city =>
-            city.name.toLowerCase().replace(/\s+/g, '-') === cityId
-        );
-
-        if (cityConfig) {
-            filteredAnnouncements = filteredAnnouncements.filter(ad =>
-                ad.city.toLowerCase().includes(cityConfig.name.toLowerCase())
-            );
-        } else {
-            // Fallback para cidades do config.js
-            const configCity = config.cities.find(city => city.id === cityId);
-            if (configCity) {
-                filteredAnnouncements = filteredAnnouncements.filter(ad =>
-                    ad.city.toLowerCase().includes(configCity.name.toLowerCase())
-                );
-            }
-        }
+        filteredAnnouncements = filteredAnnouncements.filter(ad => {
+            const adCitySlug = ad.city.toLowerCase().replace(/\s+/g, '-');
+            return adCitySlug === cityId;
+        });
     }
 
     // Recarregar anúncios filtrados
