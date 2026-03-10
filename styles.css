@@ -932,8 +932,8 @@ header::before {
 
 .top-announcements-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 350px));
+    gap: 20px;
     margin-bottom: 20px;
     justify-content: center;
     max-width: 1200px;
@@ -1693,9 +1693,10 @@ header::before {
     /* Em desktop, mostrar até 3 colunas para SUPERVIP */
     @media (min-width: 1025px) {
         .top-announcements-grid {
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(320px, 350px));
             gap: 20px;
             max-width: 1200px;
+            justify-content: center;
         }
     }
 
