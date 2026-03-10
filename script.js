@@ -223,9 +223,9 @@ function loadTopAnnouncements() {
     const users = JSON.parse(localStorage.getItem('users') || '[]');
     const blockedMap = users.reduce((acc, u) => { if (u.blocked) acc[u.email] = true; return acc; }, {});
 
-    // TOP ANÚNCIOS: SuperVIP, Top, Premium, VIP
+    // TOP ANÚNCIOS: Apenas SuperVIP (conforme regra de negócio solicitada)
     let filteredAnnouncements = announcements.filter(ad => {
-        const isTopTier = ['supervip', 'top', 'premium', 'vip'].includes(ad.planType);
+        const isTopTier = ['supervip'].includes(ad.planType);
         const isActive = ad.status === 'active';
         const notBlocked = !blockedMap[ad.userEmail];
 
