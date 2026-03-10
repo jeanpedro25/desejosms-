@@ -525,13 +525,23 @@
              console.log('🏙️ Cidade da anunciante atual:', currentCity);
              console.log('👤 Categoria da anunciante atual:', currentCategory);
              
+             // Comparar sem diferenças de espaço ou maiúsculas/minúsculas
+             const matchCity = (c1, c2) => {
+                 if(!c1 || !c2) return false;
+                 return c1.trim().toLowerCase() === c2.trim().toLowerCase();
+             };
+             const matchCategory = (c1, c2) => {
+                 if(!c1 || !c2) return false;
+                 return c1.trim().toLowerCase() === c2.trim().toLowerCase();
+             };
+
              // Filtrar anúncios SUPERVIP da MESMA CATEGORIA E MESMA CIDADE
              let supervipAds = announcements.filter(ad => 
                  ad.planType === 'supervip' && 
                  ad.status === 'active' &&
                  ad.id != selectedProfileId && // Excluir a anunciante atual
-                 ad.city === currentCity && // MESMA CIDADE!
-                 ad.category === currentCategory // MESMA CATEGORIA!
+                 matchCity(ad.city, currentCity) && // MESMA CIDADE!
+                 matchCategory(ad.category, currentCategory) // MESMA CATEGORIA!
              );
              
              console.log('👑 SUPERVIP da mesma categoria e cidade encontrados:', supervipAds.length);
@@ -543,7 +553,7 @@
                      ad.planType === 'supervip' && 
                      ad.status === 'active' &&
                      ad.id != selectedProfileId &&
-                     ad.category === currentCategory && // MESMA CATEGORIA!
+                     matchCategory(ad.category, currentCategory) && // MESMA CATEGORIA!
                      ad.city && ad.city.toLowerCase().includes('ms') // Qualquer cidade de MS
                  );
                  console.log('📍 SUPERVIP da mesma categoria em MS encontrados:', supervipAds.length);
@@ -556,7 +566,7 @@
                      ad.planType === 'supervip' && 
                      ad.status === 'active' &&
                      ad.id != selectedProfileId &&
-                     ad.city === currentCity // MESMA CIDADE, qualquer categoria
+                     matchCity(ad.city, currentCity) // MESMA CIDADE, qualquer categoria
                  );
                  console.log('🏙️ SUPERVIP da mesma cidade (qualquer categoria) encontrados:', supervipAds.length);
              }
