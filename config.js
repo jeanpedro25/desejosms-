@@ -259,11 +259,23 @@ function updateCitySelector() {
 // Função para obter cidades que têm anúncios ativos
 function getCitiesWithActiveAds() {
     const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
-    
-    // Filtrar anúncios ativos
-    const activeAds = announcements.filter(ad => ad.status === 'active');
+    const config = getCurrentStateConfig();
+    const currentStateShort = config ? (config.shortName || 'MS') : 'MS';
 
-    // Extrair cidades únicas dos anúncios ativos
+    // Filtrar anúncios ativos e que pertencem ao estado atual
+    const activeAds = announcements.filter(ad => {
+        if (ad.status !== 'active') return false;
+
+        // Se o anúncio tem state definido, deve bater com o estado atual
+        if (ad.state) {
+            return ad.state === currentStateShort;
+        }
+
+        // Fallback: se não tem state, pode ser antigo. Permite aparecer na busca do estado atual
+        return true;
+    });
+
+    // Extrair cidades únicas dos anúncios ativos filtrados
     const citiesWithAds = [...new Set(activeAds.map(ad => ad.city))].filter(city => city && city.trim() !== '');
 
     // Ordenar alfabeticamente
@@ -384,7 +396,7 @@ function filterAnnouncementsByCity(cityId) {
     }
 }
 
-function filterAnnouncements({category = 'all', city = '', searchTerm = '', facilitation = false} = {}) {
+function filterAnnouncements({ category = 'all', city = '', searchTerm = '', facilitation = false } = {}) {
     const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
     const validCategories = ['mulher', 'homem', 'travesti', 'massagista'];
     return announcements.filter(ad => {
@@ -455,9 +467,9 @@ window.updateCitySelector = updateCitySelector;
 window.getCitiesWithActiveAds = getCitiesWithActiveAds;
 
 // Inicialização robusta (executa mesmo se DOM já estiver pronto)
-(function ensureInit(){
+(function ensureInit() {
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function(){
+        document.addEventListener('DOMContentLoaded', function () {
             console.log('📄 DOM carregado, inicializando configuração...');
             initSiteConfig();
         });
