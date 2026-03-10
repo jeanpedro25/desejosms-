@@ -529,48 +529,23 @@
              let supervipAds = announcements.filter(ad => 
                  ad.planType === 'supervip' && 
                  ad.status === 'active' &&
-                 ad.id != selectedProfileId && // Excluir a anunciante atual
-                 ad.city === currentCity && // MESMA CIDADE!
-                 ad.category === currentCategory // MESMA CATEGORIA!
+                 ad.id != selectedProfileId
              );
              
-             console.log('👑 SUPERVIP da mesma categoria e cidade encontrados:', supervipAds.length);
+             console.log('🌐 Total SUPERVIP encontrados (qualquer categoria/cidade):', supervipAds.length);
              
-             // Se não há SUPERVIP da mesma categoria na mesma cidade, buscar da mesma categoria em MS
-             if (supervipAds.length === 0 && currentCity && currentCategory) {
-                 console.log('🔄 Nenhum SUPERVIP da mesma categoria na cidade, buscando mesma categoria em MS...');
-                 supervipAds = announcements.filter(ad => 
-                     ad.planType === 'supervip' && 
-                     ad.status === 'active' &&
-                     ad.id != selectedProfileId &&
-                     ad.category === currentCategory && // MESMA CATEGORIA!
-                     ad.city && ad.city.toLowerCase().includes('ms') // Qualquer cidade de MS
-                 );
-                 console.log('📍 SUPERVIP da mesma categoria em MS encontrados:', supervipAds.length);
+             // Preferência por mesma cidade
+             if (currentCity) {
+                const sameCityAds = supervipAds.filter(ad => ad.city === currentCity);
+                if (sameCityAds.length > 0) {
+                    console.log('🏙️ Usando SUPERVIPs da mesma cidade:', sameCityAds.length);
+                    // Daremos preferência a estes, mas se for menos de 2, complementamos com os outros
+                    supervipAds = sameCityAds.concat(supervipAds.filter(ad => ad.city !== currentCity));
+                }
              }
-             
-             // Terceiro nível: mesma cidade, qualquer categoria
-             if (supervipAds.length === 0 && currentCity) {
-                 console.log('🔄 Nenhum SUPERVIP da mesma categoria, buscando qualquer categoria na mesma cidade...');
-                 supervipAds = announcements.filter(ad => 
-                     ad.planType === 'supervip' && 
-                     ad.status === 'active' &&
-                     ad.id != selectedProfileId &&
-                     ad.city === currentCity // MESMA CIDADE, qualquer categoria
-                 );
-                 console.log('🏙️ SUPERVIP da mesma cidade (qualquer categoria) encontrados:', supervipAds.length);
-             }
-             
-             // Último recurso: qualquer SUPERVIP ativo
-             if (supervipAds.length === 0) {
-                 console.log('🔄 Último recurso: qualquer SUPERVIP...');
-                 supervipAds = announcements.filter(ad => 
-                     ad.planType === 'supervip' && 
-                     ad.status === 'active' &&
-                     ad.id != selectedProfileId
-                 );
-                 console.log('🌐 Total SUPERVIP encontrados:', supervipAds.length);
-             }
+
+             // Remover duplicatas caso a concatenação acima tenha gerado
+             supervipAds = [...new Set(supervipAds)];
 
              // Embaralhar array para mostrar aleatoriamente
              const shuffledAds = supervipAds.sort(() => Math.random() - 0.5);
