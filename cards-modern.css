@@ -112,9 +112,9 @@
 }
 
 .plan-badge {
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 10px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -125,7 +125,9 @@
 .plan-badge.supervip {
     background: linear-gradient(45deg, var(--secondary-color), #FFA500);
     color: #000;
-    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+    font-size: 11px;
+    padding: 5px 10px;
+    box-shadow: 0 4px 10px rgba(255, 215, 0, 0.2);
 }
 
 .plan-badge.top {
@@ -178,8 +180,15 @@
 }
 
 @keyframes heartBeat {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.2); }
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
 }
 
 /* Informações do Card */
@@ -387,23 +396,23 @@
         gap: 15px;
         padding: 15px;
     }
-    
+
     .card-image-container {
         height: 220px;
     }
-    
+
     .card-info {
         padding: 15px;
     }
-    
+
     .card-name {
         font-size: 18px;
     }
-    
+
     .card-price {
         font-size: 20px;
     }
-    
+
     .card-actions {
         grid-template-columns: 1fr;
     }
@@ -415,7 +424,7 @@
         gap: 15px;
         padding: 10px;
     }
-    
+
     .card-image-container {
         height: 200px;
     }
@@ -427,6 +436,7 @@
         opacity: 0;
         transform: translateY(30px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -445,8 +455,13 @@
 }
 
 @keyframes loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
 }
 
 /* Comparação de Cards */

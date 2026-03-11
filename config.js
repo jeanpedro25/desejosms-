@@ -224,7 +224,7 @@ function updateCitySelector() {
             // Adicionar opção "Todas as cidades"
             const allOption = document.createElement('option');
             allOption.value = '';
-            allOption.textContent = `Todas as cidades de ${config.name}`;
+            allOption.textContent = 'Todas as cidades';
             citySelector.appendChild(allOption);
 
             // Obter cidades que realmente têm anúncios ativos
@@ -235,7 +235,14 @@ function updateCitySelector() {
                 citiesWithAds.forEach(cityName => {
                     const option = document.createElement('option');
                     option.value = cityName.toLowerCase().replace(/\s+/g, '-');
-                    option.textContent = cityName;
+
+                    // Formatar para Primeira Letra Maiúscula
+                    const formattedCity = cityName
+                        .split(' ')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                        .join(' ');
+
+                    option.textContent = `${formattedCity} - ${config.shortName}`;
                     citySelector.appendChild(option);
                 });
 
@@ -249,6 +256,16 @@ function updateCitySelector() {
                 citySelector.appendChild(noAdsOption);
 
                 console.log('⚠️ Nenhuma cidade com anúncios ativos encontrada');
+            }
+
+            // Manter a seleção persistente se a cidade já estiver no localStorage
+            const savedCity = localStorage.getItem('currentCity');
+            if (savedCity) {
+                // Selecionar se existe na lista nova
+                const optionExists = Array.from(citySelector.options).some(opt => opt.value === savedCity);
+                if (optionExists) {
+                    citySelector.value = savedCity;
+                }
             }
         }
     } catch (e) {

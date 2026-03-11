@@ -223,9 +223,9 @@ function loadTopAnnouncements() {
     const users = JSON.parse(localStorage.getItem('users') || '[]');
     const blockedMap = users.reduce((acc, u) => { if (u.blocked) acc[u.email] = true; return acc; }, {});
 
-    // TOP ANÚNCIOS: Apenas SuperVIP (conforme regra de negócio solicitada)
+    // TOP ANÚNCIOS: Apenas SuperVIP
     let filteredAnnouncements = announcements.filter(ad => {
-        const isTopTier = ['supervip'].includes(ad.planType);
+        const isTopTier = ['supervip'].includes((ad.planType || '').toLowerCase());
         const isActive = ad.status === 'active';
         const notBlocked = !blockedMap[ad.userEmail];
 
@@ -263,6 +263,10 @@ function loadTopAnnouncements() {
             return adCitySlug.includes(currentCitySlug) || currentCitySlug.includes(adCitySlug);
         });
     }
+
+    console.log('=== DEBUG TOP: Após filtro de estado/cidade ===');
+    console.log('Quantidade restante:', filteredAnnouncements.length);
+    filteredAnnouncements.forEach(a => console.log(a.name, a.city, a.state));
 
     // Ordenar SUPER VIP por valor pago (maior primeiro)
     const sortedAnnouncements = filteredAnnouncements.sort((a, b) => {
@@ -307,38 +311,16 @@ function createTopCard(ad) {
         <div class="top-card-image" onclick="openProfilePage('${ad.id}')">
             <img src="${adImage}" alt="Foto" oncontextmenu="return false;">
             <div class="wm-card">${window.statesManager ? statesManager.getCurrentWatermark() : 'DesejosMS'}</div>
-            <div class="top-card-badge ${ad.planType}">${ad.planType.toUpperCase()}</div>
-            <div class="top-card-rating">
-                ${generateStars(ad.rating || 4.5)}
-                <span class="rating-number">${(ad.rating || 4.5).toFixed(1)}</span>
-            </div>
+            <div class="plan-badge ${ad.planType}">${ad.planType.toUpperCase()}</div>
         </div>
         <div class="top-card-content">
-            <div class="top-card-title">${ad.name}</div>
-            <div class="top-card-bio">${bio}</div>
+            <div class="top-card-title" style="font-weight: 800; font-size: 1.05rem; margin-bottom: 2px;">${ad.name}</div>
             <div class="top-card-location">
-                <i class="fas fa-map-marker-alt"></i>
-                <span>${ad.city}, MS</span>
+                <span style="color: #8B0000;">(67) <strong>${ad.phone}</strong></span>
             </div>
-            <div class="top-card-atendimento">
-                <i class="fas fa-home"></i>
-                <span>${atendimento}</span>
+            <div class="top-card-location city-line" style="color: #8B0000; font-size: 0.85rem; font-weight: bold;">
+                Com Local &nbsp;<span style="font-weight: normal;">${ad.city}, MS</span>
             </div>
-            <div class="top-card-services">
-                ${services.slice(0, 3).map(service => `<span class="service-tag">${service}</span>`).join('')}
-            </div>
-
-            <div class="top-card-actions">
-                <button class="top-card-btn phone" onclick="callPhone('${ad.phone}')">
-                    <i class="fas fa-phone"></i> Ligar
-                </button>
-                <button class="top-card-btn whatsapp" onclick="openWhatsApp('${ad.whatsapp}')">
-                    <i class="fab fa-whatsapp"></i> WhatsApp
-                </button>
-            </div>
-            <button class="top-card-link" onclick="openProfilePage('${ad.id}')">
-                Ver Perfil Premium
-            </button>
         </div>
     `;
     return card;
@@ -365,10 +347,10 @@ function loadRegularAnnouncements() {
 
     updateSectionTitle(category, cityToUse);
 
-    // Excluir anúncios de usuários bloqueados
+    // Excluir anúncios de usuários bloqueados e filtrar fora os SUPERVIP (pois já aparecem no topo)
     const users2 = JSON.parse(localStorage.getItem('users') || '[]');
     const blockedMap2 = users2.reduce((acc, u) => { if (u.blocked) acc[u.email] = true; return acc; }, {});
-    let activeAnnouncements = announcements.filter(ad => ad.status === 'active' && !blockedMap2[ad.userEmail]);
+    let activeAnnouncements = announcements.filter(ad => ad.status === 'active' && !blockedMap2[ad.userEmail] && (ad.planType || '').toLowerCase() !== 'supervip');
 
     // FILTRAR POR ESTADO ATUAL
     if (config) {
@@ -438,11 +420,13 @@ function createProfileCard(profile) {
             <div class="wm-card">${window.statesManager ? statesManager.getCurrentWatermark() : 'DesejosMS'}</div>
         </div>
         <div class="profile-info">
-            <div class="profile-name" style="cursor: pointer;" onclick="openProfilePage('${profile.id}')">${displayName}</div>
-            <div class="profile-bio">${randomBio}</div>
-            <div class="profile-location"><i class="fas fa-map-marker-alt"></i>${profile.city}, ${window.getCurrentStateConfig ? window.getCurrentStateConfig().shortName : 'MS'}</div>
-            <div class="profile-services"><i class="fas fa-check-circle"></i>${profile.services ? profile.services.slice(0, 2).join(', ') : 'Atendimento completo'}</div>
-            <button class="whatsapp-btn" onclick="openWhatsApp('${profile.whatsapp || profile.phone}', '${displayName}')"><i class="fab fa-whatsapp"></i>WhatsApp</button>
+            <div class="profile-name" style="cursor: pointer; font-weight: 800; font-size: 1.05rem; margin-bottom: 2px;" onclick="openProfilePage('${profile.id}')">${displayName}</div>
+            <div class="profile-location">
+                <span style="color: #8B0000;">(67) <strong>${profile.phone || profile.whatsapp || '9999-0000'}</strong></span>
+            </div>
+            <div class="profile-location city-line" style="color: #8B0000; font-size: 0.85rem; font-weight: bold;">
+                Com Local &nbsp;<span style="font-weight: normal;">${profile.city}, ${window.getCurrentStateConfig ? window.getCurrentStateConfig().shortName : 'MS'}</span>
+            </div>
         </div>
     `;
     return card;
@@ -818,6 +802,12 @@ function filterProfiles(category = 'all', searchTerm = '', city = '') {
             return false;
         }
 
+        // NOVO: Excluir SUPERVIP da listagem comum, pois já aparecem no Top Anúncios no topo da página
+        if ((ad.planType || '').toLowerCase() === 'supervip') {
+            console.log(`Rejeitado ${ad.name}: plano SUPERVIP`);
+            return false;
+        }
+
         console.log(`✅ Aceito ${ad.name}: categoria="${ad.category}", cidade="${ad.city}"`);
         return true;
     });
@@ -935,13 +925,6 @@ function showCategoryFeedback(category, count) {
     const announcementsSection = document.querySelector('.announcements-section');
     if (announcementsSection) {
         announcementsSection.insertBefore(feedback, announcementsSection.firstChild);
-
-        // Remover automaticamente após 4 segundos
-        setTimeout(() => {
-            if (feedback.parentElement) {
-                feedback.remove();
-            }
-        }, 4000);
     }
 }
 
@@ -963,18 +946,6 @@ function loadFilteredAnnouncements(announcements) {
     const section = profilesGrid.parentElement; // .announcements-section
     const oldIndicator = section.querySelector('.category-indicator');
     if (oldIndicator) oldIndicator.remove();
-
-    const activeCategory = document.querySelector('.nav-item.active');
-    if (activeCategory) {
-        const categoryName = activeCategory.textContent.trim();
-        const catId = activeCategory.getAttribute('data-category');
-        if (catId && catId !== 'all') {
-            const categoryIndicator = document.createElement('div');
-            categoryIndicator.className = 'category-indicator show cat-' + catId;
-            categoryIndicator.innerHTML = `<i class="fas fa-filter"></i> Mostrando: ${categoryName} (${announcements.length} anúncios)`;
-            section.insertBefore(categoryIndicator, profilesGrid);
-        }
-    }
 
     // Carregar todos os anúncios filtrados de uma vez (sem paginação)
     if (announcements.length === 0) {
@@ -1055,23 +1026,23 @@ document.addEventListener('DOMContentLoaded', async function () {
                 // Aplicar filtro inicial para mostrar todos os anúncios
                 setTimeout(() => {
                     console.log('Aplicando filtro inicial...');
-                    
+
                     if (window.AUTOMATIC_SEO_CITY) {
                         const rawName = window.AUTOMATIC_SEO_CITY;
                         const cityParam = rawName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-');
                         console.log('Filtro Automático de SEO detectado:', rawName);
-                        
+
                         // Procurar o id do <select> para travar nele
                         const citySelector = document.getElementById('citySelector');
                         if (citySelector) {
                             Array.from(citySelector.options).forEach(opt => {
                                 if (opt.value === cityParam || opt.text.toLowerCase() === rawName.toLowerCase()) {
                                     opt.selected = true;
-                                    if(typeof setCurrentCity === 'function') setCurrentCity(opt.value);
+                                    if (typeof setCurrentCity === 'function') setCurrentCity(opt.value);
                                 }
                             });
                         }
-                        
+
                         filterProfiles('all', '', cityParam);
                     } else {
                         filterProfiles('all');

@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     <script src="plans-config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-client.js"></script>
 </head>
 
@@ -95,35 +95,6 @@
 
     <!-- Main Content -->
     <main class="main-content">
-        <!-- Botões de debug (remover depois) -->
-        <div
-            style="position: fixed; top: 10px; right: 10px; z-index: 9999; display: flex; flex-direction: column; gap: 5px;">
-            <button onclick="checkFormData()"
-                style="background: blue; color: white; padding: 8px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
-                🔍 Verificar Formulário
-            </button>
-            <button onclick="checkAnnouncements()"
-                style="background: green; color: white; padding: 8px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
-                📊 Verificar Anúncios
-            </button>
-            <button onclick="testVerification()"
-                style="background: orange; color: white; padding: 8px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
-                🔄 Testar Verificação
-            </button>
-            <button onclick="forceCreateAd()"
-                style="background: purple; color: white; padding: 8px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
-                ⚡ Forçar Criação
-            </button>
-            <button onclick="checkDescriptionField()"
-                style="background: brown; color: white; padding: 8px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
-                📝 Testar Descrição
-            </button>
-            <button onclick="checkAvailableCities()"
-                style="background: teal; color: white; padding: 8px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
-                🏙️ Ver Cidades
-            </button>
-        </div>
-
         <div class="container">
             <!-- Dashboard Stats -->
             <div class="dashboard-stats">
@@ -836,7 +807,8 @@
                     <div class="verification-code">
                         <h4>Seu Código Único:</h4>
                         <div class="code-display" id="verificationCode">DESEJOS2258</div>
-                        <p>Escreva este código em um papel e tire uma foto segurando o papel junto com seu documento.
+                        <p>Escreva este código em um papel e tire uma foto segurando o papel junto com seu
+                            documento.
                         </p>
                     </div>
                 </div>

@@ -231,7 +231,7 @@ async function triggerRenewalProtocol(adId) {
             .select('*')
             .eq('id', adId)
             .single();
-            
+
         if (error || !ad) {
             alert('Anúncio não encontrado para renovação.');
             return;
@@ -249,7 +249,7 @@ async function triggerRenewalProtocol(adId) {
         // Exibir modal de confirmação e pagamento logo de cara
         alert(`Bem-vindo de volta! Prontos para renovar o anúncio "${ad.name}" em ${ad.city}?`);
         const modal = document.getElementById('paymentModal');
-        if(modal) {
+        if (modal) {
             modal.style.display = 'block';
             modal.classList.add('active'); // caso use class
             // Gerar o QR code imediatamente
@@ -888,7 +888,7 @@ function loadUserStats() {
     userAds.forEach(ad => {
         const views = ad.views || 0;
         // Simulação realista de engajamento do WhatsApp (historicamente entre 10% a 25% das views viram cliques)
-        const mockClicks = Math.floor(views * (0.12 + Math.random() * 0.08)); 
+        const mockClicks = Math.floor(views * (0.12 + Math.random() * 0.08));
 
         html += `
             <div class="stat-card" style="background: white; border: 1px solid #eeeedd; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
@@ -1742,7 +1742,7 @@ function showPaymentModal() {
 
     // Atualizar detalhes do plano
     updatePlanDetails();
-    
+
     // Renderizar opções dinâmicas do Gateway (Mercadopago/Pix configurados no admin)
     renderPaymentGateways();
 
@@ -1763,47 +1763,47 @@ function showPaymentModal() {
 function renderPaymentGateways() {
     const gateways = JSON.parse(localStorage.getItem('paymentGateways')) || [];
     const activeGateways = gateways.filter(g => g.status === 'active');
-    
+
     const tabsContainer = document.querySelector('.payment-tabs');
     const contentContainer = document.querySelector('.payment-content');
-    
+
     if (!tabsContainer || !contentContainer) return;
-    
+
     // Usar gateways padrão se nenhum estiver configurado
     const gatewaysToShow = activeGateways.length > 0 ? activeGateways : [
         { id: 'pix_default', type: 'pix', name: 'PIX', status: 'active', publicKey: 'Chave configurada pelo administrador' },
         { id: 'local_default', type: 'local', name: 'Pagamento no Ato', status: 'active', publicKey: '' }
     ];
-    
+
     tabsContainer.innerHTML = '';
     contentContainer.innerHTML = '';
-    
+
     gatewaysToShow.forEach((gateway, index) => {
         const isActive = index === 0;
-        
+
         const tab = document.createElement('button');
         tab.className = `tab-btn ${isActive ? 'active' : ''}`;
         tab.setAttribute('data-method', gateway.id);
         tab.setAttribute('onclick', `switchPaymentMethod(this)`);
-        
+
         let icon = 'fa-credit-card';
-        if(gateway.type === 'pix') icon = 'fa-qrcode';
-        if(gateway.type === 'mercadopago') icon = 'fa-handshake';
-        if(gateway.type === 'local') icon = 'fa-money-bill-wave';
-        
+        if (gateway.type === 'pix') icon = 'fa-qrcode';
+        if (gateway.type === 'mercadopago') icon = 'fa-handshake';
+        if (gateway.type === 'local') icon = 'fa-money-bill-wave';
+
         tab.innerHTML = `<i class="fas ${icon}"></i> ${gateway.name}`;
         tabsContainer.appendChild(tab);
-        
+
         const content = document.createElement('div');
         content.className = `payment-method ${isActive ? 'active' : ''}`;
         content.id = `${gateway.id}-method`;
-        
+
         let btnText = 'Finalizar e Aguardar Aprovação';
         let subTitle = 'Finalize a criação do anúncio. Um administrador entrará em contato com instruções de pagamento.';
         if (gateway.type === 'pix') {
             btnText = 'Confirmar e Aguardar PIX';
             subTitle = gateway.publicKey && gateway.publicKey !== 'Chave configurada pelo administrador'
-                ? `Chave PIX: ${gateway.publicKey}` 
+                ? `Chave PIX: ${gateway.publicKey}`
                 : 'O administrador irá informar a chave PIX para pagamento.';
         } else if (gateway.type === 'mercadopago') {
             btnText = 'Pagar com Mercado Pago';
@@ -1948,7 +1948,7 @@ function applyCouponCode(code) {
 }
 
 // Função para alternar método de pagamento
-window.switchPaymentMethod = function(tabBtn) {
+window.switchPaymentMethod = function (tabBtn) {
     document.querySelectorAll('.payment-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.payment-method').forEach(method => method.classList.remove('active'));
 
@@ -1972,7 +1972,7 @@ async function generatePIX() {
         const storedPlans = JSON.parse(localStorage.getItem('pricingPlans') || '[]');
         const planFound = storedPlans.find(p => p.type === planType && p.status === 'active') || storedPlans.find(p => p.type === planType);
         if (planFound && planFound.price != null) amount = Number(String(planFound.price).replace(',', '.')) || amount;
-    } catch (e) {}
+    } catch (e) { }
 
     // Aplicar desconto de cupom se houver
     const appliedCoupon = JSON.parse(localStorage.getItem('appliedCoupon') || 'null');
@@ -2014,9 +2014,9 @@ async function generatePIX() {
         pixQR.innerHTML = `
             <div style="background: white; padding: 20px; border-radius: 8px; display: inline-block; text-align: center; max-width: 300px;">
                 ${qrImage
-                    ? `<img src="${qrImage}" style="width: 220px; height: 220px; margin-bottom: 10px; border: 2px solid #eee; border-radius: 8px;" alt="QR Code PIX">`
-                    : `<div style="width:220px;height:220px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;"><i class="fas fa-qrcode" style="font-size:48px;color:#333;"></i></div>`
-                }
+                ? `<img src="${qrImage}" style="width: 220px; height: 220px; margin-bottom: 10px; border: 2px solid #eee; border-radius: 8px;" alt="QR Code PIX">`
+                : `<div style="width:220px;height:220px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;"><i class="fas fa-qrcode" style="font-size:48px;color:#333;"></i></div>`
+            }
                 <div style="font-size: 13px; color: #333; margin-bottom: 8px;"><strong>R$ ${amount.toFixed(2)}</strong> — Plano ${planType.toUpperCase()}</div>
                 ${result.qr_code ? `
                 <div style="margin-top: 8px;">
@@ -2052,12 +2052,12 @@ async function generatePIX() {
                         if (applied) adData.appliedCoupon = applied;
                         closeModal('paymentModal');
                         alert('✅ Pagamento PIX confirmado! Seu anúncio foi ativado automaticamente.');
-                        createAd();
+                        createAd(true);
                     } else if (statusData.status === 'rejected' || statusData.status === 'cancelled') {
                         clearInterval(pollInterval);
                         pixQR.innerHTML += `<div style="color:red;margin-top:10px;">❌ Pagamento ${statusData.status}. Tente novamente.</div>`;
                     }
-                } catch (e) {}
+                } catch (e) { }
             }, 5000);
         }
 
@@ -2098,7 +2098,7 @@ function generateThumbnail(dataUrl, maxW = 320, quality = 0.8) {
 }
 
 // Função para criar anúncio
-async function createAd() {
+async function createAd(forceActive = false) {
     console.log('=== CRIANDO ANÚNCIO ===');
     console.log('Dados do anúncio:', adData);
     console.log('Plano selecionado:', selectedPlan);
@@ -2184,7 +2184,7 @@ async function createAd() {
     }
 
     const isVerified = localStorage.getItem('userVerified') === 'true';
-    const adStatus = isVerified ? 'active' : 'pending';
+    const adStatus = (isVerified || forceActive) ? 'active' : 'pending';
     const appliedCoupon = JSON.parse(localStorage.getItem('appliedCoupon') || 'null');
 
     const newAd = {
@@ -2231,43 +2231,43 @@ async function createAd() {
         localStorage.removeItem('appliedCoupon');
     }
 
-        // Criar no Supabase se não estivermos simulando
-        let insertedId = Date.now();
-        if (window.createAdInSupabase) {
-            try {
-                const supaResult = await window.createAdInSupabase(newAd);
-                if (supaResult && supaResult.id) {
-                    insertedId = supaResult.id;
-                }
-                // Limpar rascunho após criação bem-sucedida
-                localStorage.removeItem('tempAdCreation');
-                localStorage.removeItem('tempSelectedPlan');
-            } catch (err) {
-                console.error("Falha ao injetar no supabase:", err);
-                // Fallback: salvar localmente se Supabase falhar
-                const announcements2 = JSON.parse(localStorage.getItem('announcements')) || [];
-                announcements2.push(newAd);
-                try {
-                    localStorage.setItem('announcements', JSON.stringify(announcements2));
-                    localStorage.removeItem('tempAdCreation');
-                } catch (e) { console.warn('Quota local também excedida', e); }
+    // Criar no Supabase se não estivermos simulando
+    let insertedId = Date.now();
+    if (window.createAdInSupabase) {
+        try {
+            const supaResult = await window.createAdInSupabase(newAd);
+            if (supaResult && supaResult.id) {
+                insertedId = supaResult.id;
             }
-        } else {
-            // fallback se não tiver inicializado o script do DB
+            // Limpar rascunho após criação bem-sucedida
+            localStorage.removeItem('tempAdCreation');
+            localStorage.removeItem('tempSelectedPlan');
+        } catch (err) {
+            console.error("Falha ao injetar no supabase:", err);
+            // Fallback: salvar localmente se Supabase falhar
             const announcements2 = JSON.parse(localStorage.getItem('announcements')) || [];
             announcements2.push(newAd);
             try {
                 localStorage.setItem('announcements', JSON.stringify(announcements2));
-            } catch (e) {
-                console.warn('Quota excedida ao salvar anúncio local');
-                const slim = announcements2.map(a => ({ ...a, photos: [] }));
-                try { localStorage.setItem('announcements', JSON.stringify(slim)); } catch (_) { }
-            }
-            localStorage.removeItem('tempAdCreation');
+                localStorage.removeItem('tempAdCreation');
+            } catch (e) { console.warn('Quota local também excedida', e); }
         }
+    } else {
+        // fallback se não tiver inicializado o script do DB
+        const announcements2 = JSON.parse(localStorage.getItem('announcements')) || [];
+        announcements2.push(newAd);
+        try {
+            localStorage.setItem('announcements', JSON.stringify(announcements2));
+        } catch (e) {
+            console.warn('Quota excedida ao salvar anúncio local');
+            const slim = announcements2.map(a => ({ ...a, photos: [] }));
+            try { localStorage.setItem('announcements', JSON.stringify(slim)); } catch (_) { }
+        }
+        localStorage.removeItem('tempAdCreation');
+    }
 
-        loadDashboardStats();
-        loadUserAds();
+    loadDashboardStats();
+    loadUserAds();
 
     if (isVerified) {
         alert('Anúncio criado com sucesso! Seu anúncio está ATIVO e visível para todos os visitantes.');
@@ -3120,7 +3120,7 @@ window.checkAvailableCities = function () {
 // Função para processar pagamento dinâmico (configurado pelo painel admin)
 window.processDynamicPayment = async function (gatewayId, paymentBtn) {
     console.log('=== PROCESSANDO PAGAMENTO ' + gatewayId + ' ===');
-    
+
     if (paymentBtn) {
         paymentBtn.disabled = true;
         const originalText = paymentBtn.innerHTML;
@@ -3129,7 +3129,7 @@ window.processDynamicPayment = async function (gatewayId, paymentBtn) {
 
     const gateways = JSON.parse(localStorage.getItem('paymentGateways')) || [];
     const gateway = gateways.find(g => g.id === gatewayId);
-    
+
     // Simula uma resposta ou envia ao Webhook
     if (gateway && gateway.webhook) {
         try {
