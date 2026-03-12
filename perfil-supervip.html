@@ -5,717 +5,928 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Perfil Super VIP - DesejosMS</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@400;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400;1,700&family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin:0; padding:0; box-sizing:border-box; }
 
         :root {
-            --red:       #8B0000;
-            --red-mid:   #B22222;
-            --red-light: #DC143C;
-            --gold:      #D4AF37;
-            --gold-lt:   #FFD700;
-            --cream:     #FFF8F0;
-            --dark:      #1a0000;
+            --black:   #0a0a0a;
+            --card:    #141414;
+            --card2:   #1c1c1c;
+            --border:  #2a2a2a;
+            --gold:    #C9A84C;
+            --gold-lt: #E8C96A;
+            --red-btn: #C0392B;
+            --green:   #1DB954;
+            --text:    #E8E8E8;
+            --muted:   #888;
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
-            background: var(--red);
-            background-image:
-                radial-gradient(circle at 20% 20%, rgba(180,50,50,.35) 0%, transparent 45%),
-                radial-gradient(circle at 80% 80%, rgba(180,50,50,.35) 0%, transparent 45%);
+            font-family: 'Montserrat', sans-serif;
+            background: var(--black);
+            color: var(--text);
             min-height: 100vh;
-            color: #333;
         }
 
-        /* ===== HEADER ===== */
-        .svip-header {
-            background: linear-gradient(135deg, #0d0d0d 0%, #1a0000 60%, #0d0d0d 100%);
-            border-bottom: 2px solid var(--gold);
-            padding: 14px 0;
+        /* ── HEADER ── */
+        .sv-header {
+            background: #0d0d0d;
+            border-bottom: 1px solid var(--border);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             position: sticky;
             top: 0;
-            z-index: 100;
-            box-shadow: 0 4px 24px rgba(0,0,0,.6);
+            z-index: 200;
         }
-        .svip-header-inner {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .svip-logo {
-            font-family: 'Cinzel', serif;
-            font-size: 1.6rem;
-            color: var(--gold);
+        .sv-logo {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 800;
             text-decoration: none;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            letter-spacing: 1px;
-            text-shadow: 0 0 20px rgba(212,175,55,.4);
-        }
-        .svip-logo i { font-size: 1.3rem; }
-        .svip-back {
-            color: rgba(255,255,255,.75);
-            text-decoration: none;
-            font-size: 0.85rem;
             display: flex;
             align-items: center;
             gap: 6px;
-            border: 1px solid rgba(212,175,55,.3);
-            padding: 8px 16px;
-            border-radius: 30px;
-            transition: all .25s ease;
-            font-weight: 500;
         }
-        .svip-back:hover {
-            color: var(--gold);
-            border-color: var(--gold);
-            background: rgba(212,175,55,.08);
+        .sv-logo .logo-desejos { color: #fff; }
+        .sv-logo .logo-ms      { color: var(--red-btn); }
+        .sv-logo-sub {
+            font-size: 0.55rem;
+            color: var(--muted);
+            letter-spacing: 1.5px;
+            display: block;
+            font-weight: 400;
+            text-align: center;
+            margin-top: -2px;
         }
-
-        /* ===== HERO BANNER com foto principal ===== */
-        .hero-banner {
-            width: 100%;
-            max-width: 1100px;
-            margin: 32px auto 0;
-            padding: 0 20px;
-        }
-        .hero-inner {
-            border-radius: 24px;
-            overflow: hidden;
-            position: relative;
-            background: linear-gradient(135deg, #1a0000, #2d0000);
-            border: 1.5px solid rgba(212,175,55,.35);
-            box-shadow: 0 20px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(212,175,55,.1);
-        }
-        /* Faixa dourada no topo */
-        .hero-inner::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, var(--gold), var(--gold-lt), var(--gold), transparent);
-            z-index: 2;
-        }
-
-        /* ===== GRID PRINCIPAL ===== */
-        .main-grid {
-            max-width: 1100px;
-            margin: 28px auto 0;
-            padding: 0 20px;
-            display: grid;
-            grid-template-columns: 1.1fr 0.9fr;
-            gap: 24px;
-        }
-
-        /* ===== GALERIA ===== */
-        .gallery-wrap {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-        .gallery-heading {
-            font-family: 'Cinzel', serif;
-            color: var(--gold);
-            font-size: 0.8rem;
-            letter-spacing: 2px;
+        .sv-back {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 1px;
             text-transform: uppercase;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 6px;
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all .2s;
         }
-        .gallery-heading::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, rgba(212,175,55,.4), transparent);
+        .sv-back:hover { color: #fff; border-color: #555; }
+
+        /* ── MAIN LAYOUT ── */
+        .sv-wrap {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 28px 20px 60px;
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 28px;
         }
-        .gallery-grid {
+
+        /* ── LEFT COLUMN ── */
+        .left-col { display: flex; flex-direction: column; gap: 12px; }
+
+        /* Main photo */
+        .main-photo-box {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            aspect-ratio: 3/4;
+            background: #111;
+            cursor: pointer;
+        }
+        .main-photo-box img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transition: transform .4s ease;
+            user-select: none;
+        }
+        .main-photo-box:hover img { transform: scale(1.03); }
+        .photo-counter {
+            position: absolute;
+            bottom: 10px; left: 10px;
+            background: rgba(0,0,0,.7);
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 3px 9px;
+            border-radius: 20px;
+            letter-spacing: .5px;
+        }
+        .photo-nav {
+            position: absolute;
+            top: 50%; transform: translateY(-50%);
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 0 8px;
+            pointer-events: none;
+        }
+        .photo-nav-btn {
+            background: rgba(0,0,0,.55);
+            border: none;
+            color: #fff;
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            font-size: 0.8rem;
+            cursor: pointer;
+            pointer-events: all;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background .2s;
+        }
+        .photo-nav-btn:hover { background: rgba(0,0,0,.85); }
+
+        /* Thumbnails */
+        .thumbs-row {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+            gap: 6px;
         }
-        .gallery-thumb {
-            aspect-ratio: 3/4;
-            border-radius: 14px;
+        .thumb-box {
+            aspect-ratio: 1;
+            border-radius: 7px;
             overflow: hidden;
             cursor: pointer;
-            border: 1.5px solid rgba(255,255,255,.08);
+            border: 1.5px solid transparent;
+            transition: border-color .2s;
             position: relative;
-            transition: all .3s ease;
-            box-shadow: 0 4px 16px rgba(0,0,0,.4);
         }
-        .gallery-thumb::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to top, rgba(139,0,0,.6) 0%, transparent 50%);
-            opacity: 0;
-            transition: opacity .3s ease;
+        .thumb-box.active { border-color: var(--gold); }
+        .thumb-box img { width:100%; height:100%; object-fit:cover; }
+        .thumb-more {
+            position: absolute; inset: 0;
+            background: rgba(0,0,0,.65);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #fff;
         }
-        .gallery-thumb:hover {
-            border-color: var(--gold);
-            transform: translateY(-4px);
-            box-shadow: 0 12px 32px rgba(139,0,0,.5), 0 0 0 1px rgba(212,175,55,.3);
-        }
-        .gallery-thumb:hover::after { opacity: 1; }
-        .gallery-thumb img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform .5s ease;
-        }
-        .gallery-thumb:hover img { transform: scale(1.07); }
-        .thumb-zoom {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            color: white;
-            font-size: 0.75rem;
-            z-index: 3;
-            opacity: 0;
-            transition: opacity .3s ease;
-        }
-        .gallery-thumb:hover .thumb-zoom { opacity: 1; }
 
-        /* ===== PAINEL DE INFO ===== */
-        .info-wrap {
+        /* Video section */
+        .video-section {
+            border-radius: 10px;
+            overflow: hidden;
+            background: #111;
+            border: 1px solid var(--border);
+        }
+        .video-label {
+            padding: 9px 14px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--muted);
             display: flex;
-            flex-direction: column;
-            gap: 18px;
+            align-items: center;
+            gap: 7px;
+            border-bottom: 1px solid var(--border);
         }
-
-        /* Card do nome e badge */
-        .profile-card {
-            background: #fff;
-            border-radius: 20px;
-            padding: 28px 24px;
-            border: 1.5px solid rgba(139,0,0,.12);
-            box-shadow: 0 8px 32px rgba(0,0,0,.12), 0 0 0 1px rgba(212,175,55,.08);
+        .video-label i { color: var(--gold); }
+        .video-thumb {
             position: relative;
+            aspect-ratio: 16/9;
+            background: #0d0d0d;
+            cursor: pointer;
             overflow: hidden;
         }
-        .profile-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--red), var(--red-light), var(--gold), var(--red-light), var(--red));
+        .video-thumb-img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            filter: blur(6px) brightness(.4);
         }
+        .video-play-overlay {
+            position: absolute; inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .video-play-btn {
+            width: 44px; height: 44px;
+            background: rgba(255,255,255,.15);
+            border: 2px solid rgba(255,255,255,.4);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem;
+            color: #fff;
+            transition: background .2s;
+        }
+        .video-play-btn:hover { background: rgba(255,255,255,.3); }
+        .video-login-txt {
+            font-size: 0.65rem;
+            color: #aaa;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        /* ── RIGHT COLUMN ── */
+        .right-col { display: flex; flex-direction: column; gap: 20px; }
+
+        /* Badge */
         .supervip-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: linear-gradient(135deg, var(--gold), var(--gold-lt), var(--gold));
-            color: #4a2800;
-            font-size: 0.75rem;
+            background: rgba(201,168,76,.12);
+            border: 1px solid rgba(201,168,76,.4);
+            color: var(--gold);
+            font-size: 0.65rem;
             font-weight: 800;
-            letter-spacing: 1.5px;
-            padding: 5px 14px;
-            border-radius: 30px;
-            margin-bottom: 14px;
-            box-shadow: 0 4px 14px rgba(212,175,55,.4);
+            letter-spacing: 2px;
             text-transform: uppercase;
+            padding: 4px 12px;
+            border-radius: 4px;
         }
-        .profile-name-big {
+        .supervip-badge i { font-size: 0.6rem; }
+
+        /* Name */
+        .profile-name {
             font-family: 'Playfair Display', serif;
-            font-size: 2.2rem;
-            font-weight: 700;
-            color: var(--red);
-            line-height: 1.1;
-            margin-bottom: 10px;
+            font-size: 2.8rem;
+            line-height: 1.05;
+            margin-top: 4px;
         }
-        .profile-meta-row {
+        .name-first { font-weight: 700; color: #fff; font-style: normal; }
+        .name-last  { font-weight: 700; color: var(--gold); font-style: italic; }
+
+        /* Meta pills */
+        .meta-row {
             display: flex;
             flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 20px;
+            gap: 6px;
+            margin-top: 4px;
         }
         .meta-pill {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            background: var(--cream);
-            border: 1px solid rgba(139,0,0,.15);
-            border-radius: 20px;
-            padding: 5px 12px;
-            font-size: 0.82rem;
-            color: #555;
-            font-weight: 500;
-        }
-        .meta-pill i { color: var(--red); font-size: 0.75rem; }
-
-        /* Divisor dourado */
-        .gold-divider {
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--gold), transparent);
-            margin: 16px 0;
-            opacity: .5;
-        }
-
-        /* Botões de ação */
-        .action-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-        .btn-call {
-            padding: 14px 10px;
-            border: none;
-            border-radius: 12px;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 700;
-            font-size: 0.92rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all .25s ease;
-            letter-spacing: .3px;
-        }
-        .btn-phone-red {
-            background: linear-gradient(135deg, var(--red), var(--red-mid));
-            color: #fff;
-            box-shadow: 0 4px 16px rgba(139,0,0,.35);
-        }
-        .btn-phone-red:hover {
-            box-shadow: 0 8px 24px rgba(139,0,0,.5);
-            transform: translateY(-2px);
-        }
-        .btn-wpp {
-            background: linear-gradient(135deg, #25D366, #128C7E);
-            color: #fff;
-            box-shadow: 0 4px 16px rgba(37,211,102,.25);
-        }
-        .btn-wpp:hover {
-            box-shadow: 0 8px 24px rgba(37,211,102,.4);
-            transform: translateY(-2px);
-        }
-
-        /* Cards de detalhe (valor / disponib.) */
-        .detail-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-        .detail-box {
-            background: #fff;
-            border-radius: 14px;
-            padding: 16px;
-            border: 1.5px solid rgba(139,0,0,.1);
-            box-shadow: 0 4px 12px rgba(0,0,0,.06);
-        }
-        .detail-box-label {
-            font-size: 0.7rem;
+            display: flex; align-items: center; gap: 5px;
+            background: #1c1c1c;
+            border: 1px solid var(--border);
+            color: #aaa;
+            font-size: 0.67rem;
+            font-weight: 600;
+            letter-spacing: .5px;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--red);
-            font-weight: 700;
-            margin-bottom: 4px;
+            padding: 4px 10px;
+            border-radius: 4px;
         }
-        .detail-box-val {
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: #222;
-        }
+        .meta-pill i { font-size: 0.6rem; }
+        .pill-green { color: #4caf50; border-color: rgba(76,175,80,.3); }
+        .pill-gold  { color: var(--gold); border-color: rgba(201,168,76,.3); }
 
-        /* Card de seção (sobre / serviços) */
-        .section-card {
-            background: #fff;
-            border-radius: 18px;
-            padding: 22px 22px;
-            border: 1.5px solid rgba(139,0,0,.1);
-            box-shadow: 0 4px 16px rgba(0,0,0,.07);
+        /* Price + buttons */
+        .price-action-row {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 16px;
+            align-items: center;
         }
-        .section-heading {
-            font-family: 'Cinzel', serif;
-            color: var(--red);
-            font-size: 0.85rem;
-            letter-spacing: 1.5px;
+        .price-box {}
+        .price-label {
+            font-size: 0.62rem;
+            letter-spacing: 2px;
             text-transform: uppercase;
+            color: var(--muted);
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        .price-val {
             display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 14px;
+            align-items: baseline;
+            gap: 4px;
         }
-        .section-heading::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, rgba(139,0,0,.25), transparent);
+        .price-currency {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #ccc;
         }
-        .bio-txt {
-            color: #555;
-            font-size: 0.92rem;
-            line-height: 1.75;
-        }
-        .tags-wrap {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .svc-tag {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(139,0,0,.06);
-            border: 1px solid rgba(139,0,0,.15);
-            color: var(--red);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.82rem;
-            font-weight: 500;
-            transition: all .2s;
-        }
-        .svc-tag:hover {
-            background: var(--red);
+        .price-num {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 3rem;
+            font-weight: 800;
             color: #fff;
-        }
-        .svc-tag i { font-size: 0.7rem; }
-
-        /* Card de Avaliações */
-        .rating-card {
-            background: linear-gradient(135deg, var(--red) 0%, #6b0000 100%);
-            border-radius: 18px;
-            padding: 22px;
-            text-align: center;
-            color: #fff;
-            box-shadow: 0 8px 28px rgba(139,0,0,.35);
-            border: 1px solid rgba(212,175,55,.2);
-        }
-        .rating-num {
-            font-family: 'Playfair Display', serif;
-            font-size: 3.5rem;
-            font-weight: 700;
-            color: var(--gold-lt);
             line-height: 1;
         }
-        .stars-row {
-            color: var(--gold-lt);
-            font-size: 1.1rem;
-            margin: 8px 0 4px;
-            letter-spacing: 2px;
+        .price-note {
+            font-size: 0.68rem;
+            color: var(--muted);
+            margin-top: 2px;
         }
-        .rating-sub {
-            font-size: 0.78rem;
-            opacity: .7;
-            letter-spacing: .5px;
+        .action-btns {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .btn-ligar {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            background: var(--red-btn);
+            color: #fff;
+            border: none;
+            border-radius: 7px;
+            padding: 13px 20px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: filter .2s, transform .1s;
+        }
+        .btn-ligar:hover { filter: brightness(1.15); transform: translateY(-1px); }
+        .btn-wpp {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            background: #128C7E;
+            color: #fff;
+            border: none;
+            border-radius: 7px;
+            padding: 13px 20px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: filter .2s, transform .1s;
+        }
+        .btn-wpp:hover { filter: brightness(1.2); transform: translateY(-1px); }
+
+        /* Warning box */
+        .warning-box {
+            background: #161616;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .warning-box i { color: var(--gold); margin-top: 1px; font-size: 0.85rem; flex-shrink: 0; }
+        .warning-txt {
+            font-size: 0.68rem;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+        .warning-txt strong { color: #ccc; }
+        .warn-tag {
+            display: inline-block;
+            background: rgba(201,168,76,.15);
+            border: 1px solid rgba(201,168,76,.3);
+            color: var(--gold);
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            padding: 1px 7px;
+            border-radius: 3px;
+            margin-left: 4px;
         }
 
-        /* ===== LIGHTBOX ===== */
+        /* Section blocks */
+        .sv-section {
+            border-left: 2px solid var(--gold);
+            padding-left: 14px;
+        }
+        .sv-section-title {
+            font-size: 0.67rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 10px;
+        }
+        .tags-flex {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .sv-tag {
+            background: #1c1c1c;
+            border: 1px solid var(--border);
+            color: #ccc;
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: .5px;
+            text-transform: uppercase;
+            padding: 5px 12px;
+            border-radius: 4px;
+        }
+        .avail-tag {
+            display: flex; align-items: center; gap: 8px;
+            background: #1c1c1c;
+            border: 1px solid var(--border);
+            color: #ccc;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 7px 12px;
+            border-radius: 4px;
+            width: 100%;
+        }
+        .avail-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: #4caf50;
+            flex-shrink: 0;
+        }
+        .loc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+        .loc-item {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 0.72rem;
+            color: #bbb;
+            font-weight: 500;
+        }
+        .loc-item i { color: var(--red-btn); font-size: 0.65rem; }
+
+        /* Bio */
+        .bio-block {
+            text-align: center;
+            padding: 10px 0;
+        }
+        .bio-label {
+            font-size: 0.62rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--gold);
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+        .bio-label::before, .bio-label::after {
+            content: '★ ';
+        }
+        .bio-quote {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 1.02rem;
+            color: #d0d0d0;
+            line-height: 1.8;
+        }
+        .bio-quote::before { content: '"'; color: var(--gold); font-size: 1.4rem; }
+        .bio-quote::after  { content: '"'; color: var(--gold); font-size: 1.4rem; }
+
+        /* Reviews */
+        .reviews-header {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.67rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--red-btn);
+            margin-bottom: 12px;
+        }
+        .reviews-header i { color: var(--gold); }
+        .review-card {
+            background: #141414;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 8px;
+        }
+        .review-top {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 6px;
+        }
+        .reviewer-name { font-size: 0.75rem; font-weight: 700; color: #ddd; }
+        .review-stars  { color: var(--gold); font-size: 0.7rem; letter-spacing: 1px; }
+        .review-txt    { font-size: 0.72rem; color: #888; line-height: 1.6; }
+
+        /* ── FOOTER ── */
+        .sv-footer {
+            background: #0d0d0d;
+            border-top: 1px solid var(--border);
+            padding: 30px 24px;
+            text-align: center;
+        }
+        .footer-logo {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 1.4rem;
+            margin-bottom: 6px;
+        }
+        .footer-logo .fw { color: #fff; }
+        .footer-logo .fr { color: var(--red-btn); }
+        .footer-sub {
+            font-size: 0.62rem;
+            letter-spacing: 2px;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+        .footer-links {
+            display: flex; gap: 20px; justify-content: center;
+            font-size: 0.7rem;
+            color: var(--muted);
+        }
+        .footer-links a { color: var(--muted); text-decoration: none; }
+        .footer-links a:hover { color: #ccc; }
+
+        /* ── LIGHTBOX ── */
         .lightbox {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,.92);
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,.94);
             z-index: 9999;
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             opacity: 0;
             pointer-events: none;
-            transition: opacity .3s ease;
+            transition: opacity .3s;
         }
-        .lightbox.open {
-            opacity: 1;
-            pointer-events: all;
-        }
+        .lightbox.open { opacity: 1; pointer-events: all; }
         .lightbox img {
             max-width: 88vw;
             max-height: 88vh;
-            border-radius: 12px;
-            border: 2px solid rgba(212,175,55,.4);
+            border-radius: 8px;
             object-fit: contain;
+            border: 1px solid rgba(201,168,76,.3);
         }
         .lb-close {
-            position: absolute;
-            top: 20px; right: 24px;
-            color: #fff;
-            font-size: 2rem;
-            cursor: pointer;
-            transition: color .2s;
+            position: absolute; top: 18px; right: 22px;
             background: none; border: none;
+            color: #fff; font-size: 1.8rem; cursor: pointer;
         }
-        .lb-close:hover { color: var(--gold-lt); }
         .lb-nav {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(139,0,0,.7);
-            border: 1px solid rgba(212,175,55,.3);
+            position: absolute; top: 50%; transform: translateY(-50%);
+            background: rgba(0,0,0,.6);
+            border: 1px solid #333;
             color: #fff;
-            width: 48px; height: 48px;
+            width: 44px; height: 44px;
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem;
             cursor: pointer;
-            transition: all .2s;
-            backdrop-filter: blur(4px);
+            transition: background .2s;
         }
-        .lb-nav:hover { background: var(--red); border-color: var(--gold); }
-        .lb-prev { left: 24px; }
-        .lb-next { right: 24px; }
+        .lb-nav:hover { background: rgba(0,0,0,.9); }
+        .lb-prev { left: 20px; }
+        .lb-next { right: 20px; }
 
-        /* ===== FOOTER ===== */
-        .svip-footer {
-            background: #0d0d0d;
-            border-top: 1px solid rgba(212,175,55,.2);
-            color: #555;
-            text-align: center;
-            padding: 24px;
-            margin-top: 48px;
-            font-size: 0.82rem;
-        }
-        .svip-footer span { color: var(--gold); }
-
-        /* ===== MOBILE ===== */
-        @media (max-width: 768px) {
-            .main-grid {
+        /* ── MOBILE ── */
+        @media (max-width: 680px) {
+            .sv-wrap {
                 grid-template-columns: 1fr;
-                margin-top: 20px;
+                padding: 16px 14px 50px;
+                gap: 20px;
             }
-            .gallery-grid {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 7px;
-            }
-            .profile-name-big {
-                font-size: 1.7rem;
-            }
-            .action-row {
-                gap: 10px;
-            }
-            .btn-call {
-                font-size: 0.85rem;
-                padding: 13px 8px;
-            }
-            .lb-prev { left: 10px; }
-            .lb-next { right: 10px; }
+            .left-col { display: contents; }
+            .main-photo-box { order: 0; grid-column: 1; }
+            .thumbs-row { order: 1; }
+            .video-section { order: 5; }
+            .right-col { order: 2; }
+            .profile-name { font-size: 2rem; }
+            .price-action-row { grid-template-columns: 1fr; gap: 12px; }
+            .price-num { font-size: 2.4rem; }
+            .loc-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Header -->
-    <header class="svip-header">
-        <div class="svip-header-inner">
-            <a href="/" class="svip-logo">
-                <i class="fas fa-crown"></i> DesejosMS
-            </a>
-            <a href="index.html" class="svip-back">
-                <i class="fas fa-arrow-left"></i> Voltar
-            </a>
+<!-- Header -->
+<header class="sv-header">
+    <a href="/" class="sv-logo">
+        <div>
+            <span class="logo-desejos">Desejos</span><span class="logo-ms">MS</span>
+            <span class="sv-logo-sub">ONDE SEUS DESEJOS GANHAM VIDA</span>
         </div>
-    </header>
+    </a>
+    <a href="index.html" class="sv-back">
+        <i class="fas fa-arrow-left"></i> VOLTAR
+    </a>
+</header>
 
-    <!-- Layout principal -->
-    <div class="main-grid">
+<!-- Main layout -->
+<div class="sv-wrap">
 
-        <!-- Coluna Esquerda: Galeria -->
-        <div class="gallery-wrap">
-            <div class="gallery-heading">
-                <i class="fas fa-images" style="color:var(--gold)"></i> Galeria de Fotos
-            </div>
-            <div class="gallery-grid" id="galleryGrid">
-                <!-- Fotos inseridas via JS -->
-            </div>
+    <!-- ── LEFT COLUMN ── -->
+    <div class="left-col">
 
-            <!-- Card de Avaliações (só no desktop, na esquerda) -->
-            <div class="rating-card" style="margin-top:4px;">
-                <div class="rating-num">5.0</div>
-                <div class="stars-row">★★★★★</div>
-                <div class="rating-sub">Baseado em avaliações verificadas</div>
+        <!-- Foto principal -->
+        <div class="main-photo-box" id="mainPhotoBox" onclick="openLb(currentPhotoIndex)">
+            <img id="mainPhoto" src="" alt="Foto principal" oncontextmenu="return false">
+            <div class="photo-nav">
+                <button class="photo-nav-btn" onclick="event.stopPropagation(); navMain(-1)"><i class="fas fa-chevron-left"></i></button>
+                <button class="photo-nav-btn" onclick="event.stopPropagation(); navMain(1)"><i class="fas fa-chevron-right"></i></button>
             </div>
+            <div class="photo-counter" id="photoCounter">1 / 1</div>
         </div>
 
-        <!-- Coluna Direita: Informações -->
-        <div class="info-wrap">
+        <!-- Thumbnails -->
+        <div class="thumbs-row" id="thumbsRow"></div>
 
-            <!-- Card principal de perfil -->
-            <div class="profile-card">
-                <div class="supervip-badge">
-                    <i class="fas fa-gem"></i> SUPER VIP
-                </div>
-                <h1 class="profile-name-big" id="profileName">Carregando...</h1>
-                <div class="profile-meta-row">
-                    <div class="meta-pill"><i class="fas fa-birthday-cake"></i><span id="profileAge">--</span> anos</div>
-                    <div class="meta-pill"><i class="fas fa-map-marker-alt"></i><span id="profileCity">--</span></div>
-                    <div class="meta-pill"><i class="fas fa-hashtag"></i>Ref: <span id="profileRef">--</span></div>
-                </div>
-
-                <div class="gold-divider"></div>
-
-                <div class="action-row">
-                    <button class="btn-call btn-phone-red" onclick="makeCall()">
-                        <i class="fas fa-phone-alt"></i> Ligar
-                    </button>
-                    <button class="btn-call btn-wpp" onclick="openWhatsApp()">
-                        <i class="fab fa-whatsapp"></i> WhatsApp
-                    </button>
+        <!-- Vídeos -->
+        <div class="video-section">
+            <div class="video-label">
+                <i class="fas fa-video"></i> VÍDEOS DO ANÚNCIO
+            </div>
+            <div class="video-thumb">
+                <img class="video-thumb-img" id="videoThumbImg" src="" alt="">
+                <div class="video-play-overlay" onclick="alert('Faça login para assistir ao vídeo.')">
+                    <div class="video-play-btn"><i class="fas fa-play"></i></div>
+                    <div class="video-login-txt">LOGIN PARA ASSISTIR</div>
                 </div>
             </div>
+        </div>
 
-            <!-- Valor e disponibilidade -->
-            <div class="detail-row">
-                <div class="detail-box">
-                    <div class="detail-box-label"><i class="fas fa-tag"></i> Valor</div>
-                    <div class="detail-box-val" id="profileValue">A combinar</div>
+    </div>
+
+    <!-- ── RIGHT COLUMN ── -->
+    <div class="right-col">
+
+        <!-- Badge + Nome -->
+        <div>
+            <div class="supervip-badge"><i class="fas fa-star"></i> SUPER VIP PREMIUM</div>
+            <h1 class="profile-name">
+                <span class="name-first" id="nameFirst">–</span>
+                <span class="name-last" id="nameLast"></span>
+            </h1>
+        </div>
+
+        <!-- Meta -->
+        <div class="meta-row" id="metaRow">
+            <div class="meta-pill"><i class="fas fa-birthday-cake"></i> <span id="metaAge">--</span> anos</div>
+            <div class="meta-pill"><i class="fas fa-map-marker-alt"></i> <span id="metaCity">--</span></div>
+            <div class="meta-pill pill-green"><i class="fas fa-check-circle"></i> VERIFICADO</div>
+            <div class="meta-pill pill-gold">REF. # <span id="metaRef">--</span></div>
+        </div>
+
+        <!-- Preço + Botões -->
+        <div class="price-action-row">
+            <div class="price-box">
+                <div class="price-label">INVESTIMENTO</div>
+                <div class="price-val">
+                    <span class="price-currency">R$</span>
+                    <span class="price-num" id="priceNum">--</span>
                 </div>
-                <div class="detail-box">
-                    <div class="detail-box-label"><i class="fas fa-clock"></i> Disponibilidade</div>
-                    <div class="detail-box-val" id="profileAvailability">Consultar</div>
-                </div>
+                <div class="price-note">Valor a combinar</div>
             </div>
-
-            <!-- Sobre Mim -->
-            <div class="section-card">
-                <div class="section-heading">
-                    <i class="fas fa-user-circle"></i> Sobre Mim
-                </div>
-                <p class="bio-txt" id="profileBio">Carregando...</p>
+            <div class="action-btns">
+                <button class="btn-ligar" onclick="makeCall()">
+                    <i class="fas fa-phone-alt"></i> LIGAR AGORA
+                </button>
+                <button class="btn-wpp" onclick="openWhatsApp()">
+                    <i class="fab fa-whatsapp"></i> WHATSAPP
+                </button>
             </div>
+        </div>
 
-            <!-- Serviços e Locais -->
-            <div class="section-card">
-                <div class="section-heading">
-                    <i class="fas fa-concierge-bell"></i> Serviços & Atendimento
-                </div>
-                <div class="tags-wrap" id="servicesList"></div>
+        <!-- Aviso de segurança -->
+        <div class="warning-box">
+            <i class="fas fa-lock"></i>
+            <div class="warning-txt">
+                <strong>PARA EVITAR ENGANAÇÃO, NÃO FAÇA PAGAMENTO ADIANTADO.</strong><br>
+                Ao ligar mencione: <span class="warn-tag">DESEJOSMS</span>
+            </div>
+        </div>
 
-                <div style="margin-top:16px;">
-                    <div class="section-heading" style="font-size:.75rem;">
-                        <i class="fas fa-map-marker-alt"></i> Locais de Atendimento
+        <!-- Serviços -->
+        <div class="sv-section">
+            <div class="sv-section-title">Serviços Oferecidos</div>
+            <div class="tags-flex" id="servicesList">
+                <div class="sv-tag">Carregando...</div>
+            </div>
+        </div>
+
+        <!-- Disponibilidade -->
+        <div class="sv-section">
+            <div class="sv-section-title">Disponibilidade</div>
+            <div style="display:flex;flex-direction:column;gap:6px;" id="availList">
+                <div class="avail-tag"><div class="avail-dot"></div> Consultar</div>
+            </div>
+        </div>
+
+        <!-- Quem atendo -->
+        <div class="sv-section" id="wrapQuem" style="display:none;">
+            <div class="sv-section-title">Quem Atendo</div>
+            <div class="tags-flex" id="quemList"></div>
+        </div>
+
+        <!-- Onde atendo -->
+        <div class="sv-section" id="wrapOnde" style="display:none;">
+            <div class="sv-section-title">Onde Atendo</div>
+            <div class="tags-flex" id="ondeList"></div>
+        </div>
+
+        <!-- Locais de atendimento -->
+        <div class="sv-section" id="wrapLocais" style="display:none;">
+            <div class="sv-section-title">Locais de Atendimento</div>
+            <div class="loc-grid" id="locaisList"></div>
+        </div>
+
+        <!-- Biografia -->
+        <div class="bio-block">
+            <div class="bio-label">Perfil & Biografia</div>
+            <div class="bio-quote" id="bioText">Carregando...</div>
+        </div>
+
+        <!-- Avaliações -->
+        <div>
+            <div class="reviews-header">
+                <i class="fas fa-star"></i> Avaliações Verificadas
+            </div>
+            <div id="reviewsList">
+                <div class="review-card">
+                    <div class="review-top">
+                        <span class="reviewer-name">Felipe M.</span>
+                        <span class="review-stars">★★★★★</span>
                     </div>
-                    <div class="tags-wrap" id="atendimentoList"></div>
+                    <div class="review-txt">"Atendimento impecável, muito educada e cheirosa como diz no anúncio. Recomendo muito."</div>
+                </div>
+                <div class="review-card">
+                    <div class="review-top">
+                        <span class="reviewer-name">Ricardo S.</span>
+                        <span class="review-stars">★★★★★</span>
+                    </div>
+                    <div class="review-txt">"Exatamente como descrito. Uma companhia agradável e muito atenciosa. Nota 10!"</div>
                 </div>
             </div>
-
         </div>
+
     </div>
+</div>
 
-    <!-- Lightbox -->
-    <div class="lightbox" id="lightbox">
-        <button class="lb-close" onclick="closeLb()"><i class="fas fa-times"></i></button>
-        <button class="lb-nav lb-prev" onclick="navLb(-1)"><i class="fas fa-chevron-left"></i></button>
-        <img id="lbImg" src="" alt="Foto ampliada">
-        <button class="lb-nav lb-next" onclick="navLb(1)"><i class="fas fa-chevron-right"></i></button>
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+    <button class="lb-close" onclick="closeLb()"><i class="fas fa-times"></i></button>
+    <button class="lb-nav lb-prev" onclick="navLb(-1)"><i class="fas fa-chevron-left"></i></button>
+    <img id="lbImg" src="" alt="">
+    <button class="lb-nav lb-next" onclick="navLb(1)"><i class="fas fa-chevron-right"></i></button>
+</div>
+
+<!-- Footer -->
+<footer class="sv-footer">
+    <div class="footer-logo"><span class="fw">Desejos</span><span class="fr">MS</span></div>
+    <div class="footer-sub">© 2024 DesejosMS — Onde seus desejos ganham vida</div>
+    <div class="footer-links">
+        <a href="#">Termos de Uso</a>
+        <a href="#">Privacidade</a>
+        <a href="#">Anunciar</a>
     </div>
+</footer>
 
-    <!-- Footer -->
-    <footer class="svip-footer">
-        <p>© 2024 <span>DesejosMS</span> — Onde seus desejos ganham vida.</p>
-    </footer>
+<script>
+    let photos = [];
+    let currentPhotoIndex = 0;
 
-    <script>
-        let photos = [];
-        let lbIndex = 0;
-
-        function getProfileId() {
-            const p = new URLSearchParams(window.location.search);
-            let id = p.get('id') || localStorage.getItem('selectedProfileId');
-            if (!id) {
-                const ads = JSON.parse(localStorage.getItem('announcements') || '[]');
-                const sv = ads.find(a => a.planType === 'supervip' && a.status !== 'inactive');
-                if (sv) id = sv.id;
-            }
-            return id;
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const id = getProfileId();
+    function getProfileId() {
+        const p = new URLSearchParams(window.location.search);
+        let id = p.get('id') || localStorage.getItem('selectedProfileId');
+        if (!id) {
             const ads = JSON.parse(localStorage.getItem('announcements') || '[]');
-            let p = ads.find(a => String(a.id) === String(id));
-            if (!p) p = ads.find(a => a.planType === 'supervip');
-            if (!p) { alert('Perfil não encontrado!'); window.location.href = 'index.html'; return; }
+            const sv = ads.find(a => (a.planType || '').toLowerCase() === 'supervip' && a.status !== 'inactive');
+            if (sv) id = sv.id;
+        }
+        return id;
+    }
 
-            window.currentProfile = p;
+    document.addEventListener('DOMContentLoaded', () => {
+        const id = getProfileId();
+        const ads = JSON.parse(localStorage.getItem('announcements') || '[]');
+        let p = ads.find(a => String(a.id) === String(id));
+        if (!p) p = ads.find(a => (a.planType || '').toLowerCase() === 'supervip');
+        if (!p) { alert('Perfil não encontrado!'); window.location.href = 'index.html'; return; }
 
-            document.getElementById('profileName').textContent = p.name;
-            document.getElementById('profileAge').textContent = p.age;
-            document.getElementById('profileCity').textContent = p.city;
-            document.getElementById('profileRef').textContent = p.id;
-            document.getElementById('profileValue').textContent = p.price || 'A combinar';
-            document.getElementById('profileAvailability').textContent = p.availability || 'Consultar';
-            document.getElementById('profileBio').textContent = p.description || p.bio || 'Sem descrição disponível.';
-            document.title = `${p.name} - Super VIP | DesejosMS`;
+        window.currentProfile = p;
+        document.title = `${p.name} - Super VIP | DesejosMS`;
 
-            // Fotos
-            photos = p.photos || [];
-            if (!photos.length && p.photo) photos = [p.photo];
-            if (!photos.length && p.image) photos = [p.image];
+        // Nome: tenta separar nome/sobrenome
+        const nameParts = (p.name || '').trim().split(' ');
+        document.getElementById('nameFirst').textContent = nameParts[0] || p.name;
+        document.getElementById('nameLast').textContent = nameParts.slice(1).join(' ');
 
-            const grid = document.getElementById('galleryGrid');
-            grid.innerHTML = '';
-            photos.forEach((ph, i) => {
-                const d = document.createElement('div');
-                d.className = 'gallery-thumb';
-                d.innerHTML = `<img src="${ph}" alt="Foto ${i+1}" oncontextmenu="return false"><span class="thumb-zoom"><i class="fas fa-expand"></i></span>`;
-                d.onclick = () => openLb(i);
-                grid.appendChild(d);
-            });
+        // Meta
+        document.getElementById('metaAge').textContent = p.age || '--';
+        document.getElementById('metaCity').textContent = (p.city || '--') + (p.state ? ' — ' + p.state : '');
+        document.getElementById('metaRef').textContent = p.id;
 
-            // Serviços
-            loadTags(p.services, 'servicesList', 'fa-check');
-            loadTags(p.atendimento || [], 'atendimentoList', 'fa-map-marker-alt');
+        // Preço (só número)
+        const price = (p.price || '').replace(/[^\d]/g, '');
+        document.getElementById('priceNum').textContent = price || 'A combinar';
+
+        // Bio
+        document.getElementById('bioText').textContent = p.description || p.bio || 'Sem descrição disponível.';
+
+        // Fotos
+        photos = p.photos || [];
+        if (!photos.length && p.photo) photos = [p.photo];
+        if (!photos.length && p.image) photos = [p.image];
+        if (!photos.length) photos = ['https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=600&h=800&fit=crop'];
+        setMainPhoto(0);
+        buildThumbs();
+
+        // Video thumb (usa a primeira foto desfocada)
+        document.getElementById('videoThumbImg').src = photos[0];
+
+        // Serviços
+        const svcs = Array.isArray(p.services) ? p.services : (p.services || '').split(',').map(s => s.trim()).filter(Boolean);
+        const svcEl = document.getElementById('servicesList');
+        svcEl.innerHTML = '';
+        if (svcs.length) svcs.forEach(s => { svcEl.innerHTML += `<div class="sv-tag">${s}</div>`; });
+        else svcEl.innerHTML = '<div class="sv-tag">Acompanhante</div>';
+
+        // Disponibilidade (usa description como fallback se não tiver campo)
+        const avails = Array.isArray(p.availability) ? p.availability :
+                        (p.availability ? [p.availability] : ['Segunda a Sexta', 'Fins de Semana']);
+        const availEl = document.getElementById('availList');
+        availEl.innerHTML = '';
+        avails.forEach(a => {
+            availEl.innerHTML += `<div class="avail-tag"><div class="avail-dot"></div> ${a}</div>`;
         });
 
-        function loadTags(items, elId, icon) {
-            const container = document.getElementById(elId);
-            container.innerHTML = '';
-            const list = Array.isArray(items) ? items : (typeof items === 'string' ? items.split(',').map(s => s.trim()) : []);
-            list.forEach(item => {
-                if (!item) return;
-                const t = document.createElement('div');
-                t.className = 'svc-tag';
-                t.innerHTML = `<i class="fas ${icon}"></i> ${item}`;
-                container.appendChild(t);
-            });
+        // Quem atendo
+        if (p.atendimento && p.atendimento.length) {
+            document.getElementById('wrapQuem').style.display = '';
+            const quem = Array.isArray(p.atendimento) ? p.atendimento : p.atendimento.split(',').map(s=>s.trim());
+            quem.forEach(q => { document.getElementById('quemList').innerHTML += `<div class="sv-tag">${q}</div>`; });
         }
 
-        function makeCall() {
-            const p = window.currentProfile;
-            if (p && p.phone) window.location.href = `tel:${p.phone}`;
-            else alert('Telefone não disponível');
+        // Onde atendo
+        if (p.onde && p.onde.length) {
+            document.getElementById('wrapOnde').style.display = '';
+            const onde = Array.isArray(p.onde) ? p.onde : p.onde.split(',').map(s=>s.trim());
+            onde.forEach(o => { document.getElementById('ondeList').innerHTML += `<div class="sv-tag">${o}</div>`; });
         }
 
-        function openWhatsApp() {
-            const p = window.currentProfile;
-            if (p && (p.whatsapp || p.phone)) {
-                const num = (p.whatsapp || p.phone).replace(/\D/g, '');
-                const msg = `Olá ${p.name}, vi seu perfil Super VIP no DesejosMS e gostaria de mais informações.`;
-                window.open(`https://wa.me/55${num}?text=${encodeURIComponent(msg)}`, '_blank');
-            } else { alert('WhatsApp não disponível'); }
+        // Locais (cidade/estado)
+        if (p.city) {
+            document.getElementById('wrapLocais').style.display = '';
+            const lc = document.getElementById('locaisList');
+            lc.innerHTML = `<div class="loc-item"><i class="fas fa-map-marker-alt"></i> ${p.city}${p.state ? ' — ' + p.state : ''}</div>`;
         }
+    });
 
-        // Lightbox
-        function openLb(i) {
-            lbIndex = i;
-            document.getElementById('lbImg').src = photos[lbIndex];
-            document.getElementById('lightbox').classList.add('open');
-        }
-        function closeLb() {
-            document.getElementById('lightbox').classList.remove('open');
-        }
-        function navLb(dir) {
-            lbIndex = (lbIndex + dir + photos.length) % photos.length;
-            document.getElementById('lbImg').src = photos[lbIndex];
-        }
-        document.getElementById('lightbox').addEventListener('click', e => {
-            if (e.target.id === 'lightbox') closeLb();
+    // Foto principal
+    function setMainPhoto(idx) {
+        currentPhotoIndex = idx;
+        document.getElementById('mainPhoto').src = photos[idx];
+        document.getElementById('photoCounter').textContent = `${idx + 1} / ${photos.length}`;
+        // Highlight thumb
+        document.querySelectorAll('.thumb-box').forEach((t, i) => {
+            t.classList.toggle('active', i === idx);
         });
-        document.addEventListener('keydown', e => {
-            if (!document.getElementById('lightbox').classList.contains('open')) return;
-            if (e.key === 'Escape') closeLb();
-            if (e.key === 'ArrowRight') navLb(1);
-            if (e.key === 'ArrowLeft') navLb(-1);
+    }
+
+    function navMain(dir) {
+        setMainPhoto((currentPhotoIndex + dir + photos.length) % photos.length);
+    }
+
+    function buildThumbs() {
+        const row = document.getElementById('thumbsRow');
+        row.innerHTML = '';
+        const max = 3;
+        photos.slice(0, max).forEach((ph, i) => {
+            const d = document.createElement('div');
+            d.className = 'thumb-box' + (i === 0 ? ' active' : '');
+            if (i === max - 1 && photos.length > max) {
+                d.innerHTML = `<img src="${ph}" alt=""><div class="thumb-more">+${photos.length - max} FOTOS</div>`;
+            } else {
+                d.innerHTML = `<img src="${ph}" alt="">`;
+            }
+            d.onclick = () => setMainPhoto(i);
+            row.appendChild(d);
         });
-    </script>
+    }
+
+    // Contato
+    function makeCall() {
+        const p = window.currentProfile;
+        if (p && (p.phone || p.whatsapp)) window.location.href = `tel:${p.phone || p.whatsapp}`;
+        else alert('Telefone não disponível');
+    }
+    function openWhatsApp() {
+        const p = window.currentProfile;
+        const num = ((p.whatsapp || p.phone) || '').replace(/\D/g, '');
+        if (!num) { alert('WhatsApp não disponível'); return; }
+        const msg = `Olá ${p.name}, vi seu perfil Super VIP no DesejosMS e gostaria de mais informações.`;
+        window.open(`https://wa.me/55${num}?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    // Lightbox
+    function openLb(i) {
+        document.getElementById('lbImg').src = photos[i];
+        currentPhotoIndex = i;
+        document.getElementById('lightbox').classList.add('open');
+    }
+    function closeLb() { document.getElementById('lightbox').classList.remove('open'); }
+    function navLb(dir) {
+        currentPhotoIndex = (currentPhotoIndex + dir + photos.length) % photos.length;
+        document.getElementById('lbImg').src = photos[currentPhotoIndex];
+    }
+    document.getElementById('lightbox').addEventListener('click', e => { if (e.target.id === 'lightbox') closeLb(); });
+    document.addEventListener('keydown', e => {
+        if (!document.getElementById('lightbox').classList.contains('open')) return;
+        if (e.key === 'Escape') closeLb();
+        if (e.key === 'ArrowRight') navLb(1);
+        if (e.key === 'ArrowLeft') navLb(-1);
+    });
+</script>
 </body>
 </html>
