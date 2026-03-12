@@ -258,37 +258,35 @@
         .name-first { font-weight: 700; color: #fff; font-style: normal; }
         .name-last  { font-weight: 700; color: var(--gold); font-style: italic; }
 
-        /* Meta pills */
+        /* Meta pills — maiores e mais nítidas */
         .meta-row {
             display: flex;
             flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 4px;
+            gap: 8px;
+            margin-top: 6px;
         }
         .meta-pill {
-            display: flex; align-items: center; gap: 5px;
-            background: #1c1c1c;
-            border: 1px solid var(--border);
-            color: #aaa;
-            font-size: 0.67rem;
-            font-weight: 600;
-            letter-spacing: .5px;
+            display: flex; align-items: center; gap: 6px;
+            background: #222;
+            border: 1px solid #3a3a3a;
+            color: #ccc;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: .8px;
             text-transform: uppercase;
-            padding: 4px 10px;
-            border-radius: 4px;
+            padding: 6px 14px;
+            border-radius: 6px;
         }
-        .meta-pill i { font-size: 0.6rem; }
-        .pill-green { color: #4caf50; border-color: rgba(76,175,80,.3); }
-        .pill-gold  { color: var(--gold); border-color: rgba(201,168,76,.3); }
+        .meta-pill i { font-size: 0.72rem; }
+        .pill-green { color: #4caf50; border-color: rgba(76,175,80,.4); background: rgba(76,175,80,.08); }
+        .pill-gold  { color: var(--gold); border-color: rgba(201,168,76,.4); background: rgba(201,168,76,.08); }
 
-        /* Price + buttons */
+        /* Price + buttons — preço em cima, botões embaixo em largura total */
         .price-action-row {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 16px;
-            align-items: center;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
         }
-        .price-box {}
         .price-label {
             font-size: 0.62rem;
             letter-spacing: 2px;
@@ -323,6 +321,7 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
+            width: 100%;
         }
         .btn-ligar {
             display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -448,19 +447,19 @@
 
         /* Bio */
         .bio-block {
-            text-align: center;
-            padding: 10px 0;
+            text-align: left;
+            padding: 4px 0;
         }
         .bio-label {
-            font-size: 0.62rem;
-            letter-spacing: 3px;
+            font-size: 0.75rem;
+            letter-spacing: 2.5px;
             text-transform: uppercase;
             color: var(--gold);
             font-weight: 700;
             margin-bottom: 14px;
-        }
-        .bio-label::before, .bio-label::after {
-            content: '★ ';
+            border-left: 2px solid var(--gold);
+            padding-left: 10px;
+            text-align: left;
         }
         .bio-quote {
             font-family: 'Playfair Display', serif;
@@ -715,15 +714,15 @@
             <div class="tags-flex" id="ondeList"></div>
         </div>
 
-        <!-- Locais de atendimento -->
+        <!-- Locais / Tipo de atendimento -->
         <div class="sv-section" id="wrapLocais" style="display:none;">
-            <div class="sv-section-title">Locais de Atendimento</div>
+            <div class="sv-section-title">Tipo de Atendimento</div>
             <div class="loc-grid" id="locaisList"></div>
         </div>
 
-        <!-- Biografia -->
+        <!-- Descrição -->
         <div class="bio-block">
-            <div class="bio-label">Perfil & Biografia</div>
+            <div class="bio-label">Descrição</div>
             <div class="bio-quote" id="bioText">Carregando...</div>
         </div>
 
