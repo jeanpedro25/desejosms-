@@ -1,799 +1,721 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Perfil Super VIP - DesejosMS</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@400;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         :root {
-            --gold-primary: #D4AF37;
-            --gold-light: #FFD700;
-            --gold-dark: #AA8C2C;
-            --bg-dark: #050505;
-            --bg-card: rgba(20, 20, 20, 0.95);
-            --text-primary: #F0F0F0;
-            --text-secondary: #B0B0B0;
+            --red:       #8B0000;
+            --red-mid:   #B22222;
+            --red-light: #DC143C;
+            --gold:      #D4AF37;
+            --gold-lt:   #FFD700;
+            --cream:     #FFF8F0;
+            --dark:      #1a0000;
         }
 
         body {
-            background-color: var(--bg-dark);
+            font-family: 'Poppins', sans-serif;
+            background: var(--red);
             background-image:
-                radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.15), transparent 70%),
-                linear-gradient(0deg, rgba(0, 0, 0, 0.8), transparent);
-            color: var(--text-primary);
-            font-family: 'Montserrat', sans-serif;
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
+                radial-gradient(circle at 20% 20%, rgba(180,50,50,.35) 0%, transparent 45%),
+                radial-gradient(circle at 80% 80%, rgba(180,50,50,.35) 0%, transparent 45%);
+            min-height: 100vh;
+            color: #333;
         }
 
-        /* Scrollbar Premium */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #0a0a0a;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(to bottom, var(--gold-dark), var(--gold-primary));
-            border-radius: 4px;
-        }
-
-        /* Header Simplificado e Elegante */
-        .supervip-header {
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
-            padding: 15px 0;
+        /* ===== HEADER ===== */
+        .svip-header {
+            background: linear-gradient(135deg, #0d0d0d 0%, #1a0000 60%, #0d0d0d 100%);
+            border-bottom: 2px solid var(--gold);
+            padding: 14px 0;
             position: sticky;
             top: 0;
-            z-index: 1000;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            box-shadow: 0 4px 24px rgba(0,0,0,.6);
         }
-
-        .header-content {
-            max-width: 1200px;
+        .svip-header-inner {
+            max-width: 1100px;
             margin: 0 auto;
+            padding: 0 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 20px;
         }
-
-        .brand-logo {
+        .svip-logo {
             font-family: 'Cinzel', serif;
-            font-size: 1.8rem;
-            color: var(--gold-primary);
+            font-size: 1.6rem;
+            color: var(--gold);
             text-decoration: none;
             font-weight: 700;
-            text-shadow: 0 2px 10px rgba(212, 175, 55, 0.3);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .back-btn {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 8px 15px;
-            border-radius: 20px;
-        }
-
-        .back-btn:hover {
-            color: var(--gold-light);
-            border-color: var(--gold-light);
-            background: rgba(212, 175, 55, 0.1);
-        }
-
-        /* Container Principal */
-        .main-container {
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 0 20px;
-            display: grid;
-            grid-template-columns: 1fr 0.8fr;
-            gap: 40px;
-        }
-
-        @media (max-width: 968px) {
-            .main-container {
-                grid-template-columns: 1fr;
-                gap: 30px;
-            }
-        }
-
-        /* Galeria em Grid (Nova) */
-        .gallery-section {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .thumbnails-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 15px;
-        }
-
-        .thumb-item {
-            aspect-ratio: 1;
-            border-radius: 10px;
-            overflow: hidden;
-            cursor: pointer;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-            position: relative;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-        }
-
-        .thumb-item:hover {
-            border-color: var(--gold-primary);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(212, 175, 55, 0.2);
-        }
-
-        .thumb-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.5s ease;
-        }
-
-        .thumb-item:hover img {
-            transform: scale(1.1);
-        }
-
-        /* Informações do Perfil */
-        .info-section {
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-        }
-
-        .profile-title-card {
-            background: var(--bg-card);
-            padding: 30px;
-            border-radius: 20px;
-            border: 1px solid rgba(212, 175, 55, 0.2);
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .profile-title-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
-        }
-
-        .vip-badge {
-            background: linear-gradient(135deg, var(--gold-dark), var(--gold-light));
-            color: #000;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 800;
-            letter-spacing: 1px;
-            display: inline-block;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
-        }
-
-        .profile-name {
-            font-family: 'Playfair Display', serif;
-            font-size: 3rem;
-            margin: 0 0 10px 0;
-            background: linear-gradient(135deg, #FFF, var(--gold-light));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-        }
-
-        .profile-meta {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-            margin-bottom: 20px;
-        }
-
-        .profile-meta span {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .profile-meta i {
-            color: var(--gold-primary);
-        }
-
-        /* Botões de Ação */
-        .action-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .btn-premium {
-            padding: 15px;
-            border: none;
-            border-radius: 12px;
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 700;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .btn-whatsapp {
-            background: linear-gradient(135deg, #25D366, #128C7E);
-            color: white;
-            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.2);
-        }
-
-        .btn-phone {
-            background: linear-gradient(135deg, var(--gold-light), var(--gold-dark));
-            color: #000;
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
-        }
-
-        .btn-premium:hover {
-            transform: translateY(-3px);
-            filter: brightness(1.1);
-        }
-
-        /* Cards de Detalhes */
-        .details-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .detail-card {
-            background: rgba(255, 255, 255, 0.03);
-            padding: 20px;
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .detail-label {
-            color: var(--gold-primary);
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
-            display: block;
-        }
-
-        .detail-value {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #FFF;
-        }
-
-        /* Seção Sobre */
-        .about-card {
-            background: var(--bg-card);
-            padding: 30px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .section-title {
-            font-family: 'Playfair Display', serif;
-            color: var(--gold-primary);
-            font-size: 1.5rem;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .section-title::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, rgba(212, 175, 55, 0.3), transparent);
-        }
-
-        .bio-text {
-            line-height: 1.8;
-            color: #D0D0D0;
-            font-size: 1rem;
-        }
-
-        /* Serviços */
-        .services-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .service-tag {
-            background: rgba(212, 175, 55, 0.1);
-            border: 1px solid rgba(212, 175, 55, 0.2);
-            color: var(--gold-light);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9rem;
             display: flex;
             align-items: center;
             gap: 8px;
+            letter-spacing: 1px;
+            text-shadow: 0 0 20px rgba(212,175,55,.4);
+        }
+        .svip-logo i { font-size: 1.3rem; }
+        .svip-back {
+            color: rgba(255,255,255,.75);
+            text-decoration: none;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid rgba(212,175,55,.3);
+            padding: 8px 16px;
+            border-radius: 30px;
+            transition: all .25s ease;
+            font-weight: 500;
+        }
+        .svip-back:hover {
+            color: var(--gold);
+            border-color: var(--gold);
+            background: rgba(212,175,55,.08);
         }
 
-        .service-tag i {
+        /* ===== HERO BANNER com foto principal ===== */
+        .hero-banner {
+            width: 100%;
+            max-width: 1100px;
+            margin: 32px auto 0;
+            padding: 0 20px;
+        }
+        .hero-inner {
+            border-radius: 24px;
+            overflow: hidden;
+            position: relative;
+            background: linear-gradient(135deg, #1a0000, #2d0000);
+            border: 1.5px solid rgba(212,175,55,.35);
+            box-shadow: 0 20px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(212,175,55,.1);
+        }
+        /* Faixa dourada no topo */
+        .hero-inner::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--gold), var(--gold-lt), var(--gold), transparent);
+            z-index: 2;
+        }
+
+        /* ===== GRID PRINCIPAL ===== */
+        .main-grid {
+            max-width: 1100px;
+            margin: 28px auto 0;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 24px;
+        }
+
+        /* ===== GALERIA ===== */
+        .gallery-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .gallery-heading {
+            font-family: 'Cinzel', serif;
+            color: var(--gold);
             font-size: 0.8rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-
-        /* Avaliações */
-        .reviews-section {
-            margin-top: 40px;
-            background: var(--bg-card);
-            padding: 30px;
-            border-radius: 20px;
-            border-top: 3px solid var(--gold-primary);
+        .gallery-heading::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(212,175,55,.4), transparent);
         }
-
-        .rating-overview {
-            text-align: center;
-            margin-bottom: 30px;
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
         }
-
-        .big-rating {
-            font-size: 3.5rem;
-            font-weight: 700;
-            color: var(--gold-light);
-            font-family: 'Playfair Display', serif;
+        .gallery-thumb {
+            aspect-ratio: 3/4;
+            border-radius: 14px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 1.5px solid rgba(255,255,255,.08);
+            position: relative;
+            transition: all .3s ease;
+            box-shadow: 0 4px 16px rgba(0,0,0,.4);
         }
-
-        .stars-display {
-            color: var(--gold-light);
-            font-size: 1.2rem;
-            margin: 10px 0;
+        .gallery-thumb::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(139,0,0,.6) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity .3s ease;
         }
-
-        /* Marca d'água */
-        .wm {
+        .gallery-thumb:hover {
+            border-color: var(--gold);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(139,0,0,.5), 0 0 0 1px rgba(212,175,55,.3);
+        }
+        .gallery-thumb:hover::after { opacity: 1; }
+        .gallery-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform .5s ease;
+        }
+        .gallery-thumb:hover img { transform: scale(1.07); }
+        .thumb-zoom {
             position: absolute;
             bottom: 10px;
             right: 10px;
-            font-family: 'Cinzel', serif;
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 12px;
-            pointer-events: none;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+            color: white;
+            font-size: 0.75rem;
+            z-index: 3;
+            opacity: 0;
+            transition: opacity .3s ease;
+        }
+        .gallery-thumb:hover .thumb-zoom { opacity: 1; }
+
+        /* ===== PAINEL DE INFO ===== */
+        .info-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
         }
 
-        /* Modal de Imagem (Lightbox) */
-        .image-modal {
+        /* Card do nome e badge */
+        .profile-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 28px 24px;
+            border: 1.5px solid rgba(139,0,0,.12);
+            box-shadow: 0 8px 32px rgba(0,0,0,.12), 0 0 0 1px rgba(212,175,55,.08);
+            position: relative;
+            overflow: hidden;
+        }
+        .profile-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--red), var(--red-light), var(--gold), var(--red-light), var(--red));
+        }
+        .supervip-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-lt), var(--gold));
+            color: #4a2800;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            padding: 5px 14px;
+            border-radius: 30px;
+            margin-bottom: 14px;
+            box-shadow: 0 4px 14px rgba(212,175,55,.4);
+            text-transform: uppercase;
+        }
+        .profile-name-big {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--red);
+            line-height: 1.1;
+            margin-bottom: 10px;
+        }
+        .profile-meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .meta-pill {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: var(--cream);
+            border: 1px solid rgba(139,0,0,.15);
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 0.82rem;
+            color: #555;
+            font-weight: 500;
+        }
+        .meta-pill i { color: var(--red); font-size: 0.75rem; }
+
+        /* Divisor dourado */
+        .gold-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            margin: 16px 0;
+            opacity: .5;
+        }
+
+        /* Botões de ação */
+        .action-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .btn-call {
+            padding: 14px 10px;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 0.92rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all .25s ease;
+            letter-spacing: .3px;
+        }
+        .btn-phone-red {
+            background: linear-gradient(135deg, var(--red), var(--red-mid));
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(139,0,0,.35);
+        }
+        .btn-phone-red:hover {
+            box-shadow: 0 8px 24px rgba(139,0,0,.5);
+            transform: translateY(-2px);
+        }
+        .btn-wpp {
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(37,211,102,.25);
+        }
+        .btn-wpp:hover {
+            box-shadow: 0 8px 24px rgba(37,211,102,.4);
+            transform: translateY(-2px);
+        }
+
+        /* Cards de detalhe (valor / disponib.) */
+        .detail-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .detail-box {
+            background: #fff;
+            border-radius: 14px;
+            padding: 16px;
+            border: 1.5px solid rgba(139,0,0,.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,.06);
+        }
+        .detail-box-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--red);
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .detail-box-val {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #222;
+        }
+
+        /* Card de seção (sobre / serviços) */
+        .section-card {
+            background: #fff;
+            border-radius: 18px;
+            padding: 22px 22px;
+            border: 1.5px solid rgba(139,0,0,.1);
+            box-shadow: 0 4px 16px rgba(0,0,0,.07);
+        }
+        .section-heading {
+            font-family: 'Cinzel', serif;
+            color: var(--red);
+            font-size: 0.85rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .section-heading::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(139,0,0,.25), transparent);
+        }
+        .bio-txt {
+            color: #555;
+            font-size: 0.92rem;
+            line-height: 1.75;
+        }
+        .tags-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .svc-tag {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(139,0,0,.06);
+            border: 1px solid rgba(139,0,0,.15);
+            color: var(--red);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            transition: all .2s;
+        }
+        .svc-tag:hover {
+            background: var(--red);
+            color: #fff;
+        }
+        .svc-tag i { font-size: 0.7rem; }
+
+        /* Card de Avaliações */
+        .rating-card {
+            background: linear-gradient(135deg, var(--red) 0%, #6b0000 100%);
+            border-radius: 18px;
+            padding: 22px;
+            text-align: center;
+            color: #fff;
+            box-shadow: 0 8px 28px rgba(139,0,0,.35);
+            border: 1px solid rgba(212,175,55,.2);
+        }
+        .rating-num {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--gold-lt);
+            line-height: 1;
+        }
+        .stars-row {
+            color: var(--gold-lt);
+            font-size: 1.1rem;
+            margin: 8px 0 4px;
+            letter-spacing: 2px;
+        }
+        .rating-sub {
+            font-size: 0.78rem;
+            opacity: .7;
+            letter-spacing: .5px;
+        }
+
+        /* ===== LIGHTBOX ===== */
+        .lightbox {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
+            inset: 0;
+            background: rgba(0,0,0,.92);
             z-index: 9999;
             display: flex;
             justify-content: center;
             align-items: center;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.3s ease;
+            transition: opacity .3s ease;
         }
-
-        .image-modal.active {
+        .lightbox.open {
             opacity: 1;
             pointer-events: all;
         }
-
-        .modal-content-wrapper {
-            position: relative;
-            max-width: 90%;
-            max-height: 90vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .image-modal img {
-            max-width: 100%;
-            max-height: 90vh;
-            border: 2px solid var(--gold-primary);
-            box-shadow: 0 0 50px rgba(212, 175, 55, 0.2);
-            border-radius: 5px;
+        .lightbox img {
+            max-width: 88vw;
+            max-height: 88vh;
+            border-radius: 12px;
+            border: 2px solid rgba(212,175,55,.4);
             object-fit: contain;
         }
-
-        .close-modal {
+        .lb-close {
             position: absolute;
-            top: 20px;
-            right: 30px;
-            color: #FFF;
-            font-size: 40px;
+            top: 20px; right: 24px;
+            color: #fff;
+            font-size: 2rem;
             cursor: pointer;
-            transition: color 0.3s;
-            z-index: 10001;
+            transition: color .2s;
+            background: none; border: none;
         }
-
-        .close-modal:hover {
-            color: var(--gold-light);
-        }
-
-        /* Navegação do Lightbox */
-        .nav-btn {
+        .lb-close:hover { color: var(--gold-lt); }
+        .lb-nav {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(0, 0, 0, 0.5);
-            color: var(--gold-light);
-            border: 1px solid var(--gold-primary);
-            width: 50px;
-            height: 50px;
+            background: rgba(139,0,0,.7);
+            border: 1px solid rgba(212,175,55,.3);
+            color: #fff;
+            width: 48px; height: 48px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 1.1rem;
             cursor: pointer;
-            font-size: 20px;
-            transition: all 0.3s ease;
-            z-index: 10001;
+            transition: all .2s;
+            backdrop-filter: blur(4px);
         }
+        .lb-nav:hover { background: var(--red); border-color: var(--gold); }
+        .lb-prev { left: 24px; }
+        .lb-next { right: 24px; }
 
-        .nav-btn:hover {
-            background: var(--gold-primary);
-            color: #000;
+        /* ===== FOOTER ===== */
+        .svip-footer {
+            background: #0d0d0d;
+            border-top: 1px solid rgba(212,175,55,.2);
+            color: #555;
+            text-align: center;
+            padding: 24px;
+            margin-top: 48px;
+            font-size: 0.82rem;
         }
+        .svip-footer span { color: var(--gold); }
 
-        .nav-prev {
-            left: -70px;
-        }
-
-        .nav-next {
-            right: -70px;
-        }
-
+        /* ===== MOBILE ===== */
         @media (max-width: 768px) {
-            .nav-prev {
-                left: 10px;
-                background: rgba(0, 0, 0, 0.8);
+            .main-grid {
+                grid-template-columns: 1fr;
+                margin-top: 20px;
             }
-
-            .nav-next {
-                right: 10px;
-                background: rgba(0, 0, 0, 0.8);
+            .gallery-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 7px;
             }
+            .profile-name-big {
+                font-size: 1.7rem;
+            }
+            .action-row {
+                gap: 10px;
+            }
+            .btn-call {
+                font-size: 0.85rem;
+                padding: 13px 8px;
+            }
+            .lb-prev { left: 10px; }
+            .lb-next { right: 10px; }
         }
     </style>
 </head>
-
 <body>
 
     <!-- Header -->
-    <header class="supervip-header">
-        <div class="header-content">
-            <a href="/" class="brand-logo">
+    <header class="svip-header">
+        <div class="svip-header-inner">
+            <a href="/" class="svip-logo">
                 <i class="fas fa-crown"></i> DesejosMS
             </a>
-            <a href="index.html" class="back-btn">
+            <a href="index.html" class="svip-back">
                 <i class="fas fa-arrow-left"></i> Voltar
             </a>
         </div>
     </header>
 
-    <!-- Conteúdo Principal -->
-    <div class="main-container">
+    <!-- Layout principal -->
+    <div class="main-grid">
 
-        <!-- Coluna da Esquerda: Galeria em Grid -->
-        <div class="gallery-section">
-            <div class="thumbnails-grid" id="thumbnailsGrid">
-                <!-- Fotos serão inseridas aqui -->
+        <!-- Coluna Esquerda: Galeria -->
+        <div class="gallery-wrap">
+            <div class="gallery-heading">
+                <i class="fas fa-images" style="color:var(--gold)"></i> Galeria de Fotos
+            </div>
+            <div class="gallery-grid" id="galleryGrid">
+                <!-- Fotos inseridas via JS -->
+            </div>
+
+            <!-- Card de Avaliações (só no desktop, na esquerda) -->
+            <div class="rating-card" style="margin-top:4px;">
+                <div class="rating-num">5.0</div>
+                <div class="stars-row">★★★★★</div>
+                <div class="rating-sub">Baseado em avaliações verificadas</div>
             </div>
         </div>
 
-        <!-- Coluna da Direita: Informações -->
-        <div class="info-section">
+        <!-- Coluna Direita: Informações -->
+        <div class="info-wrap">
 
-            <!-- Card Título -->
-            <div class="profile-title-card">
-                <div class="vip-badge"><i class="fas fa-gem"></i> SUPER VIP</div>
-                <h1 class="profile-name" id="profileName">Carregando...</h1>
-
-                <div class="profile-meta">
-                    <span><i class="fas fa-birthday-cake"></i> <span id="profileAge">--</span> anos</span>
-                    <span><i class="fas fa-map-marker-alt"></i> <span id="profileCity">--</span></span>
-                    <span><i class="fas fa-star"></i> Ref: <span id="profileRef">--</span></span>
+            <!-- Card principal de perfil -->
+            <div class="profile-card">
+                <div class="supervip-badge">
+                    <i class="fas fa-gem"></i> SUPER VIP
+                </div>
+                <h1 class="profile-name-big" id="profileName">Carregando...</h1>
+                <div class="profile-meta-row">
+                    <div class="meta-pill"><i class="fas fa-birthday-cake"></i><span id="profileAge">--</span> anos</div>
+                    <div class="meta-pill"><i class="fas fa-map-marker-alt"></i><span id="profileCity">--</span></div>
+                    <div class="meta-pill"><i class="fas fa-hashtag"></i>Ref: <span id="profileRef">--</span></div>
                 </div>
 
-                <div class="action-buttons">
-                    <button class="btn-premium btn-phone" onclick="makeCall()">
+                <div class="gold-divider"></div>
+
+                <div class="action-row">
+                    <button class="btn-call btn-phone-red" onclick="makeCall()">
                         <i class="fas fa-phone-alt"></i> Ligar
                     </button>
-                    <button class="btn-premium btn-whatsapp" onclick="openWhatsApp()">
+                    <button class="btn-call btn-wpp" onclick="openWhatsApp()">
                         <i class="fab fa-whatsapp"></i> WhatsApp
                     </button>
                 </div>
             </div>
 
-            <!-- Detalhes Rápidos -->
-            <div class="details-grid">
-                <div class="detail-card">
-                    <span class="detail-label">Valor</span>
-                    <div class="detail-value" id="profileValue">A combinar</div>
+            <!-- Valor e disponibilidade -->
+            <div class="detail-row">
+                <div class="detail-box">
+                    <div class="detail-box-label"><i class="fas fa-tag"></i> Valor</div>
+                    <div class="detail-box-val" id="profileValue">A combinar</div>
                 </div>
-                <div class="detail-card">
-                    <span class="detail-label">Disponibilidade</span>
-                    <div class="detail-value" id="profileAvailability">Consultar</div>
-                </div>
-            </div>
-
-            <!-- Sobre -->
-            <div class="about-card">
-                <h3 class="section-title"><i class="fas fa-user-circle"></i> Sobre Mim</h3>
-                <div class="bio-text" id="profileBio">
-                    Carregando descrição...
+                <div class="detail-box">
+                    <div class="detail-box-label"><i class="fas fa-clock"></i> Disponibilidade</div>
+                    <div class="detail-box-val" id="profileAvailability">Consultar</div>
                 </div>
             </div>
 
-            <!-- Serviços -->
-            <div class="about-card">
-                <h3 class="section-title"><i class="fas fa-concierge-bell"></i> Serviços & Atendimento</h3>
-                <div class="services-grid" id="servicesList">
-                    <!-- Tags de serviços -->
+            <!-- Sobre Mim -->
+            <div class="section-card">
+                <div class="section-heading">
+                    <i class="fas fa-user-circle"></i> Sobre Mim
                 </div>
-                <div style="margin-top: 15px;">
-                    <h4 style="color: var(--gold-primary); margin-bottom: 10px; font-size: 0.9rem;">LOCAIS DE
-                        ATENDIMENTO</h4>
-                    <div class="services-grid" id="atendimentoList">
-                        <!-- Tags de locais -->
+                <p class="bio-txt" id="profileBio">Carregando...</p>
+            </div>
+
+            <!-- Serviços e Locais -->
+            <div class="section-card">
+                <div class="section-heading">
+                    <i class="fas fa-concierge-bell"></i> Serviços & Atendimento
+                </div>
+                <div class="tags-wrap" id="servicesList"></div>
+
+                <div style="margin-top:16px;">
+                    <div class="section-heading" style="font-size:.75rem;">
+                        <i class="fas fa-map-marker-alt"></i> Locais de Atendimento
                     </div>
-                </div>
-            </div>
-
-            <!-- Avaliações -->
-            <div class="reviews-section">
-                <h3 class="section-title"><i class="fas fa-star"></i> Avaliações</h3>
-                <div class="rating-overview">
-                    <div class="big-rating">5.0</div>
-                    <div class="stars-display">
-                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i
-                            class="fas fa-star"></i><i class="fas fa-star"></i>
-                    </div>
-                    <p style="color: #888;">Baseado em avaliações verificadas</p>
-                </div>
-                <div id="reviewsList">
-                    <!-- Lista de reviews -->
+                    <div class="tags-wrap" id="atendimentoList"></div>
                 </div>
             </div>
 
         </div>
     </div>
 
-    <!-- Modal de Imagem (Lightbox) -->
-    <div class="image-modal" id="imageModal">
-        <span class="close-modal" onclick="closeImageModal()">&times;</span>
-
-        <div class="modal-content-wrapper">
-            <button class="nav-btn nav-prev" onclick="changePhoto(-1)"><i class="fas fa-chevron-left"></i></button>
-            <img src="" alt="Zoom" id="modalImage">
-            <button class="nav-btn nav-next" onclick="changePhoto(1)"><i class="fas fa-chevron-right"></i></button>
-        </div>
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <button class="lb-close" onclick="closeLb()"><i class="fas fa-times"></i></button>
+        <button class="lb-nav lb-prev" onclick="navLb(-1)"><i class="fas fa-chevron-left"></i></button>
+        <img id="lbImg" src="" alt="Foto ampliada">
+        <button class="lb-nav lb-next" onclick="navLb(1)"><i class="fas fa-chevron-right"></i></button>
     </div>
 
     <!-- Footer -->
-    <footer
-        style="background: #000; color: #555; text-align: center; padding: 30px; margin-top: 50px; border-top: 1px solid #222;">
-        <p>&copy; 2024 DesejosMS - Onde seus desejos ganham vida.</p>
+    <footer class="svip-footer">
+        <p>© 2024 <span>DesejosMS</span> — Onde seus desejos ganham vida.</p>
     </footer>
 
-    <!-- Scripts -->
     <script>
-        // Variáveis Globais
-        let currentPhotos = [];
-        let currentPhotoIndex = 0;
+        let photos = [];
+        let lbIndex = 0;
 
-        // Funções Globais
-        function getEffectiveProfileId() {
-            const urlParams = new URLSearchParams(window.location.search);
-            let profileId = urlParams.get('id') || localStorage.getItem('selectedProfileId');
-
-            // Fallback se não tiver ID
-            if (!profileId) {
-                const announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
-                const firstSupervip = announcements.find(ad => ad.planType === 'supervip' && ad.status !== 'inactive');
-                if (firstSupervip) profileId = firstSupervip.id;
+        function getProfileId() {
+            const p = new URLSearchParams(window.location.search);
+            let id = p.get('id') || localStorage.getItem('selectedProfileId');
+            if (!id) {
+                const ads = JSON.parse(localStorage.getItem('announcements') || '[]');
+                const sv = ads.find(a => a.planType === 'supervip' && a.status !== 'inactive');
+                if (sv) id = sv.id;
             }
-            return profileId;
+            return id;
         }
 
-        function findProfileById(announcements, profileId) {
-            return announcements.find(ad => String(ad.id) === String(profileId));
-        }
-
-        // Carregamento Principal
         document.addEventListener('DOMContentLoaded', () => {
-            loadProfileData();
+            const id = getProfileId();
+            const ads = JSON.parse(localStorage.getItem('announcements') || '[]');
+            let p = ads.find(a => String(a.id) === String(id));
+            if (!p) p = ads.find(a => a.planType === 'supervip');
+            if (!p) { alert('Perfil não encontrado!'); window.location.href = 'index.html'; return; }
+
+            window.currentProfile = p;
+
+            document.getElementById('profileName').textContent = p.name;
+            document.getElementById('profileAge').textContent = p.age;
+            document.getElementById('profileCity').textContent = p.city;
+            document.getElementById('profileRef').textContent = p.id;
+            document.getElementById('profileValue').textContent = p.price || 'A combinar';
+            document.getElementById('profileAvailability').textContent = p.availability || 'Consultar';
+            document.getElementById('profileBio').textContent = p.description || p.bio || 'Sem descrição disponível.';
+            document.title = `${p.name} - Super VIP | DesejosMS`;
+
+            // Fotos
+            photos = p.photos || [];
+            if (!photos.length && p.photo) photos = [p.photo];
+            if (!photos.length && p.image) photos = [p.image];
+
+            const grid = document.getElementById('galleryGrid');
+            grid.innerHTML = '';
+            photos.forEach((ph, i) => {
+                const d = document.createElement('div');
+                d.className = 'gallery-thumb';
+                d.innerHTML = `<img src="${ph}" alt="Foto ${i+1}" oncontextmenu="return false"><span class="thumb-zoom"><i class="fas fa-expand"></i></span>`;
+                d.onclick = () => openLb(i);
+                grid.appendChild(d);
+            });
+
+            // Serviços
+            loadTags(p.services, 'servicesList', 'fa-check');
+            loadTags(p.atendimento || [], 'atendimentoList', 'fa-map-marker-alt');
         });
 
-        function loadProfileData() {
-            const profileId = getEffectiveProfileId();
-            const announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
-            let profile = findProfileById(announcements, profileId);
-
-            if (!profile) {
-                // Tentar encontrar qualquer supervip se falhar
-                profile = announcements.find(ad => ad.planType === 'supervip');
-            }
-
-            if (!profile) {
-                alert('Perfil não encontrado!');
-                window.location.href = 'index.html';
-                return;
-            }
-
-            // Preencher Dados
-            document.getElementById('profileName').textContent = profile.name;
-            document.getElementById('profileAge').textContent = profile.age;
-            document.getElementById('profileCity').textContent = profile.city;
-            document.getElementById('profileRef').textContent = profile.id;
-            document.getElementById('profileValue').textContent = profile.price || 'A combinar';
-            document.getElementById('profileAvailability').textContent = profile.availability || 'Consultar';
-            document.getElementById('profileBio').textContent = profile.description || profile.bio || 'Sem descrição disponível.';
-            document.title = `${profile.name} - Super VIP | DesejosMS`;
-
-            // Carregar Fotos
-            loadPhotos(profile);
-
-            // Carregar Serviços e Locais
-            loadTags(profile.services, 'servicesList', 'fa-check');
-            loadTags(profile.atendimento || extractLocais(profile.services), 'atendimentoList', 'fa-map-marker-alt');
-
-            // Configurar Botões
-            window.currentProfile = profile; // Salvar para uso nos botões
-        }
-
-        function loadPhotos(profile) {
-            let photos = profile.photos || [];
-            if (photos.length === 0 && profile.photo) photos = [profile.photo];
-            if (photos.length === 0 && profile.image) photos = [profile.image];
-
-            // Fallback images se não tiver fotos
-            if (photos.length === 0) {
-                photos = [
-                    'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800&h=1000&fit=crop',
-                    'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=800&h=1000&fit=crop',
-                    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&h=1000&fit=crop'
-                ];
-            }
-
-            // Salvar fotos globalmente para navegação
-            currentPhotos = photos;
-
-            // Renderizar Grid
-            const grid = document.getElementById('thumbnailsGrid');
-            grid.innerHTML = '';
-
-            photos.forEach((photo, index) => {
-                const div = document.createElement('div');
-                div.className = 'thumb-item';
-                div.innerHTML = `<img src="${photo}" alt="Foto ${index}">`;
-                div.onclick = () => openImageModal(index);
-                grid.appendChild(div);
-            });
-        }
-
-        function loadTags(items, elementId, iconClass) {
-            const container = document.getElementById(elementId);
+        function loadTags(items, elId, icon) {
+            const container = document.getElementById(elId);
             container.innerHTML = '';
-
-            let list = [];
-            if (Array.isArray(items)) list = items;
-            else if (typeof items === 'string') list = items.split(',').map(s => s.trim());
-
+            const list = Array.isArray(items) ? items : (typeof items === 'string' ? items.split(',').map(s => s.trim()) : []);
             list.forEach(item => {
                 if (!item) return;
-                const tag = document.createElement('div');
-                tag.className = 'service-tag';
-                tag.innerHTML = `<i class="fas ${iconClass}"></i> ${item}`;
-                container.appendChild(tag);
+                const t = document.createElement('div');
+                t.className = 'svc-tag';
+                t.innerHTML = `<i class="fas ${icon}"></i> ${item}`;
+                container.appendChild(t);
             });
         }
 
-        function extractLocais(services) {
-            // Tenta extrair locais de uma lista mista se não houver campo específico
-            const keywords = ['Motel', 'Hotel', 'Próprio', 'Residência', 'Domicílio'];
-            if (Array.isArray(services)) {
-                return services.filter(s => keywords.some(k => s.includes(k)));
-            }
-            return ['Local Próprio', 'Motel', 'Hotel']; // Default
-        }
-
-        // Ações de Contato
         function makeCall() {
-            if (window.currentProfile && window.currentProfile.phone) {
-                window.location.href = `tel:${window.currentProfile.phone}`;
-            } else {
-                alert('Telefone não disponível');
-            }
+            const p = window.currentProfile;
+            if (p && p.phone) window.location.href = `tel:${p.phone}`;
+            else alert('Telefone não disponível');
         }
 
         function openWhatsApp() {
-            if (window.currentProfile && window.currentProfile.whatsapp) {
-                const phone = window.currentProfile.whatsapp.replace(/\D/g, '');
-                const msg = `Olá ${window.currentProfile.name}, vi seu perfil Super VIP no DesejosMS e gostaria de mais informações.`;
-                window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
-            } else {
-                alert('WhatsApp não disponível');
-            }
+            const p = window.currentProfile;
+            if (p && (p.whatsapp || p.phone)) {
+                const num = (p.whatsapp || p.phone).replace(/\D/g, '');
+                const msg = `Olá ${p.name}, vi seu perfil Super VIP no DesejosMS e gostaria de mais informações.`;
+                window.open(`https://wa.me/55${num}?text=${encodeURIComponent(msg)}`, '_blank');
+            } else { alert('WhatsApp não disponível'); }
         }
 
-        // Modal de Imagem (Lightbox)
-        function openImageModal(index) {
-            currentPhotoIndex = index;
-            updateModalImage();
-
-            const modal = document.getElementById('imageModal');
-            modal.classList.add('active');
+        // Lightbox
+        function openLb(i) {
+            lbIndex = i;
+            document.getElementById('lbImg').src = photos[lbIndex];
+            document.getElementById('lightbox').classList.add('open');
         }
-
-        function closeImageModal() {
-            document.getElementById('imageModal').classList.remove('active');
+        function closeLb() {
+            document.getElementById('lightbox').classList.remove('open');
         }
-
-        function changePhoto(direction) {
-            currentPhotoIndex += direction;
-
-            // Loop infinito
-            if (currentPhotoIndex >= currentPhotos.length) currentPhotoIndex = 0;
-            if (currentPhotoIndex < 0) currentPhotoIndex = currentPhotos.length - 1;
-
-            updateModalImage();
+        function navLb(dir) {
+            lbIndex = (lbIndex + dir + photos.length) % photos.length;
+            document.getElementById('lbImg').src = photos[lbIndex];
         }
-
-        function updateModalImage() {
-            const img = document.getElementById('modalImage');
-            img.src = currentPhotos[currentPhotoIndex];
-        }
-
-        // Fechar modal com ESC e Navegar com Setas
-        document.addEventListener('keydown', (e) => {
-            const modal = document.getElementById('imageModal');
-            if (!modal.classList.contains('active')) return;
-
-            if (e.key === 'Escape') closeImageModal();
-            if (e.key === 'ArrowRight') changePhoto(1);
-            if (e.key === 'ArrowLeft') changePhoto(-1);
+        document.getElementById('lightbox').addEventListener('click', e => {
+            if (e.target.id === 'lightbox') closeLb();
         });
-
-        // Fechar ao clicar fora da imagem
-        document.getElementById('imageModal').addEventListener('click', (e) => {
-            if (e.target.id === 'imageModal') closeImageModal();
+        document.addEventListener('keydown', e => {
+            if (!document.getElementById('lightbox').classList.contains('open')) return;
+            if (e.key === 'Escape') closeLb();
+            if (e.key === 'ArrowRight') navLb(1);
+            if (e.key === 'ArrowLeft') navLb(-1);
         });
     </script>
 </body>
-
 </html>
