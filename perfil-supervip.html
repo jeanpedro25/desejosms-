@@ -33,7 +33,7 @@
         .sv-header {
             background: #0d0d0d;
             border-bottom: 1px solid var(--border);
-            padding: 14px 24px;
+            padding: 16px 28px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -41,25 +41,35 @@
             top: 0;
             z-index: 200;
         }
+        /* Logo igual ao index.html */
         .sv-logo {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 1.25rem;
-            font-weight: 800;
             text-decoration: none;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 12px;
         }
-        .sv-logo .logo-desejos { color: #fff; }
-        .sv-logo .logo-ms      { color: var(--red-btn); }
+        .sv-logo-icon {
+            color: #e53935;
+            font-size: 2rem;
+            filter: drop-shadow(0 0 8px rgba(229,57,53,.5));
+        }
+        .sv-logo-text h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1;
+            letter-spacing: 1px;
+        }
+        .sv-logo-text h1 span { color: var(--red-btn); }
         .sv-logo-sub {
-            font-size: 0.55rem;
-            color: var(--muted);
-            letter-spacing: 1.5px;
-            display: block;
+            font-size: 0.58rem;
+            color: #888;
+            letter-spacing: 2px;
+            text-transform: uppercase;
             font-weight: 400;
-            text-align: center;
-            margin-top: -2px;
+            display: block;
+            margin-top: 1px;
         }
         .sv-back {
             color: var(--muted);
@@ -287,6 +297,9 @@
             flex-direction: column;
             gap: 14px;
         }
+        .price-box {
+            text-align: center;
+        }
         .price-label {
             font-size: 0.62rem;
             letter-spacing: 2px;
@@ -298,16 +311,17 @@
         .price-val {
             display: flex;
             align-items: baseline;
+            justify-content: center;
             gap: 4px;
         }
         .price-currency {
-            font-size: 1rem;
-            font-weight: 600;
+            font-size: 1.1rem;
+            font-weight: 700;
             color: #ccc;
         }
         .price-num {
             font-family: 'Montserrat', sans-serif;
-            font-size: 3rem;
+            font-size: 3.4rem;
             font-weight: 800;
             color: #fff;
             line-height: 1;
@@ -316,6 +330,7 @@
             font-size: 0.68rem;
             color: var(--muted);
             margin-top: 2px;
+            text-align: center;
         }
         .action-btns {
             display: flex;
@@ -324,60 +339,63 @@
             width: 100%;
         }
         .btn-ligar {
-            display: flex; align-items: center; justify-content: center; gap: 8px;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
             background: var(--red-btn);
             color: #fff;
             border: none;
             border-radius: 7px;
-            padding: 13px 20px;
+            padding: 16px 20px;
             font-family: 'Montserrat', sans-serif;
-            font-size: 0.82rem;
-            font-weight: 700;
+            font-size: 1rem;
+            font-weight: 800;
             letter-spacing: 1px;
             text-transform: uppercase;
             cursor: pointer;
             transition: filter .2s, transform .1s;
         }
+        .btn-ligar i { font-size: 1.1rem; }
         .btn-ligar:hover { filter: brightness(1.15); transform: translateY(-1px); }
         .btn-wpp {
-            display: flex; align-items: center; justify-content: center; gap: 8px;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
             background: #128C7E;
             color: #fff;
             border: none;
             border-radius: 7px;
-            padding: 13px 20px;
+            padding: 16px 20px;
             font-family: 'Montserrat', sans-serif;
-            font-size: 0.82rem;
-            font-weight: 700;
+            font-size: 1rem;
+            font-weight: 800;
             letter-spacing: 1px;
             text-transform: uppercase;
             cursor: pointer;
             transition: filter .2s, transform .1s;
         }
+        .btn-wpp i { font-size: 1.2rem; }
         .btn-wpp:hover { filter: brightness(1.2); transform: translateY(-1px); }
 
-        /* Warning box */
+        /* Warning box — alerta sutil amber */
         .warning-box {
-            background: #161616;
-            border: 1px solid var(--border);
+            background: rgba(255, 193, 7, 0.07);
+            border: 1px solid rgba(255, 193, 7, 0.25);
+            border-left: 3px solid #ffc107;
             border-radius: 8px;
             padding: 12px 14px;
             display: flex;
             align-items: flex-start;
             gap: 10px;
         }
-        .warning-box i { color: var(--gold); margin-top: 1px; font-size: 0.85rem; flex-shrink: 0; }
+        .warning-box i { color: #ffc107; margin-top: 1px; font-size: 0.85rem; flex-shrink: 0; }
         .warning-txt {
-            font-size: 0.68rem;
-            color: var(--muted);
+            font-size: 0.7rem;
+            color: #c8a84b;
             line-height: 1.6;
         }
-        .warning-txt strong { color: #ccc; }
+        .warning-txt strong { color: #e0be6a; }
         .warn-tag {
             display: inline-block;
-            background: rgba(201,168,76,.15);
-            border: 1px solid rgba(201,168,76,.3);
-            color: var(--gold);
+            background: rgba(255,193,7,.15);
+            border: 1px solid rgba(255,193,7,.3);
+            color: #ffc107;
             font-size: 0.6rem;
             font-weight: 700;
             letter-spacing: 1px;
@@ -445,31 +463,51 @@
         }
         .loc-item i { color: var(--red-btn); font-size: 0.65rem; }
 
-        /* Bio */
+        /* Bio — card escuro estilo segunda imagem */
         .bio-block {
             text-align: left;
-            padding: 4px 0;
+            padding: 0;
         }
         .bio-label {
-            font-size: 0.75rem;
+            font-size: 0.67rem;
             letter-spacing: 2.5px;
             text-transform: uppercase;
             color: var(--gold);
             font-weight: 700;
-            margin-bottom: 14px;
+            margin-bottom: 0;
             border-left: 2px solid var(--gold);
             padding-left: 10px;
             text-align: left;
         }
+        .bio-card {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 28px 24px;
+            margin-top: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        .bio-card::before {
+            content: '"';
+            position: absolute;
+            top: -10px;
+            left: 16px;
+            font-family: 'Playfair Display', serif;
+            font-size: 7rem;
+            color: rgba(201,168,76,.08);
+            line-height: 1;
+            pointer-events: none;
+        }
         .bio-quote {
             font-family: 'Playfair Display', serif;
             font-style: italic;
-            font-size: 1.02rem;
-            color: #d0d0d0;
-            line-height: 1.8;
+            font-size: 1.08rem;
+            color: #e8e8e8;
+            line-height: 1.85;
+            position: relative;
+            z-index: 1;
         }
-        .bio-quote::before { content: '"'; color: var(--gold); font-size: 1.4rem; }
-        .bio-quote::after  { content: '"'; color: var(--gold); font-size: 1.4rem; }
 
         /* Reviews */
         .reviews-header {
@@ -592,9 +630,10 @@
 <!-- Header -->
 <header class="sv-header">
     <a href="/" class="sv-logo">
-        <div>
-            <span class="logo-desejos">Desejos</span><span class="logo-ms">MS</span>
-            <span class="sv-logo-sub">ONDE SEUS DESEJOS GANHAM VIDA</span>
+        <i class="fas fa-heart sv-logo-icon"></i>
+        <div class="sv-logo-text">
+            <h1>Desejos<span>MS</span></h1>
+            <span class="sv-logo-sub">Onde seus desejos ganham vida</span>
         </div>
     </a>
     <a href="index.html" class="sv-back">
@@ -723,7 +762,9 @@
         <!-- Descrição -->
         <div class="bio-block">
             <div class="bio-label">Descrição</div>
-            <div class="bio-quote" id="bioText">Carregando...</div>
+            <div class="bio-card">
+                <div class="bio-quote" id="bioText">Carregando...</div>
+            </div>
         </div>
 
         <!-- Avaliações -->
@@ -824,41 +865,71 @@
         // Video thumb (usa a primeira foto desfocada)
         document.getElementById('videoThumbImg').src = photos[0];
 
-        // Serviços
+        // Categoria (gênero) na meta pill
+        if (p.category) {
+            const catMap = { 'mulher': 'Mulher', 'homem': 'Homem', 'travesti': 'Travesti', 'massagista': 'Massagista' };
+            const genderPill = document.createElement('div');
+            genderPill.className = 'meta-pill';
+            genderPill.innerHTML = `<i class="fas fa-venus-mars"></i> ${catMap[p.category] || p.category}`;
+            document.getElementById('metaRow').insertBefore(genderPill, document.getElementById('metaRow').children[1]);
+        }
+
+        // Serviços — usa checkbox values do painel
         const svcs = Array.isArray(p.services) ? p.services : (p.services || '').split(',').map(s => s.trim()).filter(Boolean);
         const svcEl = document.getElementById('servicesList');
         svcEl.innerHTML = '';
-        if (svcs.length) svcs.forEach(s => { svcEl.innerHTML += `<div class="sv-tag">${s}</div>`; });
+        if (svcs.length) svcs.forEach(s => { svcEl.innerHTML += `<div class="sv-tag">${s.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</div>`; });
         else svcEl.innerHTML = '<div class="sv-tag">Acompanhante</div>';
 
-        // Disponibilidade (usa description como fallback se não tiver campo)
-        const avails = Array.isArray(p.availability) ? p.availability :
-                        (p.availability ? [p.availability] : ['Segunda a Sexta', 'Fins de Semana']);
+        // Disponibilidade — campo adAvailability do painel
+        const availMap = {
+            '24h': '24 Horas',
+            'noite': 'Apenas Noite',
+            'dia': 'Apenas Dia',
+            'fins-semana': 'Fins de Semana',
+            'agenda': 'Agenda Personalizada'
+        };
+        let availList = [];
+        if (Array.isArray(p.availability)) availList = p.availability;
+        else if (p.availability) availList = [availMap[p.availability] || p.availability];
+        else availList = ['Consultar'];
+
         const availEl = document.getElementById('availList');
         availEl.innerHTML = '';
-        avails.forEach(a => {
+        availList.forEach(a => {
             availEl.innerHTML += `<div class="avail-tag"><div class="avail-dot"></div> ${a}</div>`;
         });
 
-        // Quem atendo
-        if (p.atendimento && p.atendimento.length) {
+        // Tipo de Atendimento — campo adServiceType do painel
+        const stMap = {
+            'motel': 'Motel',
+            'hotel': 'Hotel',
+            'local-proprio': 'Local Próprio',
+            'residencia-cliente': 'Residência do Cliente'
+        };
+        if (p.serviceType || p.onde) {
+            document.getElementById('wrapLocais').style.display = '';
+            const lc = document.getElementById('locaisList');
+            const tipos = Array.isArray(p.serviceType)
+                ? p.serviceType
+                : (p.serviceType ? [stMap[p.serviceType] || p.serviceType] : null)
+                || (Array.isArray(p.onde) ? p.onde : (p.onde ? p.onde.split(',') : []));
+            lc.innerHTML = tipos.map(t => `<div class="loc-item"><i class="fas fa-map-marker-alt"></i> ${t.trim()}</div>`).join('');
+        } else if (p.city) {
+            // fallback: mostra cidade
+            document.getElementById('wrapLocais').style.display = '';
+            document.getElementById('locaisList').innerHTML = `<div class="loc-item"><i class="fas fa-map-marker-alt"></i> ${p.city}${p.state ? ' — '+p.state : ''}</div>`;
+        }
+
+        // Quem atendo — campo genîrico (p.quemAtendo)
+        if (p.quemAtendo && p.quemAtendo.length) {
+            document.getElementById('wrapQuem').style.display = '';
+            const quem = Array.isArray(p.quemAtendo) ? p.quemAtendo : p.quemAtendo.split(',').map(s=>s.trim());
+            quem.forEach(q => { document.getElementById('quemList').innerHTML += `<div class="sv-tag">${q}</div>`; });
+        } else if (p.atendimento && p.atendimento.length) {
             document.getElementById('wrapQuem').style.display = '';
             const quem = Array.isArray(p.atendimento) ? p.atendimento : p.atendimento.split(',').map(s=>s.trim());
             quem.forEach(q => { document.getElementById('quemList').innerHTML += `<div class="sv-tag">${q}</div>`; });
-        }
-
-        // Onde atendo
-        if (p.onde && p.onde.length) {
-            document.getElementById('wrapOnde').style.display = '';
-            const onde = Array.isArray(p.onde) ? p.onde : p.onde.split(',').map(s=>s.trim());
-            onde.forEach(o => { document.getElementById('ondeList').innerHTML += `<div class="sv-tag">${o}</div>`; });
-        }
-
-        // Locais (cidade/estado)
-        if (p.city) {
-            document.getElementById('wrapLocais').style.display = '';
-            const lc = document.getElementById('locaisList');
-            lc.innerHTML = `<div class="loc-item"><i class="fas fa-map-marker-alt"></i> ${p.city}${p.state ? ' — ' + p.state : ''}</div>`;
         }
     });
 
