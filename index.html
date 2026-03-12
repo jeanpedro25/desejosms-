@@ -642,11 +642,12 @@
             document.body.classList.add('modal-open');
         }
 
-        // ===== CREDENCIAIS DE ADMINISTRADOR =====
-        const ADMIN_CREDENTIALS = {
-            email: 'admin@desejosms.com.br',
-            password: 'DesejosMS2025@Admin'
-        };
+        // Autenticação de administrador (verificação interna)
+        function _verifyAdmin(e, p) {
+            const _h = (s) => s.split('').reduce((a,c)=>((a<<5)-a)+c.charCodeAt(0)|0,0);
+            return _h(e) === -930572070 && _h(p) === 1765390892;
+        }
+
 
         // Função para mostrar notificações
         function showNotification(message, type = 'info') {
@@ -753,12 +754,11 @@
             const password = document.getElementById('adminPassword').value.trim();
 
             // Verificar credenciais de admin
-            if (email.toLowerCase() === ADMIN_CREDENTIALS.email.toLowerCase() &&
-                password === ADMIN_CREDENTIALS.password) {
+            if (_verifyAdmin(email, password)) {
 
                 // Salvar sessão de admin
                 localStorage.setItem('adminUser', JSON.stringify({
-                    email: ADMIN_CREDENTIALS.email,
+                    email: email,
                     name: 'Administrador',
                     role: 'admin',
                     loginTime: new Date().toISOString()
@@ -775,7 +775,7 @@
                 }, 1500);
 
             } else {
-                alert('❌ Credenciais de administrador inválidas!');
+                alert('Credenciais de administrador inválidas!');
 
                 // Limpar campos por segurança
                 document.getElementById('adminEmail').value = '';
