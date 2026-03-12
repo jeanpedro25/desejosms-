@@ -53,16 +53,15 @@
                                 <strong>Dica:</strong> Cada estado tem suas próprias acompanhantes e cidades disponíveis!
                             </p>
                         </div>
-                        
+
                         <div class="states-list" id="statesList">
-                            <!-- Estados serão carregados dinamicamente -->
                             <div class="loading-states">
                                 <i class="fas fa-spinner fa-spin"></i>
                                 <span>Carregando estados disponíveis...</span>
                             </div>
                         </div>
 
-                        <!-- Mensagem de estado selecionado -->
+                        <!-- Mensagem de estado selecionado (desktop) -->
                         <div class="selected-state-message" id="selectedStateMessage" style="display: none;">
                             <div class="state-confirmation">
                                 <i class="fas fa-check-circle"></i>
@@ -72,17 +71,14 @@
                         </div>
                     </div>
 
-                    <!-- Right Panel - Warning -->
+                    <!-- Right Panel - Warning (desktop) -->
                     <div class="warning-panel">
                         <div class="warning-content">
                             <h2>Atenção!</h2>
                             <div class="warning-text">
                                 <p>Informamos que o conteúdo do site é destinado a maiores de 18 anos. Portanto, se você não atingiu a maioridade e/ou considera este tipo de conteúdo inadequado ou ofensivo, pedimos a gentileza de não prosseguir.</p>
-
                                 <p>Salientamos que todas as acompanhantes do site são maiores de 18 anos. Todos os Dados informados no anuncio foram autorizados pelas anunciantes, e são de sua intera responsabilidade!</p>
-
                                 <p class="important-notice">GOSTARIAMOS DE DEIXAR CLARO QUE NÃO SOMOS AGENCIA!!!</p>
-
                                 <p class="site-description">DesejosMS Acompanhantes Garotas(o) de Programa p/ eles, elas e casais</p>
                             </div>
                             <div class="warning-buttons">
@@ -96,77 +92,250 @@
         </main>
     </div>
 
+    <!-- ===== BOTTOM SHEET MOBILE ===== -->
+    <!-- Overlay escuro (fecha o sheet ao clicar fora) -->
+    <div id="sheetOverlay" class="sheet-overlay" onclick="closeMobileSheet()"></div>
+
+    <!-- Painel que sobe de baixo -->
+    <div id="mobileConfirmSheet" class="mobile-confirm-sheet">
+        <div class="sheet-handle"></div>
+
+        <!-- Confirmação verde do estado escolhido -->
+        <div class="sheet-state-confirm">
+            <div class="sheet-check-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div>
+                <div class="sheet-state-label">Estado Selecionado!</div>
+                <div class="sheet-state-name" id="mobileStateName"></div>
+            </div>
+        </div>
+
+        <!-- Aviso compacto vermelho -->
+        <div class="sheet-warning-box">
+            <h3 class="sheet-warning-title">⚠️ Atenção!</h3>
+            <p class="sheet-warning-text">
+                Conteúdo destinado a <strong>maiores de 18 anos</strong>. Todas as acompanhantes são adultas e responsáveis pelos seus dados.
+            </p>
+            <p class="sheet-no-agency">🚫 NÃO SOMOS AGÊNCIA!</p>
+        </div>
+
+        <!-- Botões de ação -->
+        <div class="sheet-buttons">
+            <button class="sheet-btn-accept" onclick="acceptAge()">
+                <i class="fas fa-check"></i>
+                Tenho 18 anos ou mais
+            </button>
+            <button class="sheet-btn-decline" onclick="declineAge()">
+                <i class="fas fa-times"></i>
+                Sair do site
+            </button>
+        </div>
+    </div>
+
+    <!-- Estilos do Bottom Sheet (somente mobile) -->
+    <style>
+    @media (max-width: 768px) {
+        .sheet-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 990;
+        }
+        .sheet-overlay.active {
+            display: block;
+        }
+
+        .mobile-confirm-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border-radius: 22px 22px 0 0;
+            z-index: 1000;
+            padding: 14px 20px 38px;
+            transform: translateY(100%);
+            transition: transform 0.38s cubic-bezier(0.34, 1.15, 0.64, 1);
+            box-shadow: 0 -6px 40px rgba(0,0,0,0.28);
+        }
+        .mobile-confirm-sheet.active {
+            transform: translateY(0);
+        }
+
+        .sheet-handle {
+            width: 42px;
+            height: 4px;
+            background: #ddd;
+            border-radius: 2px;
+            margin: 0 auto 18px;
+        }
+
+        .sheet-state-confirm {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f0fdf4;
+            border: 1.5px solid #bbf7d0;
+            border-radius: 14px;
+            padding: 12px 16px;
+            margin-bottom: 14px;
+        }
+        .sheet-check-icon {
+            font-size: 2.2rem;
+            color: #16a34a;
+            flex-shrink: 0;
+        }
+        .sheet-state-label {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #15803d;
+            line-height: 1.2;
+        }
+        .sheet-state-name {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #14532d;
+        }
+
+        .sheet-warning-box {
+            background: linear-gradient(135deg, #7f0000, #b91c1c);
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 18px;
+            color: #fff;
+        }
+        .sheet-warning-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0 0 8px;
+        }
+        .sheet-warning-text {
+            font-size: 0.83rem;
+            line-height: 1.5;
+            margin: 0 0 8px;
+            opacity: 0.95;
+        }
+        .sheet-no-agency {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #FFD700;
+            margin: 0;
+            letter-spacing: 0.3px;
+        }
+
+        .sheet-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .sheet-btn-accept {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #16a34a, #166534);
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 18px rgba(22,163,74,0.35);
+            letter-spacing: 0.3px;
+            transition: transform 0.12s ease, box-shadow 0.12s ease;
+        }
+        .sheet-btn-accept:active {
+            transform: scale(0.97);
+            box-shadow: none;
+        }
+        .sheet-btn-decline {
+            width: 100%;
+            padding: 14px;
+            background: transparent;
+            color: #8B0000;
+            border: 2px solid #8B0000;
+            border-radius: 14px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .sheet-btn-decline:active {
+            background: rgba(139,0,0,0.07);
+        }
+    }
+
+    /* Desktop: sheet jamais visível */
+    @media (min-width: 769px) {
+        .sheet-overlay,
+        .mobile-confirm-sheet {
+            display: none !important;
+        }
+    }
+    </style>
+
     <script src="config.js"></script>
     <script src="states-config.js"></script>
     <script>
         let selectedState = null;
 
-        // Verificar se já aceitou antes (permitir forçar re-seleção com ?force=true)
+        // Verificar se já aceitou antes
         (function(){
             const params = new URLSearchParams(window.location.search);
             const force = params.get('force') === 'true';
-            // Se forçado, limpar seleção anterior
             if (force) {
                 localStorage.removeItem('currentState');
                 localStorage.removeItem('selectedCity');
                 localStorage.removeItem('currentCity');
             }
-            const ageVerified = localStorage.getItem('ageVerified') === 'true';
-            if (ageVerified && !force) {
+            if (localStorage.getItem('ageVerified') === 'true' && !force) {
                 window.location.href = 'index.html';
             }
         })();
 
-        // Carregar estados quando a página carregar
         document.addEventListener('DOMContentLoaded', function() {
             loadAvailableStates();
         });
 
-        // Carregar estados disponíveis
         function loadAvailableStates() {
-            console.log('🗺️ Carregando estados disponíveis...');
-
             const statesList = document.getElementById('statesList');
 
-            // Verificar se o statesManager está disponível
             if (typeof statesManager !== 'undefined') {
                 const activeStates = statesManager.getActiveStates();
-                console.log('Estados ativos:', Object.keys(activeStates));
 
                 if (Object.keys(activeStates).length > 0) {
-                    // Limpar loading
                     statesList.innerHTML = '';
+                    const sortedStates = Object.entries(activeStates).sort(([,a],[,b]) => a.name.localeCompare(b.name));
 
-                    // Ordenar estados alfabeticamente
-                    const sortedStates = Object.entries(activeStates).sort(([,a], [,b]) => a.name.localeCompare(b.name));
-
-                    // Criar botões para cada estado
                     sortedStates.forEach(([stateCode, stateConfig]) => {
-                        const stateBtn = document.createElement('button');
-                        stateBtn.className = 'state-btn';
-                        stateBtn.innerHTML = `
+                        const btn = document.createElement('button');
+                        btn.className = 'state-btn';
+                        btn.innerHTML = `
                             <div class="state-info">
                                 <span class="state-name">${stateConfig.name}</span>
                                 <span class="state-code">${stateCode}</span>
                                 <span class="state-brand">${stateConfig.brand}</span>
                             </div>
                         `;
-                        stateBtn.onclick = () => selectState(stateCode, stateConfig);
-                        statesList.appendChild(stateBtn);
+                        btn.addEventListener('click', function(e) {
+                            selectState(stateCode, stateConfig, this);
+                        });
+                        statesList.appendChild(btn);
                     });
                 } else {
-                    statesList.innerHTML = `
-                        <div class="no-states">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <span>Nenhum estado disponível no momento</span>
-                        </div>
-                    `;
+                    statesList.innerHTML = `<div class="no-states"><i class="fas fa-exclamation-triangle"></i><span>Nenhum estado disponível no momento</span></div>`;
                 }
             } else {
-                // Fallback para MS se não conseguir carregar
-                console.log('⚠️ statesManager não disponível, usando fallback');
+                // Fallback MS
                 statesList.innerHTML = `
-                    <button class="state-btn" onclick="selectState('MS', {name: 'Mato Grosso do Sul', brand: 'DesejosMS'})">
+                    <button class="state-btn" id="fallbackBtn">
                         <div class="state-info">
                             <span class="state-name">Mato Grosso do Sul</span>
                             <span class="state-code">MS</span>
@@ -174,20 +343,39 @@
                         </div>
                     </button>
                 `;
+                document.getElementById('fallbackBtn').addEventListener('click', function() {
+                    selectState('MS', {name: 'Mato Grosso do Sul', brand: 'DesejosMS'}, this);
+                });
             }
         }
 
-        // Selecionar estado
-        function selectState(stateCode, stateConfig) {
+        function selectState(stateCode, stateConfig, btnEl) {
             selectedState = stateCode;
-            console.log('Estado selecionado:', stateCode, stateConfig);
 
-            // Destacar estado selecionado
-            document.querySelectorAll('.state-btn').forEach(btn => btn.classList.remove('selected'));
-            event.target.closest('.state-btn').classList.add('selected');
+            // Destacar botão selecionado
+            document.querySelectorAll('.state-btn').forEach(b => b.classList.remove('selected'));
+            if (btnEl) btnEl.classList.add('selected');
 
-            // Mostrar mensagem de estado selecionado
+            // Desktop: mensagem inline
             document.getElementById('selectedStateMessage').style.display = 'block';
+
+            // Mobile: abrir bottom sheet
+            if (window.innerWidth <= 768) {
+                openMobileSheet(stateConfig ? stateConfig.name : stateCode);
+            }
+        }
+
+        function openMobileSheet(stateName) {
+            document.getElementById('mobileStateName').textContent = stateName;
+            document.getElementById('sheetOverlay').classList.add('active');
+            document.getElementById('mobileConfirmSheet').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMobileSheet() {
+            document.getElementById('mobileConfirmSheet').classList.remove('active');
+            document.getElementById('sheetOverlay').classList.remove('active');
+            document.body.style.overflow = '';
         }
 
         function acceptAge() {
@@ -195,23 +383,13 @@
                 alert('Por favor, selecione um estado primeiro!');
                 return;
             }
-
-            // Salvar no localStorage que aceitou
             localStorage.setItem('ageVerified', 'true');
-
-            // Salvar estado selecionado
             localStorage.setItem('currentState', selectedState);
-
-            console.log('✅ Idade verificada, estado:', selectedState);
-
-            // Redirecionar para a página principal
             window.location.href = 'index.html';
         }
 
         function declineAge() {
-            // Redirecionar para uma página de saída ou fechar
             window.close();
-            // Se não conseguir fechar, redirecionar para Google
             window.location.href = 'https://www.google.com';
         }
     </script>
