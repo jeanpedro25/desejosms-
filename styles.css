@@ -2420,6 +2420,16 @@ header.header {
    ============================================================ */
 @media (max-width: 768px) {
 
+    /* --- Ocultar CTA amarelo "Quer aparecer no TOP ANÚNCIOS?" --- */
+    .cta-section {
+        display: none !important;
+    }
+
+    /* --- Ocultar barra de filtro vermelha "Mostrando: TODOS OS ANÚNCIOS" --- */
+    .category-feedback {
+        display: none !important;
+    }
+
     /* --- Linha "Com Local  cidade, MS" dos cards --- */
     .city-line {
         display: flex !important;
