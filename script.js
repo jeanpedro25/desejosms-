@@ -989,8 +989,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     console.log('=== INICIALIZAÇÃO DO SISTEMA ===');
 
     // Sincronizar com Banco de Dados Oficial na nuvem (Supabase) antes de renderizar
+    // IMPORTANTE: await garante que os dados chegam ANTES de qualquer renderização
     if (window.syncSupabaseToLocal) {
+        console.log('Aguardando sincronizacao com Supabase...');
         await window.syncSupabaseToLocal();
+        console.log('Supabase sincronizado! Iniciando renderizacao...');
     }
 
     // Aguardar um pouco para garantir que todos os scripts foram carregados
@@ -1019,7 +1022,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 setupEventListeners();
                 console.log('Event listeners configurados');
 
-                // Carregar perfis
+                // Carregar perfis - agora com dados do Supabase ja disponiveis no localStorage
                 loadProfiles();
                 console.log('Perfis carregados');
 
@@ -1030,9 +1033,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                     if (window.AUTOMATIC_SEO_CITY) {
                         const rawName = window.AUTOMATIC_SEO_CITY;
                         const cityParam = rawName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-');
-                        console.log('Filtro Automático de SEO detectado:', rawName);
+                        console.log('Filtro Automatico de SEO detectado:', rawName);
 
-                        // Procurar o id do <select> para travar nele
+                        // Procurar o id do select para travar nele
                         const citySelector = document.getElementById('citySelector');
                         if (citySelector) {
                             Array.from(citySelector.options).forEach(opt => {
@@ -1047,10 +1050,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                     } else {
                         filterProfiles('all');
                     }
-                }, 1000);
+                }, 500);
 
             } else {
-                console.error('Função updateCategories não encontrada!');
+                console.error('Funcao updateCategories nao encontrada!');
             }
         }, 200);
     }, 100);
