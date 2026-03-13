@@ -315,9 +315,10 @@
             gap: 4px;
         }
         .price-currency {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #ccc;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 3.4rem;
+            font-weight: 800;
+            color: #fff;
         }
         .price-num {
             font-family: 'Montserrat', sans-serif;
@@ -699,12 +700,10 @@
         <!-- Preço + Botões -->
         <div class="price-action-row">
             <div class="price-box">
-                <div class="price-label">INVESTIMENTO</div>
                 <div class="price-val">
                     <span class="price-currency">R$</span>
                     <span class="price-num" id="priceNum">--</span>
                 </div>
-                <div class="price-note">Valor a combinar</div>
             </div>
             <div class="action-btns">
                 <button class="btn-ligar" onclick="makeCall()">
@@ -844,12 +843,15 @@
 
         // Meta
         document.getElementById('metaAge').textContent = p.age || '--';
-        document.getElementById('metaCity').textContent = (p.city || '--') + (p.state ? ' — ' + p.state : '');
-        document.getElementById('metaRef').textContent = p.id;
+        const formattedCity = (p.city || '--').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        document.getElementById('metaCity').textContent = formattedCity + (p.state ? ' — ' + p.state : '');
+        document.getElementById('metaRef').textContent = p.advertiserRef || p.id || '--';
 
-        // Preço (só número)
-        const price = (p.price || '').replace(/[^\d]/g, '');
-        document.getElementById('priceNum').textContent = price || 'A combinar';
+        // Preço
+        let price = p.price || '';
+        let priceRaw = price.replace(/[^\d,\.]/g, '').replace(',', '.');
+        let priceFormatted = priceRaw ? parseFloat(priceRaw).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+        document.getElementById('priceNum').textContent = priceFormatted || 'A combinar';
 
         // Bio
         document.getElementById('bioText').textContent = p.description || p.bio || 'Sem descrição disponível.';
@@ -890,7 +892,7 @@
             'agenda': 'Agenda Personalizada'
         };
         let availList = [];
-        if (Array.isArray(p.availability)) availList = p.availability;
+        if (Array.isArray(p.availability)) availList = p.availability.map(a => availMap[a] || a);
         else if (p.availability) availList = [availMap[p.availability] || p.availability];
         else availList = ['Consultar'];
 
@@ -911,7 +913,7 @@
             document.getElementById('wrapLocais').style.display = '';
             const lc = document.getElementById('locaisList');
             const tipos = Array.isArray(p.serviceType)
-                ? p.serviceType
+                ? p.serviceType.map(t => stMap[t] || t)
                 : (p.serviceType ? [stMap[p.serviceType] || p.serviceType] : null)
                 || (Array.isArray(p.onde) ? p.onde : (p.onde ? p.onde.split(',') : []));
             lc.innerHTML = tipos.map(t => `<div class="loc-item"><i class="fas fa-map-marker-alt"></i> ${t.trim()}</div>`).join('');

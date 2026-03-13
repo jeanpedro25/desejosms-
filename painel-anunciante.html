@@ -181,6 +181,11 @@
 
                         <div class="profile-info" id="profileInfo">
                             <div class="info-group">
+                                <label>ID Anunciante:</label>
+                                <span id="userRef" style="font-weight: bold; color: #8B0000; letter-spacing: 1px;">REF-0000</span>
+                            </div>
+
+                            <div class="info-group">
                                 <label>Nome Completo:</label>
                                 <span id="userName">João Silva</span>
                             </div>
@@ -474,68 +479,66 @@
                                 required></textarea>
                         </div>
 
-                        <div class="form-group">
-                            <label>Serviços Oferecidos</label>
+                        <div class="form-group" style="margin-top: 30px; text-align: center;">
+                            <label style="display: inline-block; font-size: 1.25em; font-weight: bold; color: var(--primary-color, #dc3545); text-transform: uppercase;">Serviços Oferecidos</label>
                             <div class="services-grid">
                                 <label class="checkbox-item">
-                                    <input type="checkbox" value="massagem-relaxante">
+                                    <input type="checkbox" name="services" value="massagem-relaxante">
                                     <span>Massagem Relaxante</span>
                                 </label>
                                 <label class="checkbox-item">
-                                    <input type="checkbox" value="atendimento-vip">
+                                    <input type="checkbox" name="services" value="atendimento-vip">
                                     <span>Atendimento VIP</span>
                                 </label>
                                 <label class="checkbox-item">
-                                    <input type="checkbox" value="companhia-executiva">
+                                    <input type="checkbox" name="services" value="companhia-executiva">
                                     <span>Companhia Executiva</span>
                                 </label>
                                 <label class="checkbox-item">
-                                    <input type="checkbox" value="companhia-eventos">
+                                    <input type="checkbox" name="services" value="companhia-eventos">
                                     <span>Companhia para Eventos</span>
                                 </label>
                                 <label class="checkbox-item">
-                                    <input type="checkbox" value="acompanhante-viagem">
+                                    <input type="checkbox" name="services" value="acompanhante-viagem">
                                     <span>Acompanhante de Viagem</span>
                                 </label>
                                 <label class="checkbox-item">
-                                    <input type="checkbox" value="eventos-sociais">
+                                    <input type="checkbox" name="services" value="eventos-sociais">
                                     <span>Eventos Sociais</span>
                                 </label>
                                 <label class="checkbox-item">
-                                    <input type="checkbox" value="jantar-romantico">
+                                    <input type="checkbox" name="services" value="jantar-romantico">
                                     <span>Jantar Romântico</span>
                                 </label>
                                 <label class="checkbox-item">
-                                    <input type="checkbox" value="massagem-tantrica">
+                                    <input type="checkbox" name="services" value="massagem-tantrica">
                                     <span>Massagem Tântrica</span>
                                 </label>
                                 <label class="checkbox-item">
-                                    <input type="checkbox" value="pernoite">
+                                    <input type="checkbox" name="services" value="pernoite">
                                     <span>Pernoite</span>
                                 </label>
                             </div>
                         </div>
 
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="adAvailability">Disponibilidade</label>
-                                <select id="adAvailability">
-                                    <option value="24h">24 Horas</option>
-                                    <option value="noite">Apenas Noite</option>
-                                    <option value="dia">Apenas Dia</option>
-                                    <option value="fins-semana">Fins de Semana</option>
-                                    <option value="agenda">Agenda Personalizada</option>
-                                </select>
+                        <div class="form-group" style="margin-top: 30px; text-align: center;">
+                            <label style="display: inline-block; font-size: 1.25em; font-weight: bold; color: var(--primary-color, #dc3545); text-transform: uppercase;">Disponibilidade</label>
+                            <div class="services-grid">
+                                <label class="checkbox-item"><input type="checkbox" name="availability" value="24h"><span>24 Horas</span></label>
+                                <label class="checkbox-item"><input type="checkbox" name="availability" value="noite"><span>Apenas Noite</span></label>
+                                <label class="checkbox-item"><input type="checkbox" name="availability" value="dia"><span>Apenas Dia</span></label>
+                                <label class="checkbox-item"><input type="checkbox" name="availability" value="fins-semana"><span>Fins de Semana</span></label>
+                                <label class="checkbox-item"><input type="checkbox" name="availability" value="agenda"><span>Agenda Personalizada</span></label>
                             </div>
+                        </div>
 
-                            <div class="form-group">
-                                <label for="adServiceType">Tipo de Atendimento</label>
-                                <select id="adServiceType">
-                                    <option value="motel">Motel</option>
-                                    <option value="hotel">Hotel</option>
-                                    <option value="local-proprio">Local Próprio</option>
-                                    <option value="residencia-cliente">Residência do Cliente</option>
-                                </select>
+                        <div class="form-group" style="margin-top: 30px; text-align: center;">
+                            <label style="display: inline-block; font-size: 1.25em; font-weight: bold; color: var(--primary-color, #dc3545); text-transform: uppercase;">Tipo de Atendimento</label>
+                            <div class="services-grid">
+                                <label class="checkbox-item"><input type="checkbox" name="serviceType" value="motel"><span>Motel</span></label>
+                                <label class="checkbox-item"><input type="checkbox" name="serviceType" value="hotel"><span>Hotel</span></label>
+                                <label class="checkbox-item"><input type="checkbox" name="serviceType" value="local-proprio"><span>Local Próprio</span></label>
+                                <label class="checkbox-item"><input type="checkbox" name="serviceType" value="residencia-cliente"><span>Residência do Cliente</span></label>
                             </div>
                         </div>
                     </form>
@@ -643,13 +646,13 @@
             </div>
 
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="previousStep()" id="prevBtn">
-                    <i class="fas fa-arrow-left"></i>
+                <button class="btn btn-secondary" id="prevBtn">
+                    <i class="fas fa-arrow-left" style="margin-right:8px;"></i>
                     Anterior
                 </button>
-                <button class="btn btn-primary" onclick="nextStep()" id="nextBtn">
+                <button class="btn btn-primary" id="nextBtn">
                     Próximo
-                    <i class="fas fa-arrow-right"></i>
+                    <i class="fas fa-arrow-right" style="margin-left:8px;"></i>
                 </button>
             </div>
         </div>

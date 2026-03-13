@@ -384,12 +384,23 @@ function setupPlanSelection() {
     console.log('✅ Seleção de planos configurada');
 }
 
-// Configurar upload de fotos
+// Configurar upload de fotos e vídeo
 function setupPhotoUpload() {
-    console.log('📸 Configurando upload de fotos...');
+    console.log('📸 Configurando upload de fotos e vídeos...');
 
     const uploadZone = document.getElementById('uploadZone');
+    
+    // Remover listeners do input de foto usando cloneNode
     const photoInput = document.getElementById('photoInput');
+    if (photoInput) {
+        const newPhotoInput = photoInput.cloneNode(true);
+        photoInput.parentNode.replaceChild(newPhotoInput, photoInput);
+        newPhotoInput.addEventListener('change', (e) => {
+            console.log('📁 Arquivos selecionados:', e.target.files.length);
+            handleFiles(e.target.files);
+        });
+        console.log('✅ Photo input configurado');
+    }
 
     if (uploadZone) {
         // Remover event listeners existentes
@@ -399,8 +410,9 @@ function setupPhotoUpload() {
         // Adicionar novos event listeners
         newUploadZone.addEventListener('click', (e) => {
             e.preventDefault();
-            if (photoInput) {
-                photoInput.click();
+            const currentPhotoInput = document.getElementById('photoInput');
+            if (currentPhotoInput) {
+                currentPhotoInput.click();
             }
         });
 
@@ -409,14 +421,36 @@ function setupPhotoUpload() {
 
         console.log('✅ Upload zone configurada');
     }
-
-    if (photoInput) {
-        photoInput.addEventListener('change', (e) => {
-            console.log('📁 Arquivos selecionados:', e.target.files.length);
-            handleFiles(e.target.files);
+    
+    // Configurar upload e preview de vídeo
+    const videoInput = document.getElementById('videoInput');
+    if (videoInput) {
+        const newVideoInput = videoInput.cloneNode(true);
+        videoInput.parentNode.replaceChild(newVideoInput, videoInput);
+        newVideoInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                const file = e.target.files[0];
+                if (file.size > 20 * 1024 * 1024) { // 20MB
+                    alert('O vídeo deve ter no máximo 20MB.');
+                    newVideoInput.value = '';
+                    return;
+                }
+                const videoPreview = document.getElementById('videoPreview');
+                if (videoPreview) {
+                    const videoUrl = URL.createObjectURL(file);
+                    videoPreview.innerHTML = `
+                        <video src="${videoUrl}" controls style="width: 100%; max-height: 200px; border-radius: 8px; margin-top: 10px;"></video>
+                        <button type="button" onclick="document.getElementById('videoInput').value=''; document.getElementById('videoPreview').innerHTML=''; delete adData.video;" style="margin-top: 5px; background: red; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                            <i class="fas fa-trash"></i> Remover Vídeo
+                        </button>
+                    `;
+                }
+                const reader = new FileReader();
+                reader.onload = function(evt) { adData.video = evt.target.result; };
+                reader.readAsDataURL(file);
+            }
         });
-
-        console.log('✅ Photo input configurado');
+        console.log('✅ Video input configurado');
     }
 }
 
@@ -783,7 +817,7 @@ function loadUserAds() {
                     </div>
                 </td>
                 <td>
-                    <span class="status-badge ${ad.status}">${ad.status === 'active' ? 'Aprovado' : 'Pendente'}</span>
+                    <span class="status-badge ${ad.status}">${ad.status === 'active' ? 'Aprovado' : (ad.status === 'paused' ? 'Pausado' : 'Pendente')}</span>
                 </td>
                 <td>
                     <div>${ad.views || 0} visualizações</div>
@@ -798,15 +832,21 @@ function loadUserAds() {
                 </td>
                 <td>
                     <div style="display: flex; gap: 5px;">
+                        ${ad.planType === 'supervip' ? `
                         <button class="action-btn" onclick="editAd(${ad.id})" title="Editar">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="action-btn" onclick="pauseAd(${ad.id})" title="Pausar">
-                            <i class="fas fa-pause"></i>
+                        ` : ''}
+                        ${(ad.planType === 'top' || ad.planType === 'supervip') ? `
+                        <button class="action-btn" onclick="pauseAd(${ad.id})" title="${ad.status === 'paused' ? 'Retomar' : 'Pausar'}">
+                            <i class="fas ${ad.status === 'paused' ? 'fa-play' : 'fa-pause'}"></i>
                         </button>
-                        <button class="action-btn" onclick="promoteAd(${ad.id})" title="Promover">
+                        ` : ''}
+                        ${ad.planType !== 'supervip' ? `
+                        <button class="action-btn" onclick="promoteAd(${ad.id})" title="Fazer Upgrade">
                             <i class="fas fa-arrow-up"></i>
                         </button>
+                        ` : ''}
                     </div>
                 </td>
             </tr>
@@ -847,6 +887,16 @@ function loadUserProfile() {
     const userAge = localStorage.getItem('userAge') || 'Não informada';
     const userCategory = localStorage.getItem('userCategory') || 'Não informada';
 
+    // Gerar ou carregar o REF Único do Anunciante (Nível Nacional)
+    let advertiserRef = localStorage.getItem('advertiserRef');
+    if (!advertiserRef) {
+        // Gerador de ID Único Discreto: REF- + 4 números + Letra do plano/cat
+        const randomNum = Math.floor(1000 + Math.random() * 8999);
+        const timestamp = Date.now().toString().slice(-2);
+        advertiserRef = `REF-${randomNum}${timestamp}`;
+        localStorage.setItem('advertiserRef', advertiserRef);
+    }
+
     // Se não existir nada no storage ainda, criar um perfil padrão
     if (!localStorage.getItem('userProfileInitialized')) {
         localStorage.setItem('userEmail', userEmail);
@@ -864,6 +914,26 @@ function loadUserProfile() {
     const userEmailEl = document.getElementById('userEmail');
     if (userEmailEl) userEmailEl.textContent = userEmail;
     document.getElementById('userCategory').textContent = userCategory;
+
+    // Exibir o ID do Anunciante
+    const userRefEl = document.getElementById('userRef');
+    if (userRefEl) userRefEl.textContent = advertiserRef;
+
+    // Sincronizar anúncios existentes com este REF (Nível Nacional)
+    try {
+        const announcements = JSON.parse(localStorage.getItem('announcements') || '[]');
+        let changed = false;
+        announcements.forEach(ad => {
+            if (ad.userEmail === userEmail && !ad.advertiserRef) {
+                ad.advertiserRef = advertiserRef;
+                changed = true;
+            }
+        });
+        if (changed) {
+            localStorage.setItem('announcements', JSON.stringify(announcements));
+            console.log('✅ Anúncios existentes sincronizados com o novo REF Anunciante');
+        }
+    } catch (e) { console.error('Erro ao sincronizar REFs:', e); }
 
     // Sincronizar status de verificação
     syncVerificationStatus();
@@ -890,25 +960,31 @@ function loadUserStats() {
         // Simulação realista de engajamento do WhatsApp (historicamente entre 10% a 25% das views viram cliques)
         const mockClicks = Math.floor(views * (0.12 + Math.random() * 0.08));
 
+        const formattedCity = (ad.city||'').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
         html += `
-            <div class="stat-card" style="background: white; border: 1px solid #eeeedd; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                <h3 style="margin-top:0; color:#d11b62; font-family: 'Playfair Display', serif;">${ad.name} <span style="font-size:12px; color:#999; font-weight:normal; font-family:Arial;">(${ad.city})</span></h3>
-                
-                <div style="display: flex; gap: 20px; margin-top: 15px;">
-                    <div style="flex: 1; text-align: center; padding: 20px; background: #fffaf0; border-radius: 8px; border-bottom: 3px solid #6c757d;">
-                        <i class="fas fa-eye" style="font-size: 28px; color: #6c757d; margin-bottom: 12px;"></i>
-                        <div style="font-size: 28px; font-weight: bold; color: #333;">${views}</div>
-                        <div style="font-size: 14px; color: #666;">Visualizações do Perfil</div>
-                    </div>
-                    
-                    <div style="flex: 1; text-align: center; padding: 20px; background: #f0fff4; border-radius: 8px; border-bottom: 3px solid #25d366;">
-                        <i class="fab fa-whatsapp" style="font-size: 28px; color: #25d366; margin-bottom: 12px;"></i>
-                        <div style="font-size: 28px; font-weight: bold; color: #333;">${views === 0 ? 0 : mockClicks}</div>
-                        <div style="font-size: 14px; color: #666;">Cliques no WhatsApp</div>
+            <div style="display:flex; flex-direction:column; background: white; border: 1px solid #eeeedd; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); gap: 15px; width:100%; box-sizing: border-box; transition: transform 0.2s;">
+                <div style="margin-bottom: 5px;">
+                    <h3 style="margin:0; color:#8B0000; font-size: 1.15rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${ad.name}">${ad.name}</h3>
+                    <div style="font-size: 0.85rem; color:#666; margin-top: 4px;">
+                        <i class="fas fa-map-marker-alt" style="color:#d11b62; margin-right: 4px;"></i>${formattedCity}
                     </div>
                 </div>
                 
-                <div style="margin-top: 15px; text-align:right; font-size:12px; color:#999;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div style="text-align: center; padding: 15px 10px; background: #f8f9fa; border-radius: 8px; border-bottom: 3px solid #6c757d; box-sizing: border-box;">
+                        <i class="fas fa-eye" style="font-size: 22px; color: #6c757d; margin-bottom: 10px;"></i>
+                        <div style="font-size: 24px; font-weight: 800; color: #333; line-height: 1;">${views}</div>
+                        <div style="font-size: 0.75rem; color: #666; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Acessos</div>
+                    </div>
+                    
+                    <div style="text-align: center; padding: 15px 10px; background: #f0fff4; border-radius: 8px; border-bottom: 3px solid #25d366; box-sizing: border-box;">
+                        <i class="fab fa-whatsapp" style="font-size: 22px; color: #25d366; margin-bottom: 10px;"></i>
+                        <div style="font-size: 24px; font-weight: 800; color: #333; line-height: 1;">${views === 0 ? 0 : mockClicks}</div>
+                        <div style="font-size: 0.75rem; color: #666; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px;">WhatsApp</div>
+                    </div>
+                </div>
+                
+                <div style="text-align:center; font-size:0.75rem; color:#aaa; border-top: 1px solid #f5f5f5; padding-top: 12px; margin-top: auto;">
                     <i class="fas fa-sync-alt"></i> Atualizado em tempo real
                 </div>
             </div>
@@ -938,9 +1014,15 @@ function showCreateAdModal() {
             return;
         }
 
-        // Resetar estado do formulário e carregar estados antes de exibir
-        resetAdForm();
+        // Sempre carregar estados e limpar o que for básico
         loadAvailableStates();
+        
+        // Tentar carregar rascunho se existir ou resetar para novo
+        if (localStorage.getItem('adCreationDraft')) {
+            loadAdDraft();
+        } else {
+            resetAdForm();
+        }
 
         // Mostrar modal
         modal.classList.add('active');
@@ -964,6 +1046,70 @@ function showCreateAdModal() {
     }
 }
 
+// Função para salvar rascunho do anúncio
+function saveAdDraft() {
+    console.log('📝 Salvando rascunho...');
+    
+    // Não persistir dados binários grandes no localStorage
+    const lightweightAdData = { ...adData };
+    if (lightweightAdData.photos) delete lightweightAdData.photos;
+    if (lightweightAdData.video) delete lightweightAdData.video;
+
+    const draft = {
+        currentStep: currentStep,
+        selectedPlan: selectedPlan,
+        adData: lightweightAdData,
+        timestamp: Date.now()
+    };
+    localStorage.setItem('adCreationDraft', JSON.stringify(draft));
+}
+
+// Função para carregar rascunho do anúncio
+function loadAdDraft() {
+    try {
+        const savedDraft = localStorage.getItem('adCreationDraft');
+        if (!savedDraft) return;
+
+        const draft = JSON.parse(savedDraft);
+        const now = Date.now();
+        
+        // Se o rascunho for muito antigo (mais de 24h), ignorar
+        if (now - draft.timestamp > 24 * 60 * 60 * 1000) {
+            localStorage.removeItem('adCreationDraft');
+            return;
+        }
+
+        console.log('📦 Carregando rascunho encontrado...');
+        currentStep = draft.currentStep || 1;
+        selectedPlan = draft.selectedPlan || null;
+        adData = draft.adData || adData;
+        
+        // Garantir que photos exista como array, já que removemos no save
+        if (!adData.photos) {
+            adData.photos = [];
+        }
+        Object.keys(adData).forEach(key => {
+            const el = document.getElementById('ad' + key.charAt(0).toUpperCase() + key.slice(1));
+            if (el && adData[key]) {
+                el.value = adData[key];
+            }
+        });
+
+        // Marcar plano selecionado visualmente
+        if (selectedPlan) {
+            const planType = typeof selectedPlan === 'object' ? selectedPlan.type : selectedPlan;
+            const planCard = document.querySelector(`.plan-card[data-plan="${planType}"]`);
+            if (planCard) selectPlan(planCard);
+        }
+
+        updateProgressBar();
+        showStep(currentStep);
+
+    } catch (e) {
+        console.error('Erro ao carregar rascunho:', e);
+    }
+}
+
 // Configurar event listeners do modal
 function setupModalEventListeners() {
     console.log('🔧 Configurando event listeners do modal...');
@@ -984,15 +1130,21 @@ function setupModalEventListeners() {
         };
     }
 
-    // Configurar tecla ESC para fechar
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-            const modal = document.getElementById('createAdModal');
-            if (modal && modal.classList.contains('active')) {
-                closeModal('createAdModal');
-            }
-        }
-    });
+    // Configurar botões de navegação
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn) {
+        nextBtn.onclick = (e) => {
+            e.preventDefault();
+            handleNextClick();
+        };
+    }
+    const prevBtn = document.getElementById('prevBtn');
+    if (prevBtn) {
+        prevBtn.onclick = (e) => {
+            e.preventDefault();
+            handlePrevClick();
+        };
+    }
 
     console.log('✅ Event listeners do modal configurados');
 }
@@ -1056,6 +1208,12 @@ function resetAdForm() {
         if (photoPreview) {
             photoPreview.innerHTML = '';
         }
+        
+        // Limpar vídeo
+        const videoPreview = document.getElementById('videoPreview');
+        if (videoPreview) videoPreview.innerHTML = '';
+        const videoInput = document.getElementById('videoInput');
+        if (videoInput) videoInput.value = '';
 
         // Limpar seleção de planos
         document.querySelectorAll('.plan-card').forEach(card => {
@@ -1105,50 +1263,52 @@ function updateProgressBar() {
 
 // Função para mostrar step específico
 function showStep(stepNumber) {
+    console.log('📖 Mostrando step:', stepNumber);
     document.querySelectorAll('.step-content').forEach(content => content.classList.remove('active'));
-    const target = document.getElementById(`step${stepNumber}`) || document.getElementById(`step${stepNumber}-details`);
+    
+    // Suporte para IDs de step flexíveis
+    const target = document.getElementById(`step${stepNumber}`) || 
+                   document.getElementById(`step${stepNumber}-details`) ||
+                   (stepNumber === 1 ? document.getElementById('step1') : null);
+                   
     if (target) {
         target.classList.add('active');
     }
 
-    // Atualizar botões
+    // Gerenciar botões de navegação no footer
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
 
-    if (stepNumber === 1) {
-        prevBtn.style.display = 'none';
-    } else {
-        prevBtn.style.display = 'inline-flex';
-    }
+    if (!prevBtn || !nextBtn) return;
 
+    // Resetar botões
+    prevBtn.style.display = stepNumber === 1 ? 'none' : 'inline-flex';
+    
     if (stepNumber === 4) {
-        nextBtn.innerHTML = 'Finalizar <i class="fas fa-check"></i>';
-        nextBtn.onclick = finishAdCreation;
-        // Garantir que o evento também seja adicionado como event listener
-        nextBtn.removeEventListener('click', nextStep);
-        nextBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            console.log('✅ Botão finalizar clicado');
-            finishAdCreation();
-        });
+        nextBtn.innerHTML = 'Finalizar <i class="fas fa-check" style="margin-left:8px;"></i>';
+        nextBtn.classList.add('btn-success');
     } else {
-        nextBtn.innerHTML = 'Próximo <i class="fas fa-arrow-right"></i>';
-        nextBtn.onclick = nextStep;
-        // Garantir que o evento também seja adicionado como event listener
-        nextBtn.removeEventListener('click', finishAdCreation);
-        nextBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            console.log('➡️ Botão próximo clicado');
-            nextStep();
-        });
+        nextBtn.innerHTML = 'Próximo <i class="fas fa-arrow-right" style="margin-left:8px;"></i>';
+        nextBtn.classList.remove('btn-success');
     }
+}
+
+// Iniciar navegação por botões (chamado apenas uma vez no setup)
+function handleNextClick() {
+    if (currentStep === 4) {
+        finishAdCreation();
+    } else {
+        nextStep();
+    }
+}
+
+function handlePrevClick() {
+    previousStep();
 }
 
 // Função para próximo step
 function nextStep() {
-    console.log('=== PRÓXIMO STEP ===');
-    console.log('Step atual:', currentStep);
-    console.log('Plano selecionado:', selectedPlan);
+    console.log('=== PRÓXIMO STEP === (De ' + currentStep + ' para ' + (currentStep + 1) + ')');
 
     try {
         if (currentStep < 4) {
@@ -1156,35 +1316,26 @@ function nextStep() {
             const validation = validateCurrentStep();
 
             if (validation.isValid) {
-                // Salvar dados temporários no localStorage
-                saveTemporaryData();
-
                 // Avançar para o próximo step
                 currentStep++;
-                console.log('✅ Avançou para o step:', currentStep);
+                
+                // Salvar rascunho no localStorage
+                saveAdDraft();
+                saveTemporaryData();
 
                 // Atualizar interface
                 updateProgressBar();
                 showStep(currentStep);
 
-                // Configurar botões para o novo step
-                updateStepButtons();
-
                 // Mostrar feedback de sucesso
                 showStepSuccessFeedback();
-
             } else {
                 console.log('❌ Validação falhou:', validation.message);
                 showValidationError(validation.message);
             }
-        } else {
-            console.log('🎉 Último step alcançado - Finalizando criação');
-            finishAdCreation();
         }
-
     } catch (error) {
         console.error('❌ Erro ao avançar step:', error);
-        showValidationError('Erro interno. Tente novamente.');
     }
 }
 
@@ -1259,11 +1410,15 @@ function showStepSuccessFeedback() {
 
 // Função para step anterior
 function previousStep() {
+    console.log('=== STEP ANTERIOR === (De ' + currentStep + ' para ' + (currentStep - 1) + ')');
     if (currentStep > 1) {
         currentStep--;
+        
+        // Salvar rascunho
+        saveAdDraft();
+        
         updateProgressBar();
         showStep(currentStep);
-        saveTemporaryData();
     }
 }
 
@@ -1369,7 +1524,13 @@ function validateCurrentStep() {
                 adData.description = description;
                 // Coletar serviços marcados
                 adData.services = [];
-                document.querySelectorAll('.checkbox-item input:checked').forEach(cb => adData.services.push(cb.value));
+                document.querySelectorAll('.checkbox-item input[name="services"]:checked').forEach(cb => adData.services.push(cb.value));
+                
+                adData.availability = [];
+                document.querySelectorAll('.checkbox-item input[name="availability"]:checked').forEach(cb => adData.availability.push(cb.value));
+                
+                adData.serviceType = [];
+                document.querySelectorAll('.checkbox-item input[name="serviceType"]:checked').forEach(cb => adData.serviceType.push(cb.value));
 
                 if (!selectedPlan) {
                     return { isValid: false, message: 'Plano não selecionado.' };
@@ -1676,14 +1837,14 @@ function finishAdCreation() {
 
     // Coletar dados diretamente dos campos do formulário
     const formData = {
-        title: document.getElementById('adTitle')?.value?.trim() || '',
-        state: document.getElementById('adState')?.value || '',
-        city: document.getElementById('adCity')?.value || '',
-        age: document.getElementById('adAge')?.value || '',
-        price: document.getElementById('adPrice')?.value || '',
-        category: document.getElementById('adCategory')?.value || '',
-        whatsapp: document.getElementById('adWhatsApp')?.value?.trim() || '',
-        description: document.getElementById('adDescription')?.value?.trim() || ''
+        title: document.getElementById('adTitle')?.value?.trim() || adData.title || '',
+        state: document.getElementById('adState')?.value || adData.state || '',
+        city: document.getElementById('adCity')?.value || adData.city || '',
+        age: document.getElementById('adAge')?.value || adData.age || '',
+        price: document.getElementById('adPrice')?.value || adData.price || '',
+        category: document.getElementById('adCategory')?.value || adData.category || '',
+        whatsapp: document.getElementById('adWhatsApp')?.value?.trim() || adData.whatsapp || '',
+        description: document.getElementById('adDescription')?.value?.trim() || adData.description || ''
     };
 
     console.log('Dados do formulário:', formData);
@@ -2110,14 +2271,14 @@ async function createAd(forceActive = false) {
 
     // Coletar dados diretamente dos campos do formulário
     const formData = {
-        title: document.getElementById('adTitle')?.value?.trim() || '',
-        state: document.getElementById('adState')?.value || '',
-        city: document.getElementById('adCity')?.value || '',
-        age: document.getElementById('adAge')?.value || '',
-        price: document.getElementById('adPrice')?.value || '',
-        category: document.getElementById('adCategory')?.value || '',
-        whatsapp: document.getElementById('adWhatsApp')?.value?.trim() || '',
-        description: document.getElementById('adDescription')?.value?.trim() || ''
+        title: document.getElementById('adTitle')?.value?.trim() || adData.title || '',
+        state: document.getElementById('adState')?.value || adData.state || '',
+        city: document.getElementById('adCity')?.value || adData.city || '',
+        age: document.getElementById('adAge')?.value || adData.age || '',
+        price: document.getElementById('adPrice')?.value || adData.price || '',
+        category: document.getElementById('adCategory')?.value || adData.category || '',
+        whatsapp: document.getElementById('adWhatsApp')?.value?.trim() || adData.whatsapp || '',
+        description: document.getElementById('adDescription')?.value?.trim() || adData.description || ''
     };
 
     console.log('Dados do formulário:', formData);
@@ -2173,7 +2334,11 @@ async function createAd(forceActive = false) {
             phone: formData.whatsapp,
             whatsapp: formData.whatsapp,
             category: formData.category,
+            services: adData.services || [],
+            availability: adData.availability || [],
+            serviceType: adData.serviceType || [],
             photos: thumbs,
+            video: adData.video || null,
             updatedAt: new Date().toISOString()
         };
         try { localStorage.setItem('announcements', JSON.stringify(announcements)); } catch (_) { }
@@ -2190,6 +2355,7 @@ async function createAd(forceActive = false) {
     const newAd = {
         id: Date.now(),
         userEmail,
+        advertiserRef: localStorage.getItem('advertiserRef') || 'REF-N/A',
         name: formData.title,
         age: parseInt(formData.age),
         state: formData.state,
@@ -2199,7 +2365,9 @@ async function createAd(forceActive = false) {
         phone: formData.whatsapp,
         whatsapp: formData.whatsapp,
         category: formData.category,
-        services: adData.services,
+        services: adData.services || [],
+        availability: adData.availability || [],
+        serviceType: adData.serviceType || [],
         status: adStatus,
         createdAt: new Date().toISOString(),
         isVip: selectedPlan !== 'basic',
@@ -2215,7 +2383,8 @@ async function createAd(forceActive = false) {
         })() - (appliedCoupon?.discountValue || 0),
         views: 0,
         rating: 0,
-        photos: thumbs
+        photos: thumbs,
+        video: adData.video || null
     };
     if (appliedCoupon) {
         newAd.coupon = appliedCoupon;
@@ -2264,6 +2433,7 @@ async function createAd(forceActive = false) {
             try { localStorage.setItem('announcements', JSON.stringify(slim)); } catch (_) { }
         }
         localStorage.removeItem('tempAdCreation');
+        localStorage.removeItem('adCreationDraft');
     }
 
     loadDashboardStats();
@@ -2549,9 +2719,26 @@ function applyWatermarkToDataUrl(dataUrl, watermarkText = 'DesejosMS', logoUrl =
         img.crossOrigin = 'anonymous';
         img.onload = async () => {
             const canvas = document.createElement('canvas');
-            canvas.width = img.width; canvas.height = img.height;
+            
+            // Redimensionar para no máximo 1000px (largura ou altura) para economizar localStorage
+            let width = img.width;
+            let height = img.height;
+            const maxDimension = 1000;
+            
+            if (width > maxDimension || height > maxDimension) {
+                if (width > height) {
+                    height = (maxDimension / width) * height;
+                    width = maxDimension;
+                } else {
+                    width = (maxDimension / height) * width;
+                    height = maxDimension;
+                }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
             const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
+            ctx.drawImage(img, 0, 0, width, height);
             // Removido: não aplicar marca d'água preta embutida.
             // A marca branca é aplicada como overlay nas páginas de perfil.
             // Opcional: logo
@@ -2571,27 +2758,53 @@ function applyWatermarkToDataUrl(dataUrl, watermarkText = 'DesejosMS', logoUrl =
 }
 
 // Sobrescrever handleFiles para aplicar marca d'água e limitar
-function handleFiles(files) {
-    Array.from(files).forEach(async file => {
+async function handleFiles(files) {
+    console.log('🖼️ Processando arquivos...', files.length);
+    // Garantir que photos seja um array
+    if (!Array.isArray(adData.photos)) {
+        adData.photos = [];
+    }
+
+    const preview = document.getElementById('photoPreview');
+    if (preview) {
+        const loading = document.createElement('div');
+        loading.id = 'photoLoading';
+        loading.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando fotos...';
+        loading.style.cssText = 'grid-column: 1/-1; text-align: center; padding: 10px; color: #8B0000; font-weight: bold; font-family: sans-serif;';
+        preview.appendChild(loading);
+    }
+
+    const fileArray = Array.from(files);
+    for (const file of fileArray) {
         if (file.type.startsWith('image/') && adData.photos.length < 6) {
-            const reader = new FileReader();
-            reader.onload = async function (e) {
-                try {
-                    const watermarked = await applyWatermarkToDataUrl(String(e.target.result), 'DesejosMS');
-                    addPhoto(watermarked);
-                } catch (_) {
-                    addPhoto(String(e.target.result));
-                }
-            };
-            reader.readAsDataURL(file);
+            try {
+                console.log('📄 Processando arquivo:', file.name);
+                const dataUrl = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+
+                const watermarked = await applyWatermarkToDataUrl(String(dataUrl), 'DesejosMS');
+                addPhoto(watermarked);
+            } catch (error) {
+                console.error('❌ Erro ao processar:', file.name, error);
+            }
         }
-    });
+    }
+
+    const loadingEl = document.getElementById('photoLoading');
+    if (loadingEl) loadingEl.remove();
     updatePhotoPreview();
 }
 
 function addPhoto(src) {
+    if (!Array.isArray(adData.photos)) adData.photos = [];
     adData.photos.push(src);
     updatePhotoPreview();
+    // Salvar rascunho com os novos dados (sem fotos binárias pesadas, mas marca que tem itens mudados)
+    if (typeof saveAdDraft === 'function') saveAdDraft();
 }
 
 function updatePhotoPreview() {
@@ -2631,25 +2844,64 @@ function editAd(adId) {
     adData = { ...ad };
 
     // Preencher campos do formulário
-    document.getElementById('adName').value = ad.name;
-    document.getElementById('adAge').value = ad.age;
-    document.getElementById('adCity').value = ad.city;
-    document.getElementById('adDescription').value = ad.description;
-    document.getElementById('adPrice').value = ad.price;
-    document.getElementById('adPhone').value = ad.phone;
-    document.getElementById('adWhatsapp').value = ad.whatsapp;
-    document.getElementById('adCategory').value = ad.category;
+    const titleEl = document.getElementById('adTitle') || document.getElementById('adName');
+    if (titleEl) titleEl.value = ad.name || '';
+    
+    document.getElementById('adAge').value = ad.age || '';
+    
+    // Configurar estado e aguardar cidades para selecionar a correta
+    const stateSelect = document.getElementById('adState');
+    if (stateSelect && ad.state) {
+        stateSelect.value = ad.state;
+        loadCitiesForState();
+    }
+    document.getElementById('adCity').value = ad.city || '';
+    
+    document.getElementById('adDescription').value = ad.description || '';
+    
+    // Tratamento de preço
+    const priceStr = String(ad.price || '').replace('R$', '').trim();
+    document.getElementById('adPrice').value = priceStr;
+    
+    const whatsappEl = document.getElementById('adWhatsApp') || document.getElementById('adWhatsapp');
+    if (whatsappEl) whatsappEl.value = ad.whatsapp || ad.phone || '';
+    
+    document.getElementById('adCategory').value = ad.category || '';
 
-    // Selecionar serviços
+    // Selecionar serviços, disponibilidade, e tipo de atendimento
     const serviceCheckboxes = document.querySelectorAll('input[name="services"]');
     serviceCheckboxes.forEach(checkbox => {
-        checkbox.checked = ad.services.includes(checkbox.value);
+        checkbox.checked = ad.services && ad.services.includes(checkbox.value);
+    });
+
+    const availabilityCheckboxes = document.querySelectorAll('input[name="availability"]');
+    availabilityCheckboxes.forEach(checkbox => {
+        checkbox.checked = ad.availability && ad.availability.includes(checkbox.value);
+    });
+
+    const serviceTypeCheckboxes = document.querySelectorAll('input[name="serviceType"]');
+    serviceTypeCheckboxes.forEach(checkbox => {
+        checkbox.checked = ad.serviceType && ad.serviceType.includes(checkbox.value);
     });
 
     // Carregar fotos
     if (ad.photos) {
         adData.photos = [...ad.photos];
         updatePhotoPreview();
+    }
+    
+    // Carregar vídeo
+    if (ad.video) {
+        adData.video = ad.video;
+        const videoPreview = document.getElementById('videoPreview');
+        if (videoPreview) {
+            videoPreview.innerHTML = `
+                <video src="${ad.video}" controls style="width: 100%; max-height: 200px; border-radius: 8px; margin-top: 10px;"></video>
+                <button type="button" onclick="document.getElementById('videoInput').value=''; document.getElementById('videoPreview').innerHTML=''; delete adData.video;" style="margin-top: 5px; background: red; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                    <i class="fas fa-trash"></i> Remover Vídeo
+                </button>
+            `;
+        }
     }
 
     // Mostrar modal de edição
@@ -2694,9 +2946,9 @@ function promoteAd(adId) {
 
     const ad = announcements[adIndex];
 
-    // Verificar se já é TOP ou SUPERVIP
-    if (ad.planType === 'top' || ad.planType === 'supervip') {
-        alert('Este anúncio já é premium!');
+    // Verificar se já é SUPERVIP
+    if (ad.planType === 'supervip') {
+        alert('Este anúncio já está no plano máximo!');
         return;
     }
 
@@ -2707,6 +2959,21 @@ function promoteAd(adId) {
 function showPromotionModal(ad) {
     const modal = document.createElement('div');
     modal.className = 'modal active';
+    let topOptionHtml = '';
+    if (ad.planType !== 'top') {
+        topOptionHtml = `
+                    <div class="plan-card" onclick="selectPromotionPlan('top', ${ad.id})">
+                        <h4>Plano TOP</h4>
+                        <div class="price">R$ 149,99</div>
+                        <ul>
+                            <li>Destaque especial</li>
+                            <li>3x mais visualizações</li>
+                            <li>Suporte prioritário</li>
+                        </ul>
+                    </div>
+        `;
+    }
+
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-header">
@@ -2719,16 +2986,7 @@ function showPromotionModal(ad) {
                 <p>Escolha um plano para promover seu anúncio:</p>
                 
                 <div class="plan-options">
-                    <div class="plan-card" onclick="selectPromotionPlan('top', ${ad.id})">
-                        <h4>Plano TOP</h4>
-                        <div class="price">R$ 149,99</div>
-                        <ul>
-                            <li>Destaque especial</li>
-                            <li>3x mais visualizações</li>
-                            <li>Suporte prioritário</li>
-                        </ul>
-                    </div>
-                    
+                    ${topOptionHtml}
                     <div class="plan-card" onclick="selectPromotionPlan('supervip', ${ad.id})">
                         <h4>Plano SUPERVIP</h4>
                         <div class="price">R$ 199,99</div>

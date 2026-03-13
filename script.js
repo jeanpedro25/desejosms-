@@ -319,7 +319,7 @@ function createTopCard(ad) {
                 <span style="color: #8B0000;">(67) <strong>${ad.phone}</strong></span>
             </div>
             <div class="top-card-location city-line" style="color: #8B0000; font-size: 0.85rem; font-weight: bold;">
-                <span>Com Local ·</span><span style="font-weight: normal; margin-left: 3px;">${ad.city}, MS</span>
+                <span>Com Local ·</span><span style="font-weight: normal; margin-left: 3px;">${(ad.city||'').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}, MS</span>
             </div>
         </div>
     `;
@@ -425,7 +425,7 @@ function createProfileCard(profile) {
                 <span style="color: #8B0000;">(67) <strong>${profile.phone || profile.whatsapp || '9999-0000'}</strong></span>
             </div>
             <div class="profile-location city-line" style="color: #8B0000; font-size: 0.85rem; font-weight: bold;">
-                <span>Com Local ·</span><span style="font-weight: normal; margin-left: 3px;">${profile.city}, ${window.getCurrentStateConfig ? window.getCurrentStateConfig().shortName : 'MS'}</span>
+                <span>Com Local ·</span><span style="font-weight: normal; margin-left: 3px;">${(profile.city||'').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}, ${window.getCurrentStateConfig ? window.getCurrentStateConfig().shortName : 'MS'}</span>
             </div>
         </div>
     `;

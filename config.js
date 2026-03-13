@@ -236,9 +236,10 @@ function updateCitySelector() {
                     const option = document.createElement('option');
                     option.value = cityName.toLowerCase().replace(/\s+/g, '-');
 
-                    // Formatar para Primeira Letra Maiúscula
+                    // Formatar para Primeira Letra Maiúscula a partir do slug (que usa hífen)
                     const formattedCity = cityName
-                        .split(' ')
+                        .toString()
+                        .split('-')
                         .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
                         .join(' ');
 

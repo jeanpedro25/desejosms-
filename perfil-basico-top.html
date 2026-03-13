@@ -325,10 +325,11 @@
             // Atualizar estatísticas do perfil
             const profileStats = document.querySelector('.profile-stats');
             if (profileStats) {
+                const formattedCity = (profile.city || '').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
                 profileStats.innerHTML = `
-                    <span>${profile.age || 25} Anos ${profile.city}, MS</span>
+                    <span>${profile.age || 25} Anos ${formattedCity}, MS</span>
                     <span>${profile.category === 'mulher' ? 'Mulher' : profile.category}</span>
-                    <span>Ref ${profile.id}</span>
+                    <span style="letter-spacing: 0.5px;">Ref ${profile.advertiserRef || profile.id}</span>
                 `;
             }
             
@@ -346,7 +347,13 @@
                         <strong>Disponível:</strong> 24h
                     </div>
                     <div class="info-item">
-                        <strong>Valor:</strong> ${profile.price || 'A COMBINAR'}
+                        <strong>Valor:</strong> ${
+                            (() => {
+                                let v = profile.price || '';
+                                let vn = String(v).replace(/[^\d,\.]/g, '').replace(',', '.');
+                                return (vn && !isNaN(parseFloat(vn))) ? 'R$ ' + parseFloat(vn).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : (v || 'A COMBINAR');
+                            })()
+                        }
                     </div>
                 `;
             }
