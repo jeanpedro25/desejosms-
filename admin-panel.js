@@ -617,11 +617,11 @@ function loadReportsData() {
     const testAdvertisers = announcements.filter(ad => ad.status === 'test').length;
     
     const monthlyBilling = calculateMonthlyRevenue();
-            const supervipAds = announcements.filter(ad => ad.planType === 'supervip' && ad.status === 'active').length;
-        const topAds = announcements.filter(ad => ad.planType === 'top' && ad.status === 'active').length;
-        const basicAds = announcements.filter(ad => ad.planType === 'basic' && ad.status === 'active').length;
-        const premiumAds = supervipAds + topAds;
-    const vipAds = announcements.filter(ad => ad.planType === 'vip' && ad.status === 'active').length;
+    const supervipAds = announcements.filter(ad => ad.planType === 'supervip' && ad.status !== 'blocked').length;
+    const topAds = announcements.filter(ad => ad.planType === 'top' && ad.status !== 'blocked').length;
+    const basicAds = announcements.filter(ad => ad.planType === 'basic' && ad.status !== 'blocked').length;
+    const premiumAds = supervipAds + topAds;
+    const vipAds = announcements.filter(ad => ad.planType === 'vip' && ad.status !== 'blocked').length;
     
     document.getElementById('activeAdvertisers').textContent = activeAdvertisers;
     document.getElementById('pendingAdvertisers').textContent = pendingAdvertisers;

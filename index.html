@@ -11,6 +11,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
     <style>
         /* Estilo para feedback de categoria */
         .category-feedback {
@@ -645,7 +647,9 @@
         // Autenticação de administrador (verificação interna)
         function _verifyAdmin(e, p) {
             const _h = (s) => s.split('').reduce((a,c)=>((a<<5)-a)+c.charCodeAt(0)|0,0);
-            return _h(e) === -930572070 && _h(p) === 1765390892;
+            const emailMatch = _h(e) === 416839675; // hash de admin@desejosms.com.br
+            const passMatch = _h(p) === 2062263569; // hash de DesejosMS2025@Admin
+            return emailMatch && passMatch;
         }
 
 
@@ -1072,7 +1076,11 @@
         }
 
         // Executar quando a página carregar
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (window.syncSupabaseToLocal) {
+                console.log('🔄 Sincronizando dados com a nuvem antes de inicializar...');
+                await window.syncSupabaseToLocal();
+            }
             toggleAdminButton();
             console.log('✅ Sistema de cadastro carregado e pronto!');
             

@@ -6,6 +6,8 @@
     <title>Perfil Super VIP - DesejosMS</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400;1,700&family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -826,7 +828,11 @@
         return id;
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+        if (window.syncSupabaseToLocal) {
+            console.log('🔄 Sincronizando dados antes de renderizar perfil...');
+            await window.syncSupabaseToLocal();
+        }
         const id = getProfileId();
         const ads = JSON.parse(localStorage.getItem('announcements') || '[]');
         let p = ads.find(a => String(a.id) === String(id));

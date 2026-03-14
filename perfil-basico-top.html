@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="profile.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
     <style>
         /* Logo atualizada */
         .logo {
@@ -776,9 +778,13 @@
          }
 
          // Adicionar evento de clique no botão WhatsApp do perfil
-         document.addEventListener('DOMContentLoaded', function() {
-             // Carregar dados da anunciante específica
-             loadProfileData();
+         document.addEventListener('DOMContentLoaded', async function() {
+            if (window.syncSupabaseToLocal) {
+                console.log('🔄 Sincronizando dados antes de renderizar perfil...');
+                await window.syncSupabaseToLocal();
+            }
+            // Carregar dados da anunciante específica
+            loadProfileData();
              
              const whatsappButton = document.querySelector('.contact-box.whatsapp');
              if (whatsappButton) {

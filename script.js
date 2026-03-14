@@ -180,7 +180,7 @@ function loadRealAnnouncements() {
     }
 
     // Não criar anúncios de exemplo: mostrar apenas cidades onde há anúncios reais
-    const activeAnnouncements = announcements.filter(ad => ad.status === 'active');
+    const activeAnnouncements = announcements.filter(ad => ad.status !== 'blocked');
     if (announcements.length === 0 || activeAnnouncements.length === 0) {
         console.log('Nenhum anúncio ativo encontrado. Mantendo lista vazia para não poluir o seletor de cidades.');
         // Atualizar seletor de cidades para refletir ausência de anúncios
@@ -232,7 +232,7 @@ function loadTopAnnouncements() {
         const uStatus = userStatusMap[email] || { blocked: false, verified: false };
         
         const isTopTier = ['supervip'].includes((ad.planType || '').toLowerCase());
-        const isActive = ad.status === 'active';
+        const isActive = ad.status !== 'blocked';
         const isVerified = uStatus.verified;
         const notBlocked = !uStatus.blocked;
 
@@ -758,8 +758,8 @@ function filterProfiles(category = 'all', searchTerm = '', city = '') {
         const uStatus = userStatusMapFilter[email] || { blocked: false, verified: false };
         
         // Filtro por status - apenas anúncios ativos de usuários não bloqueados
-        if (ad.status !== 'active' || uStatus.blocked) {
-            console.log(`Rejeitado ${ad.name}: inativo ou bloqueado`);
+        if (ad.status === 'blocked' || uStatus.blocked) {
+            console.log(`❌ Rejeitado ${ad.name}: status "${ad.status}" ou usuário bloqueado`);
             return false;
         }
 

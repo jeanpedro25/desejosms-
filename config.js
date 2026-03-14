@@ -282,7 +282,7 @@ function getCitiesWithActiveAds() {
 
     // Filtrar anúncios ativos e que pertencem ao estado atual
     const activeAds = announcements.filter(ad => {
-        if (ad.status !== 'active') return false;
+        if (ad.status === 'blocked') return false;
 
         // Se o anúncio tem state definido, deve bater com o estado atual
         if (ad.state) {
@@ -372,12 +372,12 @@ function setCurrentCity(cityId) {
 function getCityStatistics(cityId = '') {
     const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
 
-    let filteredAnnouncements = announcements.filter(ad => ad.status === 'active');
+    let filteredAnnouncements = announcements.filter(ad => ad.status !== 'blocked');
 
     // Filtrar por cidade específica
     if (cityId) {
         filteredAnnouncements = filteredAnnouncements.filter(ad => {
-            const adCitySlug = ad.city.toLowerCase().replace(/\s+/g, '-');
+            const adCitySlug = (ad.city || '').toLowerCase().replace(/\s+/g, '-');
             return adCitySlug === cityId;
         });
     }
@@ -393,7 +393,7 @@ function getCityStatistics(cityId = '') {
 function filterAnnouncementsByCity(cityId) {
     const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
 
-    let filteredAnnouncements = announcements.filter(ad => ad.status === 'active');
+    let filteredAnnouncements = announcements.filter(ad => ad.status !== 'blocked');
 
     // Filtrar por cidade específica
     if (cityId) {
