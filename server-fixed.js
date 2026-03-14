@@ -2,6 +2,8 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
+const url = require('url');
+
 const PORT = process.env.PORT || 3025;
 
 const mimeTypes = {
@@ -19,10 +21,15 @@ const mimeTypes = {
 const server = http.createServer((req, res) => {
     console.log(`🌐 ${new Date().toLocaleTimeString()} - ${req.method} ${req.url}`);
 
-    let filePath = '.' + req.url;
-    if (filePath === './') {
-        filePath = './index.html';
+    // Remover parâmetros da query string (ex: ?id=10)
+    const parsedUrl = url.parse(req.url);
+    let pathname = parsedUrl.pathname || '/';
+    
+    if (pathname === '/') {
+        pathname = '/index.html';
     }
+
+    const filePath = '.' + pathname;
 
     const extname = String(path.extname(filePath)).toLowerCase();
     const mimeType = mimeTypes[extname] || 'application/octet-stream';

@@ -576,16 +576,24 @@ function syncVerificationStatus() {
     // Determinar email atual
     const currentEmail = (localStorage.getItem('userEmail') || 'teste@desejosms.com').toLowerCase();
     let isVerified = localStorage.getItem('userVerified') === 'true';
+    let createdAt = null;
     try {
         const users = JSON.parse(localStorage.getItem('users') || '[]');
         const u = users.find(x => (x.email || '').toLowerCase() === currentEmail);
-        if (u && typeof u.verified === 'boolean') {
-            isVerified = !!u.verified;
-            localStorage.setItem('userVerified', isVerified.toString());
+        if (u) {
+            if (typeof u.verified === 'boolean') {
+                isVerified = !!u.verified;
+                localStorage.setItem('userVerified', isVerified.toString());
+            }
             if (u.name) localStorage.setItem('userName', u.name);
             if (u.phone) localStorage.setItem('userPhone', u.phone);
             if (u.age != null) localStorage.setItem('userAge', String(u.age));
             if (u.category) localStorage.setItem('userCategory', u.category);
+            
+            // Obter data de criação
+            if (u.createdAt) {
+                createdAt = u.createdAt.seconds ? new Date(u.createdAt.seconds * 1000) : new Date(u.createdAt);
+            }
         }
     } catch (e) { /* ignora */ }
 
@@ -606,9 +614,37 @@ function syncVerificationStatus() {
 
     // Dashboard
     const dashboardStatus = document.getElementById('accountStatus');
+    const dashboardNotice = document.getElementById('accountStatusNotice');
+    
     if (dashboardStatus) {
-        dashboardStatus.textContent = isVerified ? 'Verificada' : 'Não Verificada';
-        dashboardStatus.className = isVerified ? 'stat-number' : 'stat-number status-not-verified';
+        if (isVerified) {
+            dashboardStatus.textContent = 'Verificada';
+            dashboardStatus.className = 'stat-number';
+            dashboardStatus.style.color = '#fff';
+            if (dashboardNotice) dashboardNotice.innerHTML = '<i class="fas fa-check-circle"></i> Conta Protegida';
+        } else {
+            // Lógica de prazo de 10 dias para o dashboard
+            const GRACE_PERIOD_DAYS = 10;
+            let daysLeft = GRACE_PERIOD_DAYS;
+            if (createdAt) {
+                const now = new Date();
+                const diffTime = Math.abs(now - createdAt);
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                daysLeft = GRACE_PERIOD_DAYS - diffDays;
+            }
+            
+            dashboardStatus.textContent = 'Não Verificada';
+            dashboardStatus.style.color = daysLeft <= 2 ? '#ff4d4d' : '#fff';
+            
+            if (dashboardNotice) {
+                if (daysLeft <= 0) {
+                    dashboardNotice.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Prazo esgotado! Sua conta será excluída em breve.`;
+                } else {
+                    dashboardNotice.innerHTML = `<i class="fas fa-clock"></i> Você tem <strong>${daysLeft} dias</strong> para verificar sua conta, após esse período sua conta será excluída.`;
+                }
+                dashboardNotice.style.color = '#fff';
+            }
+        }
     }
     // Perfil label
     const profileStatus = document.getElementById('verificationStatus');
@@ -646,11 +682,28 @@ function syncVerificationStatus() {
             msg.textContent = 'Reprovado: ' + reason;
             actions.innerHTML = '<button class="btn btn-primary" onclick="showVerificationModal()"><i class="fas fa-id-card"></i> Enviar novamente</button>';
         } else {
-            card.style.background = '#fff3cd';
-            card.style.border = '1px solid #ffeeba';
-            card.style.color = '#856404';
-            msg.textContent = 'Para criar anúncios, você precisa verificar sua conta enviando documentos de identificação.';
-            actions.innerHTML = '<button class="btn btn-primary" onclick="showVerificationModal()"><i class="fas fa-id-card"></i> Verificar Conta</button>';
+            // Lógica de prazo de 10 dias
+            const GRACE_PERIOD_DAYS = 10;
+            let daysLeft = GRACE_PERIOD_DAYS;
+            
+            if (createdAt) {
+                const now = new Date();
+                const diffTime = Math.abs(now - createdAt);
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                daysLeft = GRACE_PERIOD_DAYS - diffDays;
+            }
+            
+            card.style.background = daysLeft <= 2 ? '#fff0f0' : '#fff3cd';
+            card.style.border = daysLeft <= 2 ? '1px solid #ffcccc' : '1px solid #ffeeba';
+            card.style.color = daysLeft <= 2 ? '#b30000' : '#856404';
+            
+            if (daysLeft <= 0) {
+                msg.innerHTML = `<strong>⚠️ PRAZO ESGOTADO:</strong> Sua conta expirou! Seus anúncios estão ocultos e <strong>o perfil será excluído permanentemente</strong> por falta de verificação.`;
+            } else {
+                msg.innerHTML = `<strong>🛡️ VERIFICAÇÃO PENDENTE:</strong> Você tem <strong>${daysLeft} dias</strong> para verificar sua conta. Após esse prazo, seu perfil será <strong>excluído</strong>.<br><small><i>Aviso: Seus anúncios só ficam visíveis após a verificação, mesmo se já estiverem pagos.</i></small>`;
+            }
+            
+            actions.innerHTML = '<button class="btn btn-primary" onclick="showVerificationModal()"><i class="fas fa-id-card"></i> Verificar Agora</button>';
         }
     }
 }

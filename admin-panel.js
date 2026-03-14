@@ -428,6 +428,23 @@ function loadUsersData() {
         const userAds = announcements.filter(ad => ad.userEmail === user.email);
         const activeAds = userAds.filter(ad => ad.status === 'active').length;
         const lastAccess = user.lastAccess || 'Nunca';
+        
+        // Calcular prazo de verificação
+        let deadlineInfo = '';
+        if (!user.verified) {
+            const createdAt = user.createdAt ? (user.createdAt.seconds ? new Date(user.createdAt.seconds * 1000) : new Date(user.createdAt)) : new Date(user.lastAccess || Date.now());
+            const now = new Date();
+            const diffDays = Math.floor((now - createdAt) / (1000 * 60 * 60 * 24));
+            const daysLeft = 10 - diffDays;
+            
+            if (daysLeft <= 0) {
+                deadlineInfo = `<div style="color: #d9534f; font-size: 11px; font-weight: bold;">EXPIRADO</div>`;
+            } else if (daysLeft <= 2) {
+                deadlineInfo = `<div style="color: #f0ad4e; font-size: 11px; font-weight: bold;">EXPIRA EM ${daysLeft}d</div>`;
+            } else {
+                deadlineInfo = `<div style="font-size: 11px; color: #666;">Restam ${daysLeft}d</div>`;
+            }
+        }
 
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -447,6 +464,7 @@ function loadUsersData() {
                 <span class="status-badge ${user.blocked ? 'blocked' : (user.verified ? 'active' : 'pending')}">
                     ${user.blocked ? 'BLOQUEADO' : (user.verified ? 'VERIFICADO' : 'PENDENTE')}
                 </span>
+                ${deadlineInfo}
             </td>
             <td>${activeAds} anúncios</td>
             <td>${lastAccess}</td>

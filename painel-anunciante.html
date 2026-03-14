@@ -65,7 +65,7 @@
                 </div>
 
                 <div class="header-actions">
-                    <div id="notifBell" class="btn btn-secondary" style="position: relative; background:#8B0000;"
+                    <div id="notifBell" class="btn btn-secondary" style="position: relative; background:#FFD700; color: #000;"
                         onclick="toggleNotifications()">
                         <i class="fas fa-bell"></i>
                         <span id="notifCount"
@@ -84,7 +84,7 @@
                         <i class="fas fa-plus"></i>
                         Criar Novo Anúncio
                     </button>
-                    <button class="btn btn-secondary" onclick="logoutUser()" style="background:#444;">
+                    <button class="btn btn-secondary" onclick="logoutUser()" style="background:rgba(0,0,0,0.4); color: white; border: 1px solid rgba(255,255,255,0.2);">
                         <i class="fas fa-sign-out-alt"></i>
                         Sair
                     </button>
@@ -133,8 +133,9 @@
                         <i class="fas fa-user-shield"></i>
                     </div>
                     <div class="stat-info">
-                        <div class="stat-number" id="accountStatus">Não Verificada</div>
+                        <div class="stat-number" id="accountStatus">Verificada</div>
                         <div class="stat-label">Status da Conta</div>
+                        <div id="accountStatusNotice" style="font-size: 11px; margin-top: 5px; line-height: 1.2; font-weight: 500; opacity: 0.9;"></div>
                     </div>
                 </div>
             </div>

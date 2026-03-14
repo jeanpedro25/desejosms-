@@ -219,19 +219,26 @@ function loadTopAnnouncements() {
         basic: announcements.filter(ad => ad.planType === 'basic').length
     });
 
-    // Excluir anúncios de usuários bloqueados
+    // Excluir anúncios de usuários bloqueados ou não verificados
     const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const blockedMap = users.reduce((acc, u) => { if (u.blocked) acc[u.email] = true; return acc; }, {});
+    const userStatusMap = users.reduce((acc, u) => { 
+        acc[(u.email || '').toLowerCase()] = { blocked: !!u.blocked, verified: !!u.verified }; 
+        return acc; 
+    }, {});
 
     // TOP ANÚNCIOS: Apenas SuperVIP
     let filteredAnnouncements = announcements.filter(ad => {
+        const email = (ad.userEmail || '').toLowerCase();
+        const uStatus = userStatusMap[email] || { blocked: false, verified: false };
+        
         const isTopTier = ['supervip'].includes((ad.planType || '').toLowerCase());
         const isActive = ad.status === 'active';
-        const notBlocked = !blockedMap[ad.userEmail];
+        const isVerified = uStatus.verified;
+        const notBlocked = !uStatus.blocked;
 
-        console.log(`Anúncio: ${ad.name} | Plano: ${ad.planType} | Status: ${ad.status} | TopTier: ${isTopTier} | Ativo: ${isActive} | Não bloqueado: ${notBlocked}`);
+        console.log(`Anúncio: ${ad.name} | Plano: ${ad.planType} | Status: ${ad.status} | Verified: ${isVerified} | Active: ${isActive}`);
 
-        return isTopTier && isActive && notBlocked;
+        return isTopTier && isActive && isVerified && notBlocked;
     });
 
     // Filtrar por categoria ativa, se houver
@@ -347,10 +354,23 @@ function loadRegularAnnouncements() {
 
     updateSectionTitle(category, cityToUse);
 
-    // Excluir anúncios de usuários bloqueados e filtrar fora os SUPERVIP (pois já aparecem no topo)
+    // Excluir anúncios de usuários bloqueados/não verificados e filtrar fora os SUPERVIP
     const users2 = JSON.parse(localStorage.getItem('users') || '[]');
-    const blockedMap2 = users2.reduce((acc, u) => { if (u.blocked) acc[u.email] = true; return acc; }, {});
-    let activeAnnouncements = announcements.filter(ad => ad.status === 'active' && !blockedMap2[ad.userEmail] && (ad.planType || '').toLowerCase() !== 'supervip');
+    const userStatusMap2 = users2.reduce((acc, u) => { 
+        acc[(u.email || '').toLowerCase()] = { blocked: !!u.blocked, verified: !!u.verified }; 
+        return acc; 
+    }, {});
+    
+    let activeAnnouncements = announcements.filter(ad => {
+        const email = (ad.userEmail || '').toLowerCase();
+        const uStatus = userStatusMap2[email] || { blocked: false, verified: false };
+        const isVerified = uStatus.verified;
+        const notBlocked = !uStatus.blocked;
+        const isActive = ad.status === 'active';
+        const notSuperVip = (ad.planType || '').toLowerCase() !== 'supervip';
+        
+        return isActive && isVerified && notBlocked && notSuperVip;
+    });
 
     // FILTRAR POR ESTADO ATUAL
     if (config) {
@@ -726,10 +746,20 @@ function filterProfiles(category = 'all', searchTerm = '', city = '') {
         console.log(`${index + 1}. ${ad.name} - Categoria: "${ad.category}" - Cidade: "${ad.city}" - Status: ${ad.status}`);
     });
 
+    // Obter mapa de status dos usuários para verificar bloqueio e verificação
+    const usersData = JSON.parse(localStorage.getItem('users') || '[]');
+    const userStatusMapFilter = usersData.reduce((acc, u) => { 
+        acc[(u.email || '').toLowerCase()] = { blocked: !!u.blocked, verified: !!u.verified }; 
+        return acc; 
+    }, {});
+
     let filtered = announcements.filter(ad => {
-        // Filtro por status - apenas anúncios ativos
-        if (ad.status !== 'active') {
-            console.log(`Rejeitado ${ad.name}: status inativo (${ad.status})`);
+        const email = (ad.userEmail || '').toLowerCase();
+        const uStatus = userStatusMapFilter[email] || { blocked: false, verified: false };
+        
+        // Filtro por status - apenas anúncios ativos de usuários verificados e não bloqueados
+        if (ad.status !== 'active' || !uStatus.verified || uStatus.blocked) {
+            console.log(`Rejeitado ${ad.name}: inativo, não verificado ou bloqueado`);
             return false;
         }
 
