@@ -238,7 +238,7 @@ function loadTopAnnouncements() {
 
         console.log(`Anúncio: ${ad.name} | Plano: ${ad.planType} | Status: ${ad.status} | Verified: ${isVerified} | Active: ${isActive}`);
 
-        return isTopTier && isActive && isVerified && notBlocked;
+        return isTopTier && isActive && notBlocked;
     });
 
     // Filtrar por categoria ativa, se houver
@@ -369,7 +369,7 @@ function loadRegularAnnouncements() {
         const isActive = ad.status === 'active';
         const notSuperVip = (ad.planType || '').toLowerCase() !== 'supervip';
         
-        return isActive && isVerified && notBlocked && notSuperVip;
+        return isActive && notBlocked && notSuperVip;
     });
 
     // FILTRAR POR ESTADO ATUAL
@@ -757,9 +757,9 @@ function filterProfiles(category = 'all', searchTerm = '', city = '') {
         const email = (ad.userEmail || '').toLowerCase();
         const uStatus = userStatusMapFilter[email] || { blocked: false, verified: false };
         
-        // Filtro por status - apenas anúncios ativos de usuários verificados e não bloqueados
-        if (ad.status !== 'active' || !uStatus.verified || uStatus.blocked) {
-            console.log(`Rejeitado ${ad.name}: inativo, não verificado ou bloqueado`);
+        // Filtro por status - apenas anúncios ativos de usuários não bloqueados
+        if (ad.status !== 'active' || uStatus.blocked) {
+            console.log(`Rejeitado ${ad.name}: inativo ou bloqueado`);
             return false;
         }
 
@@ -774,10 +774,8 @@ function filterProfiles(category = 'all', searchTerm = '', city = '') {
                     console.log(`❌ Rejeitado ${ad.name}: estado "${ad.state}" != "${currentStateShort}"`);
                     return false;
                 }
-            } else {
-                // 2. Fallback: aceitar no estado atual, permitindo cidades como Maracaju
-                return true;
             }
+            // Se não tem state, continua para os próximos filtros (fallback)
         }
 
         // Filtro por categoria - CORREÇÃO: usar comparação exata
