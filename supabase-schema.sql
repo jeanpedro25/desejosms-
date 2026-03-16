@@ -136,7 +136,61 @@ CREATE TRIGGER update_settings_updated_at
     BEFORE UPDATE ON settings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- 7. INDEX para performance
+-- 8. TABELA DE USUÁRIOS
+CREATE TABLE IF NOT EXISTS users (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    password TEXT,
+    name TEXT,
+    phone TEXT,
+    age INTEGER,
+    category TEXT,
+    verified BOOLEAN DEFAULT false,
+    blocked BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 9. TABELA DE VERIFICAÇÕES (DADOS)
+CREATE TABLE IF NOT EXISTS verifications (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    user_email TEXT NOT NULL,
+    user_name TEXT,
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+    documents JSONB DEFAULT '{}',
+    notes TEXT,
+    admin_notes TEXT,
+    submitted_at TIMESTAMPTZ DEFAULT NOW(),
+    approved_at TIMESTAMPTZ,
+    rejected_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- RLS para novas tabelas
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE verifications ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users self access" ON users;
+CREATE POLICY "Users self access" ON users FOR ALL USING (true); -- Simplificado para MVP
+
+DROP POLICY IF EXISTS "Verifications self access" ON verifications;
+CREATE POLICY "Verifications self access" ON verifications FOR ALL USING (true); -- Simplificado para MVP
+
+-- Trigger for updated_at
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
+CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_verifications_updated_at ON verifications;
+CREATE TRIGGER update_verifications_updated_at BEFORE UPDATE ON verifications FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Index para novas tabelas
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_verifications_user_email ON verifications(user_email);
+CREATE INDEX IF NOT EXISTS idx_verifications_status ON verifications(status);
+
+-- 10. INDEX para performance
 CREATE INDEX IF NOT EXISTS idx_announcements_status ON announcements(status);
 CREATE INDEX IF NOT EXISTS idx_announcements_user_email ON announcements(user_email);
 CREATE INDEX IF NOT EXISTS idx_announcements_category ON announcements(category);

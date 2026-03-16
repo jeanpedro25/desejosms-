@@ -4,8 +4,16 @@ let filteredVerifications = [];
 let selectedVerification = null;
 
 // Inicialização
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     console.log('=== INICIALIZANDO PÁGINA DE VERIFICAÇÕES ===');
+    
+    // Tentar sincronizar com Supabase primeiro
+    if (window.syncVerificationsFromSupabase) {
+        console.log('🔄 Sincronizando com Supabase...');
+        await window.syncVerificationsFromSupabase();
+        if (window.syncUsersFromSupabase) await window.syncUsersFromSupabase();
+    }
+
     loadVerifications();
     setupEventListeners();
     
@@ -75,12 +83,19 @@ function idbGetBlob(id){
 		req.onerror = ()=> reject(req.error);
 	}));
 }
-async function getDocumentUrlSafe(document){
-	if (document && document.url) return document.url;
-	if (document && document.docId){
+async function getDocumentUrlSafe(doc){
+	if (doc && doc.url) return doc.url;
+    if (doc && doc.data) return doc.data; // Suporte para Base64 direto
+	if (doc && doc.docId){
 		try {
-			const blob = await idbGetBlob(document.docId);
-			if (blob) return URL.createObjectURL(blob);
+			const blob = await idbGetBlob(doc.docId);
+			if (blob) {
+                try {
+                    return URL.createObjectURL(blob);
+                } catch(urlErr) {
+                    console.error('Falha ao criar URL do Blob:', urlErr);
+                }
+            }
 		} catch(e){ console.warn('IDB read failed', e); }
 	}
 	return null;
@@ -339,7 +354,7 @@ function createVerificationCard(verification) {
             <div class="documents-title">Documentos Enviados</div>
             <div class="documents-grid">
                 ${Object.entries(verification.documents).map(([key, doc]) => `
-                    <div class="document-item" onclick="event.stopPropagation(); viewDocument('${key}', ${verification.id})">
+                    <div class="document-item" onclick="event.stopPropagation(); viewDocument('${key}', '${verification.id}')">
                         <i class="fas ${doc.uploaded ? 'fa-file-alt' : 'fa-times-circle'}"></i>
                         <span>${doc.name}</span>
                     </div>
@@ -349,18 +364,18 @@ function createVerificationCard(verification) {
         
         ${verification.status === 'pending' ? `
             <div class="verification-actions">
-                <button class="btn btn-success" onclick="event.stopPropagation(); approveVerification(${verification.id})">
+                <button class="btn btn-success" onclick="event.stopPropagation(); approveVerification('${verification.id}')">
                     <i class="fas fa-check"></i>
                     Aprovar
                 </button>
-                <button class="btn btn-danger" onclick="event.stopPropagation(); rejectVerification(${verification.id})">
+                <button class="btn btn-danger" onclick="event.stopPropagation(); rejectVerification('${verification.id}')">
                     <i class="fas fa-times"></i>
                     Rejeitar
                 </button>
             </div>
         ` : verification.status === 'approved' ? `
             <div class="verification-actions">
-                <button class="btn btn-warning" onclick="event.stopPropagation(); rejectVerification(${verification.id})">
+                <button class="btn btn-warning" onclick="event.stopPropagation(); rejectVerification('${verification.id}')">
                     <i class="fas fa-times"></i>
                     Reverter Aprovação
                 </button>
@@ -370,7 +385,7 @@ function createVerificationCard(verification) {
             </div>
         ` : verification.status === 'rejected' ? `
             <div class="verification-actions">
-                <button class="btn btn-success" onclick="event.stopPropagation(); approveVerification(${verification.id})">
+                <button class="btn btn-success" onclick="event.stopPropagation(); approveVerification('${verification.id}')">
                     <i class="fas fa-check"></i>
                     Aprovar
                 </button>
@@ -459,40 +474,33 @@ function openVerificationDetails(verification) {
             
             <div class="documents-section">
                 <h3>Documentos Enviados</h3>
-                            <div class="documents-grid-full">
-                ${Object.entries(verification.documents).map(([key, doc]) => `
-                    <div class="document-preview">
-                        <div class="document-header">
-                            <h4>${doc.name}</h4>
-                            <div class="document-actions">
-                                <button class="btn btn-sm btn-info" onclick="viewDocument('${key}', ${verification.id})">
-                                    <i class="fas fa-eye"></i> Visualizar
-                                </button>
-                                <button class="btn btn-sm btn-success" onclick="downloadDocument('${key}', ${verification.id})">
-                                    <i class="fas fa-download"></i> Baixar
-                                </button>
+                <div class="documents-grid-full">
+                    ${Object.entries(verification.documents).map(([key, doc]) => `
+                        <div class="document-preview">
+                            <div class="document-header">
+                                <h4>${doc.name}</h4>
+                                <div class="document-actions">
+                                    <button class="btn btn-sm btn-info" onclick="viewDocument('${key}', '${verification.id}')">
+                                        <i class="fas fa-eye"></i> Visualizar
+                                    </button>
+                                    <button class="btn btn-sm btn-success" onclick="downloadDocument('${key}', '${verification.id}')">
+                                        <i class="fas fa-download"></i> Baixar
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        <div class="document-content">
-                            ${doc.uploaded ? `
-                                <img src="${doc.url}" alt="${doc.name}" style="max-width: 100%; height: 200px; object-fit: cover; border-radius: 8px; cursor: pointer;" onclick="viewDocument('${key}', ${verification.id})">
-                            ` : `
-                                <div class="document-missing">
-                                    <i class="fas fa-times-circle"></i>
-                                    <p>Documento não enviado</p>
-                                </div>
-                            `}
-                        </div>
-                    </div>
-                            ${doc.uploaded ? `
-                                <img src="${doc.url}" alt="${doc.name}" />
-                            ` : `
-                                <div class="placeholder">
-                                    <i class="fas fa-times"></i>
-                                </div>
-                            `}
-                            <h4>${doc.name}</h4>
-                            <p>${doc.uploaded ? 'Enviado' : 'Não enviado'}</p>
+                            <div class="document-content" style="text-align: center; margin-top: 10px;">
+                                ${doc.uploaded ? `
+                                    <div class="doc-success-badge" style="color: #28a745; margin-bottom: 10px;">
+                                        <i class="fas fa-check-circle"></i> Documento carregado
+                                    </div>
+                                    <p style="font-size: 11px; color: #666;">Clique em visualizar para abrir em tamanho real</p>
+                                ` : `
+                                    <div class="document-missing" style="color: #dc3545;">
+                                        <i class="fas fa-times-circle"></i>
+                                        <p>Documento não enviado</p>
+                                    </div>
+                                `}
+                            </div>
                         </div>
                     `).join('')}
                 </div>
@@ -519,31 +527,30 @@ function openVerificationDetails(verification) {
 function viewDocument(documentKey, verificationId) {
     console.log('Visualizando documento:', documentKey, 'da verificação:', verificationId);
     
-    const verification = verifications.find(v => v.id === verificationId);
+    const verification = verifications.find(v => String(v.id) === String(verificationId));
     if (!verification) {
         console.error('Verificação não encontrada:', verificationId);
         alert('Verificação não encontrada.');
         return;
     }
     
-    const document = verification.documents[documentKey];
-    if (!document) {
+    const doc = verification.documents[documentKey];
+    if (!doc) {
         console.error('Documento não encontrado:', documentKey);
         alert('Documento não encontrado.');
         return;
     }
     
     // Verificar se o documento tem URL ou dados base64
-    getDocumentUrlSafe(document).then(documentUrl => {
-        if (!document.uploaded || !documentUrl) {
+    getDocumentUrlSafe(doc).then(documentUrl => {
+        if (!doc.uploaded || !documentUrl) {
             console.error('Documento não foi enviado ou URL inválida');
-            console.log('Documento:', document);
-            alert('Documento não foi enviado ou está indisponível.');
+            console.log('Documento:', doc);
+            alert('Atenção: O arquivo deste documento não foi encontrado no armazenamento local deste navegador.');
             return;
         }
         
-        console.log('Documento encontrado:', document);
-        console.log('URL do documento:', documentUrl);
+        console.log('Documento carregado com sucesso:', doc.name);
         
         // Criar modal para visualização
         const modal = document.createElement('div');
@@ -554,50 +561,52 @@ function viewDocument(documentKey, verificationId) {
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.92);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 10000;
+            backdrop-filter: blur(5px);
         `;
         
         modal.innerHTML = `
             <div class="document-viewer-content" style="
                 background: white;
-                padding: 20px;
-                border-radius: 10px;
-                max-width: 95%;
-                max-height: 95%;
+                padding: 30px;
+                border-radius: 15px;
+                max-width: 90%;
+                max-height: 90%;
                 overflow: auto;
                 position: relative;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                box-shadow: 0 20px 50px rgba(0,0,0,0.5);
             ">
                 <button onclick="this.parentElement.parentElement.remove()" style="
                     position: absolute;
-                    top: 10px;
-                    right: 10px;
-                    background: #dc3545;
+                    top: 15px;
+                    right: 15px;
+                    background: #333;
                     color: white;
                     border: none;
                     border-radius: 50%;
-                    width: 30px;
-                    height: 30px;
+                    width: 35px;
+                    height: 35px;
                     cursor: pointer;
-                    font-size: 16px;
-                    z-index: 10001;
+                    font-size: 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s;
                 ">×</button>
-                <h3 style="margin-bottom: 20px; color: #8B0000; text-align: center;">${document.name}</h3>
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <img src="${documentUrl}" alt="${document.name}" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                    <div style="display: none; padding: 20px; background: #f8f9fa; border-radius: 8px; color: #666;">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 2em; color: #ffc107; margin-bottom: 10px;"></i>
-                        <p>Documento não pode ser exibido</p>
-                        <p>Use o botão "Baixar" para salvar o arquivo</p>
-                    </div>
+                <h3 style="margin-bottom: 20px; color: #810816; text-align: center; font-family: 'Cinzel', serif;">Visualização: ${doc.name}</h3>
+                <div style="text-align: center; margin-bottom: 25px; background: #f0f0f0; padding: 10px; border-radius: 10px;">
+                    <img src="${documentUrl}" alt="${doc.name}" style="max-width: 100%; height: auto; border-radius: 5px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);" onerror="this.src='https://via.placeholder.com/600x400?text=Erro+ao+exibir+imagem';">
                 </div>
-                <div style="text-align: center;">
-                    <button class="btn btn-sm btn-success" id="downloadBtnTemp">
-                        <i class="fas fa-download"></i> Baixar Documento
+                <div style="text-align: center; display: flex; gap: 10px; justify-content: center;">
+                    <button class="btn btn-success" id="downloadBtnTemp" style="padding: 10px 20px;">
+                        <i class="fas fa-download"></i> Baixar Original
+                    </button>
+                    <button class="btn btn-secondary" onclick="this.parentElement.parentElement.parentElement.remove()" style="padding: 10px 20px; background: #6c757d;">
+                        Fechar
                     </button>
                 </div>
             </div>
@@ -605,44 +614,73 @@ function viewDocument(documentKey, verificationId) {
         document.body.appendChild(modal);
         const btn = modal.querySelector('#downloadBtnTemp');
         btn.onclick = () => downloadDocument(documentKey, verificationId);
-    }).catch(()=> alert('Falha ao carregar documento.'));
+    }).catch(err => {
+        console.error('Erro ao processar visualização:', err);
+        alert('Ocorreu um erro ao tentar processar o arquivo para visualização: ' + err.message);
+    });
 }
 
 // Função para baixar documento
 function downloadDocument(documentKey, verificationId) {
-    const verification = verifications.find(v => v.id === verificationId);
+    const verification = verifications.find(v => String(v.id) === String(verificationId));
     if (!verification) return;
     
-    const document = verification.documents[documentKey];
-    if (!document || !document.uploaded) {
+    const doc = verification.documents[documentKey];
+    if (!doc || !doc.uploaded) {
         alert('Documento não foi enviado.');
         return;
     }
     
-    getDocumentUrlSafe(document).then(documentUrl => {
+    getDocumentUrlSafe(doc).then(documentUrl => {
         if (!documentUrl) { alert('Documento indisponível.'); return; }
-        try {
+        
+        // Se já é base64, converter para JPEG usando canvas
+        const doDownload = (url) => {
+            const safeName = (verification.userName || 'documento').replace(/[^a-zA-Z0-9]/g, '_');
+            const docName = (doc.name || 'documento').replace(/[^a-zA-Z0-9]/g, '_');
             const link = document.createElement('a');
-            link.href = documentUrl;
-            link.download = `${verification.userName}_${document.name}_${verificationId}.png`;
-            link.target = '_blank';
+            link.href = url;
+            link.download = `${safeName}_${docName}.jpg`;
+            link.style.display = 'none';
             document.body.appendChild(link);
             link.click();
-            document.body.removeChild(link);
-            console.log(`Documento ${document.name} baixado com sucesso`);
-        } catch (error) {
-            console.error('Erro ao baixar documento:', error);
-            alert('Erro ao baixar documento. Tente novamente.');
+            setTimeout(() => document.body.removeChild(link), 100);
+            console.log('Download iniciado:', link.download);
+        };
+        
+        if (documentUrl.startsWith('data:image/')) {
+            // Usar canvas para converter para JPG
+            const img = new Image();
+            img.onload = function() {
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.naturalWidth || img.width || 800;
+                    canvas.height = img.naturalHeight || img.height || 600;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0);
+                    doDownload(canvas.toDataURL('image/jpeg', 0.92));
+                } catch(e) {
+                    console.warn('Canvas falhou, baixando original:', e);
+                    doDownload(documentUrl);
+                }
+            };
+            img.onerror = function() { doDownload(documentUrl); };
+            img.src = documentUrl;
+        } else {
+            doDownload(documentUrl);
         }
     });
 }
+
 
 // Função para aprovar verificação
 function approveVerification(verificationId = null) {
     const id = verificationId || (selectedVerification ? selectedVerification.id : null);
     if (!id) return;
     
-    const verification = verifications.find(v => v.id === id);
+    const verification = verifications.find(v => String(v.id) === String(id));
     if (!verification) return;
     
     verification.status = 'approved';
@@ -664,8 +702,41 @@ function approveVerification(verificationId = null) {
     let changed = false;
     anns.forEach(a=>{ if (a.userEmail===verification.userEmail && a.status==='pending'){ a.status='active'; changed = true; } });
     if (changed) localStorage.setItem('announcements', JSON.stringify(anns));
+    // Criar notificação de aprovação para o anunciante
+    const approvalNotification = {
+        id: Date.now(),
+        userEmail: verification.userEmail,
+        type: 'verification_approved',
+        title: 'Conta Verificada!',
+        message: 'Sua identidade foi verificada com sucesso. Seus anúncios agora estão ativos e visíveis.',
+        createdAt: new Date().toISOString(),
+        read: false,
+        actionUrl: 'painel-anunciante.html'
+    };
+    
+    let notifications = JSON.parse(localStorage.getItem('userNotifications') || '[]');
+    notifications.push(approvalNotification);
+    localStorage.setItem('userNotifications', JSON.stringify(notifications));
+
     // Persistir verificações
     localStorage.setItem('verifications', JSON.stringify(verifications));
+    
+    // SINCRONIZAR COM SUPABASE
+    if (window.upsertVerificationInSupabase) {
+        window.upsertVerificationInSupabase(verification).catch(err => console.error('Erro ao salvar verificação no Supabase:', err));
+        
+        // Atualizar usuário no Supabase
+        if (window.upsertUserInSupabase) {
+            const user = users.find(u => u.email === verification.userEmail);
+            if (user) window.upsertUserInSupabase(user).catch(err => console.error('Erro ao atualizar usuário no Supabase:', err));
+        }
+
+        // Atualizar anúncios ativos no Supabase
+        if (changed && window.updateAdInSupabase) {
+            const userAds = anns.filter(a => a.userEmail === verification.userEmail && a.status === 'active');
+            userAds.forEach(ad => window.updateAdInSupabase(ad.id, { status: 'active' }).catch(err => console.error('Erro ao ativar anúncio no Supabase:', err)));
+        }
+    }
     
     // Atualizar interface
     loadVerifications(); updateStats();
@@ -674,57 +745,109 @@ function approveVerification(verificationId = null) {
     alert('Verificação aprovada com sucesso!');
 }
 
+// Modal personalizado para coletar motivo de rejeição
+function showRejectModal(onConfirm, isReverting) {
+    const existing = document.getElementById('rejectReasonModal');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'rejectReasonModal';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
+    
+    const title = isReverting ? 'Reverter Aprovação' : 'Rejeitar Verificação';
+    const placeholder = isReverting ? 'Motivo da reversão...' : 'Motivo da rejeição...';
+    const defaultReason = isReverting ? 'Aprovação revertida pelo administrador' : 'Documentos insuficientes ou inválidos';
+    
+    overlay.innerHTML = `
+        <div style="background:#fff;border-radius:12px;padding:30px;max-width:450px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+            <h3 style="margin:0 0 15px;color:#810816;font-size:18px;"><i class="fas fa-times-circle"></i> ${title}</h3>
+            <p style="margin:0 0 15px;color:#555;font-size:14px;">Informe o motivo (opcional):</p>
+            <textarea id="rejectReasonInput" rows="4" style="width:100%;box-sizing:border-box;border:2px solid #ddd;border-radius:8px;padding:10px;font-size:14px;resize:vertical;outline:none;" placeholder="${placeholder}"></textarea>
+            <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end;">
+                <button onclick="document.getElementById('rejectReasonModal').remove()" style="padding:10px 20px;background:#6c757d;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;">Cancelar</button>
+                <button id="confirmRejectBtn" style="padding:10px 25px;background:#dc3545;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:bold;">Confirmar</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    // Focar no textarea
+    setTimeout(() => { const ta = document.getElementById('rejectReasonInput'); if(ta) ta.focus(); }, 100);
+    
+    document.getElementById('confirmRejectBtn').onclick = function() {
+        const ta = document.getElementById('rejectReasonInput');
+        const reason = (ta ? ta.value.trim() : '') || defaultReason;
+        overlay.remove();
+        onConfirm(reason);
+    };
+    
+    // Fechar ao clicar fora
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) overlay.remove();
+    });
+}
+
 // Função para rejeitar verificação
 function rejectVerification(verificationId = null) {
     const id = verificationId || (selectedVerification ? selectedVerification.id : null);
     if (!id) return;
     
-    const reason = prompt('Motivo da rejeição:');
-    if (!reason) return;
+    const verification = verifications.find(v => String(v.id) === String(id));
+    if (!verification) { alert('Verificação não encontrada.'); return; }
     
-    const verification = verifications.find(v => v.id === id);
-    if (!verification) return;
+    const isReverting = verification.status === 'approved';
     
-    verification.status = 'rejected';
-    verification.rejectedAt = new Date().toISOString();
-    delete verification.approvedAt;
-    verification.adminNotes = reason;
-    
-    // Garantir que o usuário permaneça não verificado
-    const users = JSON.parse(localStorage.getItem('users')||'[]');
-    const idx = users.findIndex(u=>u.email===verification.userEmail);
-    if (idx!==-1){ 
-        users[idx].verified = false; 
-        users[idx].verificationStatus = 'rejected'; // Adicionar status de rejeição
-        localStorage.setItem('users', JSON.stringify(users)); 
-    }
-    
-    // Criar notificação de rejeição para o anunciante
-    const rejectionNotification = {
-        id: Date.now(),
-        userEmail: verification.userEmail,
-        type: 'verification_rejected',
-        title: 'Verificação Rejeitada',
-        message: `Sua verificação foi rejeitada pelo motivo: "${reason}". Clique aqui para enviar nova verificação.`,
-        createdAt: new Date().toISOString(),
-        read: false,
-        actionUrl: 'painel-anunciante.html',
-        requiresAction: true
-    };
-    
-    // Salvar notificação
-    let notifications = JSON.parse(localStorage.getItem('userNotifications') || '[]');
-    notifications.push(rejectionNotification);
-    localStorage.setItem('userNotifications', JSON.stringify(notifications));
-    
-    // Persistir verificações
-    localStorage.setItem('verifications', JSON.stringify(verifications));
-    
-    // Atualizar interface
-    loadVerifications(); updateStats();
-    closeModal('verificationModal');
-    
-    alert('Verificação rejeitada. O anunciante será notificado e poderá enviar nova verificação.');
+    showRejectModal(function(finalReason) {
+        verification.status = 'rejected';
+        verification.rejectedAt = new Date().toISOString();
+        delete verification.approvedAt;
+        verification.adminNotes = finalReason;
+        
+        // Usuário fica como não-verificado
+        const users = JSON.parse(localStorage.getItem('users')||'[]');
+        const idx = users.findIndex(u => u.email === verification.userEmail);
+        if (idx !== -1) { 
+            users[idx].verified = false; 
+            users[idx].verificationStatus = 'rejected';
+            localStorage.setItem('users', JSON.stringify(users)); 
+        }
+        
+        // Notificação para o anunciante
+        const rejectionNotification = {
+            id: Date.now(),
+            userEmail: verification.userEmail,
+            type: 'verification_rejected',
+            title: isReverting ? 'Aprovação Revertida' : 'Verificação Rejeitada',
+            message: isReverting ? 
+                `Sua aprovação foi revertida. Motivo: "${finalReason}". Envie novos documentos.` :
+                `Sua verificação foi rejeitada. Motivo: "${finalReason}". Clique aqui para enviar nova verificação.`,
+            createdAt: new Date().toISOString(),
+            read: false,
+            actionUrl: 'painel-anunciante.html',
+            requiresAction: true
+        };
+        
+        let notifications = JSON.parse(localStorage.getItem('userNotifications') || '[]');
+        notifications.push(rejectionNotification);
+        localStorage.setItem('userNotifications', JSON.stringify(notifications));
+        
+        localStorage.setItem('verifications', JSON.stringify(verifications));
+        
+        // SINCRONIZAR COM SUPABASE
+        if (window.upsertVerificationInSupabase) {
+            window.upsertVerificationInSupabase(verification).catch(err => console.error('Erro Supabase:', err));
+            if (window.upsertUserInSupabase) {
+                const user = users.find(u => u.email === verification.userEmail);
+                if (user) window.upsertUserInSupabase(user).catch(err => console.error('Erro Supabase user:', err));
+            }
+        }
+        
+        loadVerifications();
+        updateStats();
+        closeModal('verificationModal');
+        alert(isReverting ? 'Aprovação revertida! Anunciante foi notificado.' : 'Verificação rejeitada! Anunciante foi notificado.');
+    }, isReverting);
 }
 
 // Função para aprovar todas as verificações pendentes

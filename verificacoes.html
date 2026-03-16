@@ -7,13 +7,23 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="verificacoes.css">
     <link rel="stylesheet" href="notifications.css">
+    <script src="security.js"></script>
 </head>
 <body>
-    <!-- Age Verification Check -->
+    <!-- Verificação de acesso admin -->
     <script>
         if (localStorage.getItem('ageVerified') !== 'true') {
             window.location.href = 'age-verification.html';
         }
+        (function checkAdmin() {
+            if (typeof Security !== 'undefined' && Security.isAdminLoggedIn()) return;
+            try {
+                var sess = JSON.parse(localStorage.getItem('adminSession') || 'null');
+                if (sess && sess.authenticated && sess.role === 'admin') return;
+            } catch(e) {}
+            if (localStorage.getItem('adminUser')) return;
+            window.location.href = 'index.html';
+        })();
     </script>
 
     <div class="verifications-container">
@@ -84,21 +94,9 @@
                         <i class="fas fa-download"></i>
                         Exportar
                     </button>
-                    <button class="btn btn-warning" onclick="debugVerifications()" style="background: #ffc107; color: #000;">
-                        <i class="fas fa-bug"></i>
-                        Debug
-                    </button>
                     <button class="btn btn-info" onclick="forceRefresh()" style="background: #17a2b8; color: #fff;">
                         <i class="fas fa-sync"></i>
                         Atualizar
-                    </button>
-                    <button class="btn btn-success" onclick="createTestVerification()" style="background: #28a745; color: #fff;">
-                        <i class="fas fa-plus"></i>
-                        Criar Teste
-                    </button>
-                    <button class="btn btn-danger" onclick="createDirectVerifications()" style="background: #dc3545; color: #fff;">
-                        <i class="fas fa-bolt"></i>
-                        Criar Direto
                     </button>
                 </div>
             </div>
@@ -161,7 +159,8 @@
     </div>
 
     <script src="notifications.js"></script>
-    <!-- <script src="debug-live.js"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
     <script src="verificacoes.js"></script>
     
     <style>

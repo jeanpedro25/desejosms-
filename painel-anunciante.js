@@ -124,6 +124,14 @@ document.addEventListener('DOMContentLoaded', async function () {
         await window.syncSupabaseToLocal();
     }
 
+    if (window.syncUsersFromSupabase) {
+        await window.syncUsersFromSupabase();
+    }
+
+    if (window.syncVerificationsFromSupabase) {
+        await window.syncVerificationsFromSupabase();
+    }
+
     // RESET INICIAL: não apagar rascunho; apenas normalizar se corrompido
     console.log('🧹 Executando reset inicial...');
     localStorage.removeItem('tempPlan');
@@ -158,12 +166,17 @@ document.addEventListener('DOMContentLoaded', async function () {
         localStorage.setItem('userVerified', 'false');
     }
 
-    // Garantir dados mínimos do usuário no storage (fallback para ambiente de teste)
-    if (!localStorage.getItem('userEmail')) {
-        localStorage.setItem('userEmail', 'teste@desejosms.com');
+
+    // Garantir que o usuário está logado (sem fallback inseguro)
+    const userEmail = localStorage.getItem('userEmail');
+    if (!userEmail || userEmail === 'teste@desejosms.com') {
+        // Se não há email válido, redirecionar para login
+        localStorage.removeItem('currentUser');
+        window.location.href = 'index.html?loginRequired=1';
+        return;
     }
     if (!localStorage.getItem('userName')) {
-        localStorage.setItem('userName', 'João Silva');
+        localStorage.setItem('userName', '');
     }
     if (!localStorage.getItem('userVerified')) {
         localStorage.setItem('userVerified', 'false');
@@ -622,6 +635,14 @@ function syncVerificationStatus() {
             dashboardStatus.className = 'stat-number';
             dashboardStatus.style.color = '#fff';
             if (dashboardNotice) dashboardNotice.innerHTML = '<i class="fas fa-check-circle"></i> Conta Protegida';
+        } else if (latestVerification && latestVerification.status === 'pending') {
+            dashboardStatus.textContent = 'Em análise';
+            dashboardStatus.className = 'stat-number status-pending';
+            dashboardStatus.style.color = '#fff';
+            if (dashboardNotice) {
+                dashboardNotice.innerHTML = '<i class="fas fa-hourglass-half"></i> Seus documentos estão sendo analisados.';
+                dashboardNotice.style.color = '#fff';
+            }
         } else {
             // Lógica de prazo de 10 dias para o dashboard
             const GRACE_PERIOD_DAYS = 10;
@@ -652,6 +673,11 @@ function syncVerificationStatus() {
         if (isVerified) {
             profileStatus.innerHTML = '<i class="fas fa-check-circle"></i> Verificada';
             profileStatus.className = 'status-verified';
+        } else if (latestVerification && latestVerification.status === 'pending') {
+            profileStatus.innerHTML = '<i class="fas fa-hourglass-half"></i> Em análise';
+            profileStatus.className = 'status-pending-analysis';
+            profileStatus.style.background = '#fff3cd';
+            profileStatus.style.color = '#856404';
         } else {
             profileStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Não Verificada';
             profileStatus.className = 'status-not-verified';
@@ -2394,7 +2420,16 @@ async function createAd(forceActive = false) {
             video: adData.video || null,
             updatedAt: new Date().toISOString()
         };
-        try { localStorage.setItem('announcements', JSON.stringify(announcements)); } catch (_) { }
+        const updatedAd = announcements[adIndex];
+        try { 
+            localStorage.setItem('announcements', JSON.stringify(announcements)); 
+            
+            // SINCRONIZAR COM SUPABASE
+            if (window.updateAdInSupabase) {
+                console.log('☁️ Sincronizando edição com Supabase...');
+                window.updateAdInSupabase(updatedAd.id, updatedAd).catch(err => console.error('Erro ao atualizar no Supabase:', err));
+            }
+        } catch (_) { }
         loadDashboardStats();
         loadUserAds();
         alert('Anúncio atualizado com sucesso!');
@@ -2635,20 +2670,47 @@ function idbGetDoc(id) {
     }));
 }
 
-// Utilitário para reduzir para <= targetBytes (~5MB)
+// Função para comprimir DataURL
+function compressDataURL(dataUrl, maxWidth, quality) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            if (width > maxWidth) {
+                height = (maxWidth / width) * height;
+                width = maxWidth;
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src = dataUrl;
+    });
+}
+
+// Calcula tamanho de dataURL em bytes sem fetch (compatível com CSP)
+function dataUrlSizeBytes(dataUrl) {
+    if (!dataUrl) return 0;
+    const base64 = dataUrl.split(',')[1] || '';
+    const padding = (base64.match(/=+$/) || [''])[0].length;
+    return Math.floor((base64.length * 3) / 4) - padding;
+}
+
+// Reduzir dataURL para <= targetBytes sem usar fetch (evita violação CSP)
 async function ensureUnderSizeBytes(dataUrl, targetBytes = 5 * 1024 * 1024) {
     let current = dataUrl;
+    if (dataUrlSizeBytes(current) <= targetBytes) return current;
     for (const dim of [1600, 1400, 1200, 1000, 900, 800]) {
-        const blob = await (await fetch(current)).blob();
-        if (blob.size <= targetBytes) return current;
         current = await compressDataURL(current, dim, 0.85);
+        if (dataUrlSizeBytes(current) <= targetBytes) return current;
     }
-    // Reduzir qualidade se necessário
-    for (const q of [0.75, 0.65, 0.55, 0.5]) {
-        const reduced = await compressDataURL(current, 800, q);
-        const blob = await (await fetch(reduced)).blob();
-        if (blob.size <= targetBytes) return reduced;
-        current = reduced;
+    for (const q of [0.75, 0.65, 0.55, 0.5, 0.4]) {
+        current = await compressDataURL(current, 800, q);
+        if (dataUrlSizeBytes(current) <= targetBytes) return current;
     }
     return current;
 }
@@ -2657,8 +2719,9 @@ async function ensureUnderSizeBytes(dataUrl, targetBytes = 5 * 1024 * 1024) {
 async function submitVerification() {
     try {
         console.log('=== ENVIANDO VERIFICAÇÃO ===');
-        const userEmail = localStorage.getItem('userEmail') || 'teste@desejosms.com';
-        console.log('Email do usuário:', userEmail);
+        const userEmail = localStorage.getItem('userEmail') || '';
+        if (!userEmail) { alert('Você precisa estar logado para enviar documentos.'); return; }
+        console.log('Email do usuário: (omitido por segurança)');
 
         const modal = document.getElementById('verificationModal');
         if (!modal) { alert('Modal de verificação não encontrado!'); return; }
@@ -2680,20 +2743,36 @@ async function submitVerification() {
         const progressBar = document.getElementById('verificationProgressBar');
         if (progressWrap && progressBar) { progressWrap.style.display = 'block'; progressBar.style.width = '0%'; }
 
-        // Salvar arquivos diretamente no IndexedDB
+        // Salvar arquivos no IndexedDB E converter para Base64 (para que o admin remoto veja)
         const ids = ['documento', 'foto-codigo', 'selfie'].map(t => `verif-${userEmail}-${t}-${Date.now()}`);
+        const base64Docs = [];
         let count = 0;
         for (let i = 0; i < 3; i++) {
-            await idbPutDoc({ id: ids[i], userEmail, type: i === 0 ? 'documento' : i === 1 ? 'foto-codigo' : 'selfie', blob: files[i], createdAt: Date.now() });
+            // Salvar no IDB local (não critico - pode falhar)
+            try {
+                await idbPutDoc({ id: ids[i], userEmail, type: i === 0 ? 'documento' : i === 1 ? 'foto-codigo' : 'selfie', blob: files[i], createdAt: Date.now() });
+            } catch (idbErr) {
+                console.warn('IDB save falhou (não crítico):', idbErr.message || idbErr);
+            }
+
+            // Converter para Base64 comprimido para o Admin
+            const dataUrl = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.readAsDataURL(files[i]);
+            });
+            const compressed = await ensureUnderSizeBytes(dataUrl, 700 * 1024); // ~700KB por doc para economizar DB
+            base64Docs.push(compressed);
+
             count++; if (progressBar) progressBar.style.width = Math.round((count / 3) * 100) + '%';
         }
         if (progressBar) progressBar.style.width = '100%';
 
-        // Guardar referências no localStorage (sem base64)
+        // Guardar referências no localStorage (COM base64 para o admin)
         const docs = [
-            { userEmail, type: 'documento', url: null, docId: ids[0], submittedAt: new Date().toISOString(), status: 'pending' },
-            { userEmail, type: 'foto-codigo', url: null, docId: ids[1], submittedAt: new Date().toISOString(), status: 'pending' },
-            { userEmail, type: 'selfie', url: null, docId: ids[2], submittedAt: new Date().toISOString(), status: 'pending' }
+            { userEmail, type: 'documento', url: base64Docs[0], docId: ids[0], submittedAt: new Date().toISOString(), status: 'pending' },
+            { userEmail, type: 'foto-codigo', url: base64Docs[1], docId: ids[1], submittedAt: new Date().toISOString(), status: 'pending' },
+            { userEmail, type: 'selfie', url: base64Docs[2], docId: ids[2], submittedAt: new Date().toISOString(), status: 'pending' }
         ];
         localStorage.setItem('pendingVerifications', JSON.stringify(docs));
 
@@ -2703,9 +2782,9 @@ async function submitVerification() {
             const users = JSON.parse(localStorage.getItem('users') || '[]');
             const u = users.find(x => (x.email || '').toLowerCase() === userEmail.toLowerCase()) || { name: userEmail };
             const documents = {
-                documento: { name: 'Documento de Identificação', uploaded: true, verified: false, url: null, docId: ids[0] },
-                'foto-codigo': { name: 'Foto com Código', uploaded: true, verified: false, url: null, docId: ids[1] },
-                selfie: { name: 'Selfie', uploaded: true, verified: false, url: null, docId: ids[2] }
+                documento: { name: 'Documento de Identificação', uploaded: true, verified: false, url: base64Docs[0], docId: ids[0] },
+                'foto-codigo': { name: 'Foto com Código', uploaded: true, verified: false, url: base64Docs[1], docId: ids[1] },
+                selfie: { name: 'Selfie', uploaded: true, verified: false, url: base64Docs[2], docId: ids[2] }
             };
             // Se existir qualquer verificação anterior (aprovada/rejeitada/pendente), vamos substituir por uma PENDENTE nova
             const existingIdx = verifs.findIndex(v => (v.userEmail || '').toLowerCase() === userEmail.toLowerCase());
@@ -2722,7 +2801,19 @@ async function submitVerification() {
             };
             if (existingIdx !== -1) verifs[existingIdx] = verificationObj; else verifs.push(verificationObj);
             localStorage.setItem('verifications', JSON.stringify(verifs));
-        } catch (e) { console.warn('Falha ao atualizar verifications', e); }
+
+            // SINCRONIZAR COM SUPABASE (opcional - não bloquear se falhar)
+            if (window.upsertVerificationInSupabase) {
+                try {
+                    console.log('☁️ Enviando verificação para Supabase...');
+                    await window.upsertVerificationInSupabase(verificationObj);
+                    console.log('✅ Verificação salva no Supabase.');
+                } catch (sbErr) {
+                    console.warn('⚠️ Falha ao salvar no Supabase (não crítico):', sbErr.message || sbErr);
+                    // Continua mesmo sem Supabase - dado local é suficiente para o admin ver
+                }
+            }
+        } catch (e) { console.warn('Falha ao atualizar verifications no localStorage:', e); }
 
         alert('Documentos enviados com sucesso! Aguarde aprovação do administrador.');
         // Notificar anunciante: em análise
@@ -2982,6 +3073,12 @@ function pauseAd(adId) {
     announcements[adIndex].status = newStatus;
 
     localStorage.setItem('announcements', JSON.stringify(announcements));
+    
+    // Sincronizar com Supabase
+    if (window.updateAdInSupabase) {
+        window.updateAdInSupabase(adId, { status: newStatus }).catch(e => console.error("Erro ao sincronizar status:", e));
+    }
+
     loadUserAds();
 
     const statusText = newStatus === 'active' ? 'ativado' : 'pausado';
@@ -3075,6 +3172,15 @@ function selectPromotionPlan(planType, adId) {
     announcements[adIndex].paidAmount = price;
 
     localStorage.setItem('announcements', JSON.stringify(announcements));
+
+    // Sincronizar com Supabase
+    if (window.updateAdInSupabase) {
+        window.updateAdInSupabase(adId, { 
+            plan_type: planType, 
+            is_vip: planType === 'supervip',
+            paid_amount: price
+        }).catch(e => console.error("Erro ao sincronizar promoção:", e));
+    }
 
     // Fechar modal
     document.querySelector('.modal').remove();

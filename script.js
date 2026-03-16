@@ -303,30 +303,38 @@ function createTopCard(ad) {
     const card = document.createElement('div');
     card.className = 'top-card';
 
-    const bio = `${ad.age} anos, ${ad.city}`;
-    const services = ad.services || ['Atendimento completo'];
-    const atendimento = services.includes('Local Próprio') ? 'Local Próprio' :
-        services.includes('Motel') ? 'Motel' :
-            services.includes('Hotel') ? 'Hotel' : 'Atendimento';
+    // SANITIZAR todos os dados dinâmicos para prevenir XSS
+    const S = window.sanitizeHTML || (s => String(s || '').replace(/[&<>"'`=\/]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#x27;','`':'&#x60;','=':'&#x3D;','/':'&#x2F;'}[c])));
+    const safeId = String(ad.id || '').replace(/[^a-zA-Z0-9\-_]/g, '');
+    const safeName = S(ad.name);
+    const safePhone = S(window.sanitizePhone ? window.sanitizePhone(ad.phone) : ad.phone);
+    const safeCity = S((ad.city || '').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '));
+    const safePlan = S(ad.planType || 'basic');
+    const watermark = S(window.statesManager ? statesManager.getCurrentWatermark() : 'DesejosMS');
 
-    // escolher imagem real do anúncio sem forçar crop
+    const services = ad.services || ['Atendimento completo'];
+
+    // Imagem: apenas base64 ou HTTPS
     let adImage = '';
-    if (ad.photos && Array.isArray(ad.photos) && ad.photos.length > 0) adImage = ad.photos[0];
-    else if (ad.photo) adImage = ad.photo; else if (ad.image) adImage = ad.image; else adImage = getProfileImage(ad.planType);
+    const validateImg = u => u && (u.startsWith('data:image/') || u.startsWith('https://'));
+    if (ad.photos && Array.isArray(ad.photos) && ad.photos.length > 0 && validateImg(ad.photos[0])) adImage = ad.photos[0];
+    else if (validateImg(ad.photo)) adImage = ad.photo;
+    else if (validateImg(ad.image)) adImage = ad.image;
+    else adImage = getProfileImage(ad.planType);
 
     card.innerHTML = `
-        <div class="top-card-image" onclick="openProfilePage('${ad.id}')">
-            <img src="${adImage}" alt="Foto" oncontextmenu="return false;">
-            <div class="wm-card">${window.statesManager ? statesManager.getCurrentWatermark() : 'DesejosMS'}</div>
-            <div class="plan-badge ${ad.planType}">${ad.planType.toUpperCase()}</div>
+        <div class="top-card-image" onclick="openProfilePage('${safeId}')">
+            <img src="${S(adImage)}" alt="Foto" oncontextmenu="return false;">
+            <div class="wm-card">${watermark}</div>
+            <div class="plan-badge ${safePlan}">${safePlan.toUpperCase()}</div>
         </div>
         <div class="top-card-content">
-            <div class="top-card-title" style="font-weight: 800; font-size: 1.05rem; margin-bottom: 2px;">${ad.name}</div>
+            <div class="top-card-title" style="font-weight: 800; font-size: 1.05rem; margin-bottom: 2px;">${safeName}</div>
             <div class="top-card-location">
-                <span style="color: #8B0000;">(67) <strong>${ad.phone}</strong></span>
+                <span style="color: #8B0000;">(67) <strong>${safePhone}</strong></span>
             </div>
             <div class="top-card-location city-line" style="color: #8B0000; font-size: 0.85rem; font-weight: bold;">
-                <span>Com Local ·</span><span style="font-weight: normal; margin-left: 3px;">${(ad.city||'').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}, MS</span>
+                <span>Com Local &middot;</span><span style="font-weight: normal; margin-left: 3px;">${safeCity}, MS</span>
             </div>
         </div>
     `;
@@ -420,32 +428,42 @@ function loadRegularAnnouncements() {
 function createProfileCard(profile) {
     const card = document.createElement('div');
     card.className = 'profile-card';
+
+    // SANITIZAR todos os dados dinâmicos para prevenir XSS
+    const S = window.sanitizeHTML || (s => String(s || '').replace(/[&<>"'`=\/]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#x27;','`':'&#x60;','=':'&#x3D;','/':'&#x2F;'}[c])));
+    const safeId = String(profile.id || '').replace(/[^a-zA-Z0-9\-_]/g, '');
+    const safeName = S(profile.name);
+    const safePhone = S(window.sanitizePhone ? window.sanitizePhone(profile.phone || profile.whatsapp) : (profile.phone || profile.whatsapp || '9999-0000'));
+    const safeCity = S((profile.city || '').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '));
+    const safePlanType = S(profile.planType || 'basic');
+    const watermark = S(window.statesManager ? statesManager.getCurrentWatermark() : 'DesejosMS');
+    const stateShort = S(window.getCurrentStateConfig ? window.getCurrentStateConfig().shortName : 'MS');
+
     let planBadge = '';
-    if (profile.planType === 'supervip') planBadge = '<div class="plan-badge supervip">SUPER VIP</div>';
-    else if (profile.planType === 'top') planBadge = '<div class="plan-badge top">TOP</div>';
+    if (safePlanType === 'supervip') planBadge = '<div class="plan-badge supervip">SUPER VIP</div>';
+    else if (safePlanType === 'top') planBadge = '<div class="plan-badge top">TOP</div>';
 
-    const displayName = profile.name;
-    const bioOptions = ['Promoção rapidinha', 'Atendimento exclusivo', 'Local próprio', 'Muito carinhosa', 'Experiência garantida', 'Discreta e elegante'];
-    const randomBio = bioOptions[Math.floor(Math.random() * bioOptions.length)];
-
-    // escolher imagem real do anúncio sem redimensionamento agressivo
+    // Imagem: apenas base64 ou HTTPS
     let mainImage = '';
-    if (profile.photos && Array.isArray(profile.photos) && profile.photos.length > 0) mainImage = profile.photos[0];
-    else if (profile.photo) mainImage = profile.photo; else if (profile.image) mainImage = profile.image; else mainImage = getProfileImage(profile.planType);
+    const validateImg = u => u && (u.startsWith('data:image/') || u.startsWith('https://'));
+    if (profile.photos && Array.isArray(profile.photos) && profile.photos.length > 0 && validateImg(profile.photos[0])) mainImage = profile.photos[0];
+    else if (validateImg(profile.photo)) mainImage = profile.photo;
+    else if (validateImg(profile.image)) mainImage = profile.image;
+    else mainImage = getProfileImage(profile.planType);
 
     card.innerHTML = `
-        <div class="profile-image" style="cursor: pointer;" onclick="openProfilePage('${profile.id}')">
+        <div class="profile-image" style="cursor: pointer;" onclick="openProfilePage('${safeId}')">
             ${planBadge}
-            <img src="${mainImage}" alt="Foto" oncontextmenu="return false;">
-            <div class="wm-card">${window.statesManager ? statesManager.getCurrentWatermark() : 'DesejosMS'}</div>
+            <img src="${S(mainImage)}" alt="Foto" oncontextmenu="return false;">
+            <div class="wm-card">${watermark}</div>
         </div>
         <div class="profile-info">
-            <div class="profile-name" style="cursor: pointer; font-weight: 800; font-size: 1.05rem; margin-bottom: 2px;" onclick="openProfilePage('${profile.id}')">${displayName}</div>
+            <div class="profile-name" style="cursor: pointer; font-weight: 800; font-size: 1.05rem; margin-bottom: 2px;" onclick="openProfilePage('${safeId}')">${safeName}</div>
             <div class="profile-location">
-                <span style="color: #8B0000;">(67) <strong>${profile.phone || profile.whatsapp || '9999-0000'}</strong></span>
+                <span style="color: #8B0000;">(67) <strong>${safePhone}</strong></span>
             </div>
             <div class="profile-location city-line" style="color: #8B0000; font-size: 0.85rem; font-weight: bold;">
-                <span>Com Local ·</span><span style="font-weight: normal; margin-left: 3px;">${(profile.city||'').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}, ${window.getCurrentStateConfig ? window.getCurrentStateConfig().shortName : 'MS'}</span>
+                <span>Com Local &middot;</span><span style="font-weight: normal; margin-left: 3px;">${safeCity}, ${stateShort}</span>
             </div>
         </div>
     `;

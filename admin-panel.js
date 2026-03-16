@@ -1,6 +1,22 @@
 // Admin JS – seleção e email em massa
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Sincronizar com Supabase na inicialização
+    if (window.syncSupabaseToLocal) {
+        console.log('🔄 Sincronizando anúncios com Supabase...');
+        await window.syncSupabaseToLocal();
+    }
+    
+    if (window.syncUsersFromSupabase) {
+        console.log('🔄 Sincronizando usuários com Supabase...');
+        await window.syncUsersFromSupabase();
+    }
+    
+    if (window.syncVerificationsFromSupabase) {
+        console.log('🔄 Sincronizando verificações com Supabase...');
+        await window.syncVerificationsFromSupabase();
+    }
+
     renderAdsTable();
 });
 
@@ -52,8 +68,8 @@ function renderAdsTable(){
             <td><span class="plan-badge ${a.planType}">${String(a.planType||'').toUpperCase()}</span></td>
             <td>${new Date(a.createdAt||Date.now()).toLocaleDateString('pt-BR')}</td>
             <td>
-                <button class="action-btn" title="Aprovar" onclick="approveAd(${a.id})"><i class="fas fa-check"></i></button>
-                <button class="action-btn" title="Rejeitar" onclick="rejectAd(${a.id})"><i class="fas fa-times"></i></button>
+                <button class="action-btn" title="Aprovar" onclick="approveAd('${a.id}')"><i class="fas fa-check"></i></button>
+                <button class="action-btn" title="Rejeitar" onclick="rejectAd('${a.id}')"><i class="fas fa-times"></i></button>
             </td>
         </tr>`;
     }).join('');
@@ -550,13 +566,13 @@ function loadAdsData() {
             <td>${createdDate}</td>
             <td>
                 <div style="display: flex; gap: 5px;">
-                    <button class="btn btn-primary" onclick="viewAdDetails(${ad.id})" style="padding: 5px 10px; font-size: 12px;">
+                    <button class="btn btn-primary" onclick="viewAdDetails('${ad.id}')" style="padding: 5px 10px; font-size: 12px;">
                         <i class="fas fa-eye"></i>
                     </button>
-                    <button class="btn btn-success" onclick="approveAd(${ad.id})" style="padding: 5px 10px; font-size: 12px;">
+                    <button class="btn btn-success" onclick="approveAd('${ad.id}')" style="padding: 5px 10px; font-size: 12px;">
                         <i class="fas fa-check"></i>
                     </button>
-                    <button class="btn btn-danger" onclick="rejectAd(${ad.id})" style="padding: 5px 10px; font-size: 12px;">
+                    <button class="btn btn-danger" onclick="rejectAd('${ad.id}')" style="padding: 5px 10px; font-size: 12px;">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -652,7 +668,7 @@ function showPendingAds() {
 // Funções de gerenciamento de anúncios
 function viewAdDetails(adId) {
     const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
-    const ad = announcements.find(a => a.id === adId);
+    const ad = announcements.find(a => String(a.id) === String(adId));
     
     if (!ad) return;
     
@@ -709,7 +725,7 @@ function viewAdDetails(adId) {
 function approveAd(adId) {
     if (!selectedAd) {
         const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
-        selectedAd = announcements.find(a => a.id === adId);
+        selectedAd = announcements.find(a => String(a.id) === String(adId));
     }
     
     if (selectedAd) {
@@ -730,7 +746,7 @@ function approveAd(adId) {
             selectedAd.status = 'active';
             
             const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
-            const index = announcements.findIndex(a => a.id === selectedAd.id);
+            const index = announcements.findIndex(a => String(a.id) === String(selectedAd.id));
             
             if (index !== -1) {
                 announcements[index] = selectedAd;
@@ -748,7 +764,7 @@ function approveAd(adId) {
 function rejectAd(adId) {
     if (!selectedAd) {
         const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
-        selectedAd = announcements.find(a => a.id === adId);
+        selectedAd = announcements.find(a => String(a.id) === String(adId));
     }
     
     if (selectedAd) {
@@ -769,7 +785,7 @@ function rejectAd(adId) {
             selectedAd.status = 'rejected';
             
             const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
-            const index = announcements.findIndex(a => a.id === selectedAd.id);
+            const index = announcements.findIndex(a => String(a.id) === String(selectedAd.id));
             
             if (index !== -1) {
                 announcements[index] = selectedAd;

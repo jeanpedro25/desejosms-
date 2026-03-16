@@ -136,3 +136,128 @@ window.deleteAdInSupabase = async function(id) {
         throw e;
     }
 };
+
+// ==========================================
+// MÓDULO SUPABASE - USUÁRIOS (USERS)
+// ==========================================
+
+window.syncUsersFromSupabase = async function() {
+    try {
+        const { data, error } = await window.supabaseClient.from('users').select('*');
+        if (error) {
+            // RLS ou erro de permissão - NÃO apagar localStorage
+            console.warn('Supabase users inacessível (RLS?):', error.message);
+            return null;
+        }
+        if (data && data.length > 0) {
+            // Merge: não sobrescrever usuários locais que não estão no Supabase
+            const local = JSON.parse(localStorage.getItem('users') || '[]');
+            const merged = [...data];
+            local.forEach(lu => {
+                if (!merged.find(su => (su.email||'').toLowerCase() === (lu.email||'').toLowerCase())) {
+                    merged.push(lu);
+                }
+            });
+            localStorage.setItem('users', JSON.stringify(merged));
+            return merged;
+        }
+        return null; // Se Supabase devolveu vazio, NÃO limpar o localStorage
+    } catch (e) {
+        console.warn('Sync users falhou:', e.message);
+        return null;
+    }
+};
+
+window.upsertUserInSupabase = async function(userData) {
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('users')
+            .upsert([userData], { onConflict: 'email' })
+            .select();
+        if (error) throw error;
+        await window.syncUsersFromSupabase();
+        return data[0];
+    } catch (e) {
+        console.error('❌ Erro ao salvar usuário no Supabase:', e);
+        throw e;
+    }
+};
+
+// ==========================================
+// MÓDULO SUPABASE - VERIFICAÇÕES (VERIFICATIONS)
+// ==========================================
+
+window.syncVerificationsFromSupabase = async function() {
+    try {
+        const { data, error } = await window.supabaseClient.from('verifications').select('*');
+        if (error) throw error;
+        
+        // Formatar para o padrão local (camelCase)
+        const formatted = (data || []).map(v => ({
+            id: v.id,
+            userId: v.user_id,
+            userEmail: v.user_email,
+            userName: v.user_name,
+            status: v.status,
+            documents: v.documents,
+            notes: v.notes,
+            adminNotes: v.admin_notes,
+            submittedAt: v.submitted_at,
+            approvedAt: v.approved_at,
+            rejectedAt: v.rejected_at
+        }));
+        
+        localStorage.setItem('verifications', JSON.stringify(formatted));
+        return formatted;
+    } catch (e) {
+        console.error('❌ Erro ao sincronizar verficações:', e);
+        return null;
+    }
+};
+
+window.upsertVerificationInSupabase = async function(verData) {
+    try {
+        const dbData = {
+            user_email: verData.userEmail,
+            user_name: verData.userName,
+            status: verData.status,
+            documents: verData.documents,
+            notes: verData.notes,
+            admin_notes: verData.adminNotes,
+            submitted_at: verData.submittedAt,
+            approved_at: verData.approvedAt,
+            rejected_at: verData.rejectedAt
+        };
+        
+        // Tentar encontrar por email para fazer update ou insert
+        const { data: existing } = await window.supabaseClient
+            .from('verifications')
+            .select('id')
+            .eq('user_email', verData.userEmail)
+            .single();
+
+        let result;
+        if (existing) {
+            const { data, error } = await window.supabaseClient
+                .from('verifications')
+                .update(dbData)
+                .eq('id', existing.id)
+                .select();
+            if (error) throw error;
+            result = data[0];
+        } else {
+            const { data, error } = await window.supabaseClient
+                .from('verifications')
+                .insert([dbData])
+                .select();
+            if (error) throw error;
+            result = data[0];
+        }
+        
+        await window.syncVerificationsFromSupabase();
+        return result;
+    } catch (e) {
+        console.error('❌ Erro ao salvar verificação no Supabase:', e);
+        throw e;
+    }
+};

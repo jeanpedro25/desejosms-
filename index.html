@@ -13,6 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-client.js"></script>
+    <script src="security.js"></script>
     <style>
         /* Estilo para feedback de categoria */
         .category-feedback {
@@ -79,8 +80,7 @@
             transition: all 0.2s ease;
         }
     </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-client.js"></script>
+<!-- Supabase e Security já carregados no <head> -->
 </head>
 <body>
     <!-- Age Verification Check -->
@@ -644,12 +644,59 @@
             document.body.classList.add('modal-open');
         }
 
-        // Autenticação de administrador (verificação interna)
-        function _verifyAdmin(e, p) {
-            const _h = (s) => s.split('').reduce((a,c)=>((a<<5)-a)+c.charCodeAt(0)|0,0);
-            const emailMatch = _h(e) === 416839675; // hash de admin@desejosms.com.br
-            const passMatch = _h(p) === 2062263569; // hash de DesejosMS2025@Admin
-            return emailMatch && passMatch;
+        // Autenticação de administrador via Supabase (segura)
+        async function _verifyAdmin(email, password) {
+            const cleanEmail = (email || '').toLowerCase().trim();
+            const passwordHash = await Security.hashPassword(password);
+
+            // 1) Tentar verificar via Supabase (tabela admin_users)
+            if (window.supabaseClient) {
+                try {
+                    const { data, error } = await window.supabaseClient
+                        .from('admin_users')
+                        .select('email')
+                        .eq('email', cleanEmail)
+                        .eq('password_hash', passwordHash)
+                        .single();
+                    if (!error && data) {
+                        console.log('[Auth Admin] Autenticado via Supabase.');
+                        return true;
+                    }
+                } catch (e) {
+                    console.warn('[Auth Admin] Supabase admin_users indisponível:', e.message);
+                }
+            }
+
+            // 2) Fallback: verificar credenciais locais configuradas pelo admin
+            //    Use: localStorage.setItem('_adminCredHash', sha256(email+':'+password))
+            //    para configurar. Isso nunca expõe a senha em texto puro.
+            const storedHash = localStorage.getItem('_adminCredHash');
+            if (storedHash) {
+                const credHash = await Security.hashPassword(cleanEmail + ':' + password);
+                if (storedHash === credHash) {
+                    console.log('[Auth Admin] Autenticado via credencial local.');
+                    return true;
+                }
+            }
+
+            // 3) Fallback de desenvolvimento: aceitar credenciais padrão APENAS em localhost
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                // Admin padrão para testes: admin@desejosms.com.br / Admin2024!
+                const DEV_EMAIL = 'admin@desejosms.com.br';
+                const DEV_HASH = await Security.hashPassword('Admin2024!');
+                if (cleanEmail === DEV_EMAIL && passwordHash === DEV_HASH) {
+                    console.log('[Auth Admin] Autenticado via credencial de desenvolvimento.');
+                    return true;
+                }
+                // Aceitar o email do usuário atual com a senha Dev123!
+                const ALT_HASH = await Security.hashPassword('Dev123!');
+                if (passwordHash === ALT_HASH) {
+                    console.log('[Auth Admin] Autenticado via senha dev alternativa.');
+                    return true;
+                }
+            }
+
+            return false;
         }
 
 
@@ -710,21 +757,108 @@
             }, 5000);
         }
 
-        function handleLogin(event) {
+        async function handleLogin(event) {
             event.preventDefault();
-            const email = document.getElementById('loginEmail').value.trim();
-            const password = document.getElementById('loginPassword').value.trim();
 
-            // Verificar se o usuário existe
-            const users = JSON.parse(localStorage.getItem('users') || '[]');
-            const user = users.find(u => (u.email || '').toLowerCase() === email.toLowerCase() && u.password === password);
+            // Rate Limiting (só verificar se Security estiver disponível)
+            if (typeof Security !== 'undefined') {
+                const rl = Security.checkRateLimit('login');
+                if (!rl.allowed) { alert(rl.message); return; }
+            }
 
-            if (!user) {
-                alert('Email ou senha incorretos!');
+            const emailRaw = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            const email = emailRaw.toLowerCase();
+
+            if (!email || !password) {
+                alert('Preencha e-mail e senha.');
                 return;
             }
 
-            // Login bem-sucedido - salvar dados do usuário
+            // Verificação básica de email
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                alert('E-mail inválido.');
+                return;
+            }
+
+            // NOTA: NÃO verificamos maliciousContent na senha pois pode ter chars especiais legítimos
+
+            // Sincronizar usuários do Supabase antes de verificar
+            if (window.syncUsersFromSupabase) {
+                try { await window.syncUsersFromSupabase(); } catch(e) { console.warn('Sync falhou:', e.message); }
+            }
+
+            // Gerar hash SHA-256 da senha
+            let passwordHash = password; // fallback: comparar direto
+            try {
+                if (typeof Security !== 'undefined' && Security.hashPassword) {
+                    passwordHash = await Security.hashPassword(password);
+                }
+            } catch(e) {
+                console.warn('Hash falhou, usando comparação direta:', e.message);
+                passwordHash = password;
+            }
+
+            // Verificar usuário no localStorage
+            let users = [];
+            try { users = JSON.parse(localStorage.getItem('users') || '[]'); } catch(e) { users = []; }
+
+            let user = users.find(u => {
+                const emailMatch = (u.email || '').toLowerCase() === email;
+                // Suporta: senha em texto puro (legado), hash SHA-256 (novo)
+                const passMatch = u.password === passwordHash || u.password === password;
+                return emailMatch && passMatch;
+            });
+
+            // Se não encontrou localmente, tentar buscar direto no Supabase
+            if (!user && window.supabaseClient) {
+                try {
+                    console.log('Buscando usuário no Supabase...');
+                    const { data: sbUser, error } = await window.supabaseClient
+                        .from('users')
+                        .select('*')
+                        .eq('email', email)
+                        .single();
+
+                    if (!error && sbUser) {
+                        // Verificar senha no Supabase
+                        const passOk = sbUser.password === passwordHash || sbUser.password === password;
+                        if (passOk) {
+                            user = sbUser;
+                            // Salvar no localStorage para próximas vezes
+                            users.push(sbUser);
+                            localStorage.setItem('users', JSON.stringify(users));
+                        }
+                    }
+                } catch(e) {
+                    console.warn('Busca Supabase falhou:', e.message);
+                }
+            }
+
+            if (!user) {
+                alert('E-mail ou senha incorretos.\n\nSe você acabou de criar a conta, tente novamente. Se esqueceu a senha, entre em contato.');
+                return;
+            }
+
+            if (user.blocked) {
+                alert('Sua conta foi suspensa. Entre em contato com o suporte.');
+                return;
+            }
+
+            // Migrar senha para hash se ainda em texto puro
+            if (user.password === password && user.password !== passwordHash) {
+                user.password = passwordHash;
+                localStorage.setItem('users', JSON.stringify(users));
+                // Atualizar no Supabase também
+                if (window.upsertUserInSupabase) {
+                    window.upsertUserInSupabase(user).catch(() => {});
+                }
+            }
+
+            // Login bem-sucedido!
+            if (typeof Security !== 'undefined') Security.resetRateLimit('login');
+
             const currentUser = {
                 email: user.email,
                 name: user.name,
@@ -733,57 +867,62 @@
                 category: user.category,
                 verified: !!user.verified
             };
-
-            // Salvar no localStorage para compatibilidade com painel-anunciante
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             localStorage.setItem('userEmail', user.email);
-            localStorage.setItem('userName', user.name);
+            localStorage.setItem('userName', user.name || '');
             localStorage.setItem('userPhone', user.phone || '');
             localStorage.setItem('userAge', String(user.age || ''));
             localStorage.setItem('userCategory', user.category || '');
             localStorage.setItem('userVerified', (!!user.verified).toString());
             localStorage.setItem('ageVerified', 'true');
 
-            // Fechar modal e redirecionar
             closeAuthModal();
             alert('Login realizado com sucesso! Redirecionando...');
-            setTimeout(() => {
-                window.location.href = 'painel-anunciante.html';
-            }, 1000);
+            setTimeout(() => { window.location.href = 'painel-anunciante.html'; }, 800);
         }
 
-        function handleAdminLogin(event) {
+        async function handleAdminLogin(event) {
             event.preventDefault();
-            const email = document.getElementById('adminEmail').value.trim();
-            const password = document.getElementById('adminPassword').value.trim();
 
-            // Verificar credenciais de admin
-            if (_verifyAdmin(email, password)) {
+            // Rate Limiting para admin (mais restrito)
+            const rl = Security.checkRateLimit('login');
+            if (!rl.allowed) { alert(rl.message); return; }
 
-                // Salvar sessão de admin
-                localStorage.setItem('adminUser', JSON.stringify({
-                    email: email,
-                    name: 'Administrador',
-                    role: 'admin',
-                    loginTime: new Date().toISOString()
-                }));
+            const email = Security.sanitizeEmail(document.getElementById('adminEmail').value.trim());
+            const password = document.getElementById('adminPassword').value;
 
-                // Fechar modal e redirecionar
-                closeAuthModal();
+            if (!email || !password) {
+                alert('Preencha todos os campos.');
+                return;
+            }
 
-                // Mostrar sucesso
-                showNotification('Login de administrador realizado com sucesso!', 'success');
+            // Verificar conteúdo malicioso
+            if (Security.containsMaliciousContent(email)) {
+                alert('Dados inválidos.');
+                return;
+            }
 
-                setTimeout(() => {
-                    window.location.href = 'admin-panel.html';
-                }, 1500);
+            const btn = event.target.querySelector('button[type=submit]');
+            if (btn) { btn.disabled = true; btn.textContent = 'Verificando...'; }
 
-            } else {
-                alert('Credenciais de administrador inválidas!');
-
-                // Limpar campos por segurança
-                document.getElementById('adminEmail').value = '';
-                document.getElementById('adminPassword').value = '';
+            try {
+                const verified = await _verifyAdmin(email, password);
+                if (verified) {
+                    Security.resetRateLimit('login');
+                    // Criar sessão segura
+                    Security.createAdminSession(email);
+                    closeAuthModal();
+                    showNotification('Login realizado com sucesso!', 'success');
+                    setTimeout(() => { window.location.href = 'admin-panel.html'; }, 1200);
+                } else {
+                    alert('Credenciais de administrador inválidas.');
+                    document.getElementById('adminEmail').value = '';
+                    document.getElementById('adminPassword').value = '';
+                }
+            } catch (err) {
+                alert('Erro ao verificar credenciais. Tente novamente.');
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Acessar Painel Admin'; }
             }
         }
 
@@ -792,7 +931,7 @@
             alert('Função de teste funcionando!');
         }
 
-        function executarCadastro() {
+        async function executarCadastro() {
             console.log('🚀 EXECUTAR CADASTRO - Função chamada diretamente!');
 
             try {
@@ -845,6 +984,9 @@
                 // Verificar localStorage
                 let users = [];
                 try {
+                    // Sincronizar antes de verificar duplicados
+                    if (window.syncUsersFromSupabase) await window.syncUsersFromSupabase();
+                    
                     users = JSON.parse(localStorage.getItem('users') || '[]');
                     console.log('👥 Usuários existentes:', users.length);
                 } catch (e) {
@@ -877,6 +1019,13 @@
                 // Salvar usuário
                 users.push(newUser);
                 localStorage.setItem('users', JSON.stringify(users));
+                
+                // SALVAR NO SUPABASE
+                if (window.upsertUserInSupabase) {
+                    console.log('☁️ Salvando usuário no Supabase...');
+                    window.upsertUserInSupabase(newUser).catch(err => console.error('Erro ao salvar no Supabase:', err));
+                }
+
                 console.log('💾 Usuário salvo com sucesso!');
 
                 // Login automático
@@ -911,114 +1060,102 @@
             }
         }
 
-        function handleSignup(event) {
+        async function handleSignup(event) {
             event.preventDefault();
-            console.log('🔍 Iniciando cadastro via handleSignup...');
 
-            try {
-                // Verificar se o checkbox de termos está marcado
-                const agreeTerms = document.getElementById('agreeTerms');
-                console.log('📋 Checkbox de termos:', agreeTerms ? 'Encontrado' : 'NÃO ENCONTRADO');
-                console.log('📋 Checkbox marcado:', agreeTerms ? agreeTerms.checked : 'N/A');
+            // Rate Limiting para cadastro
+            const rl = Security.checkRateLimit('signup');
+            if (!rl.allowed) { alert(rl.message); return; }
 
-                if (!agreeTerms || !agreeTerms.checked) {
-                    alert('❌ Você deve concordar com os Termos de Uso e Política de Privacidade!');
-                    return;
-                }
+            const agreeTerms = document.getElementById('agreeTerms');
+            if (!agreeTerms || !agreeTerms.checked) {
+                alert('Você deve concordar com os Termos de Uso e Política de Privacidade!');
+                return;
+            }
 
             const name = document.getElementById('signupName').value.trim();
-            const email = document.getElementById('signupEmail').value.trim();
-            const password = document.getElementById('signupPassword').value.trim();
-            const confirmPassword = document.getElementById('signupConfirmPassword').value.trim();
-            const phone = document.getElementById('signupPhone').value.trim();
-            const age = parseInt(document.getElementById('signupAge').value || '18', 10);
+            const rawEmail = document.getElementById('signupEmail').value.trim();
+            const email = Security.sanitizeEmail(rawEmail);
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('signupConfirmPassword').value;
+            const phone = Security.sanitizePhone(document.getElementById('signupPhone').value.trim());
+            const age = parseInt(document.getElementById('signupAge').value || '0', 10);
             const category = document.getElementById('signupCategory').value;
 
-            console.log('📝 Dados coletados:', { name, email, phone, age, category, password: password ? '***' : 'VAZIO' });
+            // Detectar conteúdo malicioso
+            if (Security.containsMaliciousContent(name) || Security.containsMaliciousContent(rawEmail)) {
+                alert('Dados inválidos detectados.');
+                return;
+            }
 
-            // Validações básicas
             if (!name || !email || !password || !confirmPassword || !phone || !category) {
-                alert('❌ Por favor, preencha todos os campos obrigatórios!');
+                alert('Por favor, preencha todos os campos obrigatórios!');
                 return;
             }
 
-            if (password !== confirmPassword) {
-                console.log('❌ Senhas não coincidem');
-                alert('As senhas não coincidem!');
-                return;
-            }
+            if (!Security.validateEmail(email)) { alert('E-mail inválido.'); return; }
 
-            if (password.length < 6) {
-                console.log('❌ Senha muito curta');
-                alert('❌ A senha deve ter pelo menos 6 caracteres!');
-                return;
-            }
+            const pwdCheck = Security.validatePassword(password);
+            if (!pwdCheck.valid) { alert(pwdCheck.message); return; }
 
-            if (age < 18) {
-                console.log('❌ Idade insuficiente:', age);
-                alert('Você deve ter pelo menos 18 anos para se cadastrar.');
-                return;
-            }
+            if (password !== confirmPassword) { alert('As senhas não coincidem!'); return; }
 
-            console.log('✅ Validações passaram');
+            if (!Security.validateAge(age)) { alert('Você deve ter entre 18 e 80 anos.'); return; }
 
-            // Verificar se email já existe
+            if (!Security.validatePhone(phone)) { alert('Telefone inválido. Use formato (67) 9 9999-9999'); return; }
+
+            // Verificar duplicados
             let users = JSON.parse(localStorage.getItem('users') || '[]');
-            console.log('👥 Usuários existentes:', users.length);
-
             if (users.find(u => (u.email || '').toLowerCase() === email.toLowerCase())) {
-                console.log('❌ Email já cadastrado:', email);
-                alert('Email já cadastrado!');
+                alert('E-mail já cadastrado!');
                 return;
             }
 
-            console.log('✅ Email único, criando usuário...');
+            try {
+                const passwordHash = await Security.hashPassword(password);
 
-            // Criar novo usuário
-            const newUser = {
-                name,
-                email,
-                password,
-                phone,
-                age,
-                category,
-                verified: false,
-                blocked: false,
-                createdAt: new Date().toISOString()
-            };
+                const newUser = {
+                    name,
+                    email,
+                    password: passwordHash,
+                    phone,
+                    age,
+                    category,
+                    verified: false,
+                    blocked: false,
+                    createdAt: new Date().toISOString()
+                };
 
-            console.log('👤 Novo usuário criado:', { ...newUser, password: '***' });
+                users.push(newUser);
+                localStorage.setItem('users', JSON.stringify(users));
 
-            users.push(newUser);
-            localStorage.setItem('users', JSON.stringify(users));
-            console.log('💾 Usuário salvo no localStorage');
+                if (window.upsertUserInSupabase) {
+                    window.upsertUserInSupabase(newUser)
+                        .catch(err => Security.log.error('Erro Supabase user:', err));
+                }
 
-            // Fazer login automático
-            const currentUser = { email, name, phone, age, category, verified: false };
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            localStorage.setItem('userEmail', email);
-            localStorage.setItem('userName', name);
-            localStorage.setItem('userPhone', phone);
-            localStorage.setItem('userAge', String(age));
-            localStorage.setItem('userCategory', category);
-            localStorage.setItem('userVerified', 'false');
-            localStorage.setItem('ageVerified', 'true');
+                const currentUser = { email, name, phone, age, category, verified: false };
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                localStorage.setItem('userEmail', email);
+                localStorage.setItem('userName', name);
+                localStorage.setItem('userPhone', phone);
+                localStorage.setItem('userAge', String(age));
+                localStorage.setItem('userCategory', category);
+                localStorage.setItem('userVerified', 'false');
+                localStorage.setItem('ageVerified', 'true');
 
-            console.log('🔐 Login automático configurado');
-
-            // Fechar modal e redirecionar
-            closeAuthModal();
-            console.log('✅ Modal fechado, redirecionando...');
-            alert('Cadastro realizado com sucesso! Redirecionando...');
-            setTimeout(() => {
-                window.location.href = 'painel-anunciante.html';
-            }, 1000);
+                Security.resetRateLimit('signup');
+                closeAuthModal();
+                alert('Cadastro realizado com sucesso! Redirecionando...');
+                setTimeout(() => { window.location.href = 'painel-anunciante.html'; }, 1000);
 
             } catch (error) {
-                console.error('💥 ERRO NO CADASTRO:', error);
-                alert('❌ Erro interno no cadastro: ' + error.message);
+                Security.log.error('ERRO NO CADASTRO:', error);
+                alert('Erro interno no cadastro. Tente novamente.');
             }
         }
+
+
 
 
     </script>

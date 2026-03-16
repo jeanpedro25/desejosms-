@@ -10,21 +10,39 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="plans-config.js"></script>
+    <script src="security.js"></script>
     <script src="admin-panel.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-client.js"></script>
 </head>
 <body>
-    <!-- Age Verification Check -->
+    <!-- Verificação de acesso admin -->
     <script>
         if (localStorage.getItem('ageVerified') !== 'true') {
             window.location.href = 'age-verification.html';
         }
-        
-        // Verificação de login admin
-        if (!localStorage.getItem('adminUser')) {
-            window.location.href = 'admin-access-denied.html';
-        }
+        (function checkAdmin() {
+            // 1) Novo sistema: Security.isAdminLoggedIn()
+            try { if (typeof Security !== 'undefined' && Security.isAdminLoggedIn()) return; } catch(e) {}
+            // 2) adminSession no localStorage
+            try {
+                var sess = JSON.parse(localStorage.getItem('adminSession') || 'null');
+                if (sess && sess.authenticated === true && sess.role === 'admin') {
+                    var elapsed = Date.now() - new Date(sess.loginTime).getTime();
+                    if (elapsed < 4 * 60 * 60 * 1000) return;
+                }
+            } catch(e) {}
+            // 3) Legado: adminUser
+            if (localStorage.getItem('adminUser')) {
+                var em = localStorage.getItem('adminUser');
+                localStorage.setItem('adminSession', JSON.stringify({
+                    email: em, role: 'admin', authenticated: true, loginTime: new Date().toISOString()
+                }));
+                return;
+            }
+            // Sem sessão válida → redirecionar
+            window.location.href = 'index.html';
+        })();
     </script>
 
     <div class="admin-container">
