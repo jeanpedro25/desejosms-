@@ -1,11 +1,12 @@
 // Configuração e inicialização do Supabase
 const supabaseUrl = 'https://rhsserqlbyyjgglcrwva.supabase.co';
-const supabaseKey = 'sb_publishable_v83uLp_HYDgO9PXmjFl8eQ_kSzRGLNI'; 
+// Chave pública anon (novo formato Supabase)
+const supabaseKey = 'sb_publishable_v83uLp_HYDgO9PXmjFl8eQ_kSzRGLNI';
 
 // Criar o cliente Supabase globalmente
 window.supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-console.log('🔗 Cliente Supabase inicializado com sucesso.');
+console.log('🔗 Supabase conectado a:', supabaseUrl);
 
 // ==========================================
 // MÓDULO SUPABASE - ANÚNCIOS (ANNOUNCEMENTS)
@@ -259,5 +260,84 @@ window.upsertVerificationInSupabase = async function(verData) {
     } catch (e) {
         console.error('❌ Erro ao salvar verificação no Supabase:', e);
         throw e;
+    }
+};
+
+// ── STORAGE: Upload de fotos do anúncio ──────────────────────
+// Recebe array de dataURLs (base64), faz upload no bucket 'ad-photos'
+// Retorna array de URLs públicas
+window.uploadPhotosToStorage = async function(dataUrls, adState, userEmail, adId) {
+    if (!window.supabaseClient) return dataUrls; // fallback: manter base64
+    const publicUrls = [];
+    const state = (adState || 'MS').toUpperCase();
+    const emailSlug = (userEmail || 'unknown').replace(/[^a-z0-9]/gi, '_');
+    const folder = `${state}/${emailSlug}/${adId || Date.now()}`;
+
+    for (let i = 0; i < dataUrls.length; i++) {
+        const dataUrl = dataUrls[i];
+        // Já é URL pública do Storage? Não re-upload
+        if (typeof dataUrl === 'string' && dataUrl.startsWith('https://') && dataUrl.includes('supabase')) {
+            publicUrls.push(dataUrl);
+            continue;
+        }
+        // Converter base64 → Blob
+        try {
+            const res  = await fetch(dataUrl);
+            const blob = await res.blob();
+            const ext  = blob.type.includes('png') ? 'png' : blob.type.includes('webp') ? 'webp' : 'jpg';
+            const path = `${folder}/foto_${i + 1}_${Date.now()}.${ext}`;
+
+            const { data, error } = await window.supabaseClient.storage
+                .from('ad-photos')
+                .upload(path, blob, { upsert: true, contentType: blob.type });
+
+            if (error) {
+                console.warn('⚠️ Erro upload foto', i, error.message);
+                publicUrls.push(dataUrl); // fallback: manter base64
+                continue;
+            }
+
+            const { data: urlData } = window.supabaseClient.storage
+                .from('ad-photos')
+                .getPublicUrl(path);
+
+            publicUrls.push(urlData.publicUrl);
+            console.log(`✅ Foto ${i+1} enviada:`, urlData.publicUrl);
+        } catch (err) {
+            console.warn('⚠️ Falha ao converter/upload foto:', err.message);
+            publicUrls.push(dataUrl);
+        }
+    }
+    return publicUrls;
+};
+
+// ── STORAGE: Upload de vídeo do anúncio ──────────────────────
+window.uploadVideoToStorage = async function(dataUrl, adState, userEmail, adId) {
+    if (!window.supabaseClient || !dataUrl) return dataUrl;
+    if (typeof dataUrl === 'string' && dataUrl.startsWith('https://') && dataUrl.includes('supabase')) return dataUrl;
+    const state    = (adState || 'MS').toUpperCase();
+    const emailSlug = (userEmail || 'unknown').replace(/[^a-z0-9]/gi, '_');
+    const folder   = `${state}/${emailSlug}/${adId || Date.now()}`;
+    try {
+        const res  = await fetch(dataUrl);
+        const blob = await res.blob();
+        const ext  = blob.type.includes('webm') ? 'webm' : 'mp4';
+        const path = `${folder}/video_${Date.now()}.${ext}`;
+
+        const { error } = await window.supabaseClient.storage
+            .from('ad-videos')
+            .upload(path, blob, { upsert: true, contentType: blob.type });
+
+        if (error) { console.warn('⚠️ Erro upload vídeo:', error.message); return dataUrl; }
+
+        const { data: urlData } = window.supabaseClient.storage
+            .from('ad-videos')
+            .getPublicUrl(path);
+
+        console.log('✅ Vídeo enviado:', urlData.publicUrl);
+        return urlData.publicUrl;
+    } catch (err) {
+        console.warn('⚠️ Falha ao enviar vídeo:', err.message);
+        return dataUrl;
     }
 };
