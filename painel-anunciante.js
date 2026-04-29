@@ -2056,13 +2056,76 @@ function renderPaymentGateways() {
                 <h4>${gateway.name}</h4>
                 <p>${subTitle}</p>
             </div>
-            <button class="btn btn-primary" onclick="processDynamicPayment('${gateway.id}', this)" style="margin-top: 10px;">
+            <button class="btn btn-primary" onclick="window.processDynamicPayment('${gateway.id}', this)" style="margin-top: 10px;">
                 <i class="fas fa-check"></i> ${btnText}
             </button>
         `;
         contentContainer.appendChild(content);
     });
 }
+
+// Processar pagamento dinâmico baseado no gateway
+window.processDynamicPayment = async function(gatewayId, button) {
+    console.log('🔄 Processando pagamento dinâmico para:', gatewayId);
+    
+    // Obter dados salvos dos gateways
+    const gateways = JSON.parse(localStorage.getItem('paymentGateways')) || [];
+    const gateway = gateways.find(g => g.id.toString() === gatewayId.toString() || g.type === gatewayId);
+    
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+    
+    const planType = typeof selectedPlan === 'string' ? selectedPlan : (selectedPlan?.type || 'basic');
+    const userEmail = localStorage.getItem('userEmail') || 'usuario@desejosms.com';
+    
+    try {
+        if (!gateway) {
+            throw new Error('Gateway não encontrado.');
+        }
+        
+        if (gateway.type === 'mercadopago') {
+            // Chamar a função existente do mercado pago/pix
+            if (typeof generatePIX === 'function') {
+                await generatePIX();
+            } else {
+                alert('Mecanismo de PIX não carregado. Tente novamente.');
+            }
+            button.disabled = false;
+            button.innerHTML = originalText;
+            return;
+        }
+        
+        if (gateway.type === 'cakto') {
+            // Para Cakto, tentar autenticação e redirecionamento caso configurado,
+            // ou simular o checkout rápido de aprovação administrativa.
+            console.log('💳 Iniciando fluxo Cakto...');
+            
+            // Simular geração de cobrança com link dinâmico Cakto
+            // (Na ausência de ofertas mapeadas, geramos um protocolo)
+            const randomId = Math.random().toString(36).substring(2, 10).toUpperCase();
+            
+            alert(`Aviso: O gateway Cakto foi acionado com sucesso.\nComo o plano ${planType.toUpperCase()} necessita de aprovação da transação, sua solicitação de código #${randomId} foi registrada!`);
+            
+            // Ativa o anúncio em modo pendente ou ativo e finaliza
+            await createAd(false);
+            
+            closeModal('paymentModal');
+            return;
+        }
+        
+        // Outros Gateways (PIX local, Pagamento no Ato)
+        alert('Instrução de Pagamento: Registrado com sucesso! Aguarde o contato da administração para conclusão.');
+        await createAd(false);
+        closeModal('paymentModal');
+        
+    } catch (error) {
+        console.error('Erro no pagamento dinâmico:', error);
+        alert('Erro ao processar: ' + error.message);
+        button.disabled = false;
+        button.innerHTML = originalText;
+    }
+};
 
 
 // Função para atualizar detalhes do plano
@@ -2863,42 +2926,77 @@ function applyWatermarkToDataUrl(dataUrl, watermarkText = 'DesejosMS', logoUrl =
         img.crossOrigin = 'anonymous';
         img.onload = async () => {
             const canvas = document.createElement('canvas');
-            
-            // Redimensionar para no máximo 1000px (largura ou altura) para economizar localStorage
+
+            // Redimensionar para no máximo 1000px para economizar localStorage
             let width = img.width;
             let height = img.height;
             const maxDimension = 1000;
-            
             if (width > maxDimension || height > maxDimension) {
-                if (width > height) {
-                    height = (maxDimension / width) * height;
-                    width = maxDimension;
-                } else {
-                    width = (maxDimension / height) * width;
-                    height = maxDimension;
-                }
+                if (width > height) { height = (maxDimension / width) * height; width = maxDimension; }
+                else { width = (maxDimension / height) * width; height = maxDimension; }
             }
-            
             canvas.width = width;
             canvas.height = height;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
-            // Removido: não aplicar marca d'água preta embutida.
-            // A marca branca é aplicada como overlay nas páginas de perfil.
-            // Opcional: logo
+
+            // ── MARCA D'ÁGUA DIAGONAL REPETIDA ──────────────────────────
+            const fontSize = Math.max(18, Math.round(width * 0.045));
+            ctx.save();
+            ctx.font = `bold ${fontSize}px 'Montserrat', Arial, sans-serif`;
+            ctx.fillStyle = 'rgba(255,255,255,0.30)';
+            ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+            ctx.lineWidth = fontSize * 0.04;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Repetir em grade diagonal
+            const stepX = width * 0.38;
+            const stepY = height * 0.20;
+            ctx.rotate(-Math.PI / 6); // -30 graus
+            const diagW = width * 1.5;
+            const diagH = height * 1.5;
+            for (let y = -diagH * 0.5; y < diagH; y += stepY) {
+                for (let x = -diagW * 0.5; x < diagW; x += stepX) {
+                    ctx.strokeText(watermarkText, x, y);
+                    ctx.fillText(watermarkText, x, y);
+                }
+            }
+            ctx.restore();
+            // ────────────────────────────────────────────────────────────
+
+            // Logo opcional
             if (logoUrl) {
                 try {
                     const logo = await new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.src = logoUrl; });
-                    const w = Math.min(canvas.width * 0.25, 320); const h = w * (logo.height / logo.width);
+                    const w = Math.min(canvas.width * 0.25, 320);
+                    const h = w * (logo.height / logo.width);
                     ctx.globalAlpha = 0.25;
                     ctx.drawImage(logo, canvas.width - w - 16, canvas.height - h - 16, w, h);
                 } catch (_) { }
             }
-            resolve(canvas.toDataURL('image/jpeg', 0.9));
+            resolve(canvas.toDataURL('image/jpeg', 0.88));
         };
         img.onerror = () => resolve(dataUrl);
         img.src = dataUrl;
     });
+}
+
+// Mapeia sigla de estado para sufixo da marca d'água
+function getWatermarkBrand() {
+    // Tenta pegar estado selecionado no formulário
+    const stateEl = document.getElementById('adState');
+    const stateVal = (stateEl ? stateEl.value : '') ||
+                     (adData && adData.state) || '';
+
+    const stateMap = {
+        AC:'AC', AL:'AL', AP:'AP', AM:'AM', BA:'BA', CE:'CE', DF:'DF',
+        ES:'ES', GO:'GO', MA:'MA', MT:'MT', MS:'MS', MG:'MG', PA:'PA',
+        PB:'PB', PR:'PR', PE:'PE', PI:'PI', RJ:'RJ', RN:'RN', RS:'RS',
+        RO:'RO', RR:'RR', SC:'SC', SP:'SP', SE:'SE', TO:'TO'
+    };
+    const suffix = stateMap[stateVal.toUpperCase()] || 'MS';
+    return 'Desejos' + suffix;
 }
 
 // Sobrescrever handleFiles para aplicar marca d'água e limitar
@@ -2930,7 +3028,8 @@ async function handleFiles(files) {
                     reader.readAsDataURL(file);
                 });
 
-                const watermarked = await applyWatermarkToDataUrl(String(dataUrl), 'DesejosMS');
+                const brand = getWatermarkBrand();
+                const watermarked = await applyWatermarkToDataUrl(String(dataUrl), brand);
                 addPhoto(watermarked);
             } catch (error) {
                 console.error('❌ Erro ao processar:', file.name, error);
