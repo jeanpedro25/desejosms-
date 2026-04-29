@@ -1096,12 +1096,10 @@ function showCreateAdModal() {
         // Sempre carregar estados e limpar o que for básico
         loadAvailableStates();
         
-        // Tentar carregar rascunho se existir ou resetar para novo
-        if (localStorage.getItem('adCreationDraft')) {
-            loadAdDraft();
-        } else {
-            resetAdForm();
-        }
+        // Sempre resetar para novo anúncio limpo
+        localStorage.removeItem('adCreationDraft');
+        localStorage.removeItem('tempAdCreation');
+        resetAdForm();
 
         // Mostrar modal
         modal.classList.add('active');
