@@ -144,11 +144,8 @@
 
     function validatePassword(password) {
         if (!password) return { valid: false, message: 'Senha obrigatória.' };
-        if (password.length < 8) return { valid: false, message: 'Senha deve ter pelo menos 8 caracteres.' };
+        if (password.length < 6) return { valid: false, message: 'Senha deve ter pelo menos 6 caracteres.' };
         if (password.length > 128) return { valid: false, message: 'Senha muito longa.' };
-        // Exigir ao menos 1 letra e 1 número
-        if (!/[a-zA-Z]/.test(password)) return { valid: false, message: 'Senha deve conter ao menos uma letra.' };
-        if (!/\d/.test(password)) return { valid: false, message: 'Senha deve conter ao menos um número.' };
         return { valid: true };
     }
 
@@ -160,7 +157,8 @@
     function validatePhone(phone) {
         if (!phone) return false;
         const digits = phone.replace(/\D/g, '');
-        return digits.length >= 10 && digits.length <= 13;
+        // Aceitar números com 8 a 13 dígitos (fixo, celular, WhatsApp)
+        return digits.length >= 8 && digits.length <= 13;
     }
 
     function validateName(name) {

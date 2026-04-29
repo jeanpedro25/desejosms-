@@ -815,13 +815,14 @@
             if (!user && window.supabaseClient) {
                 try {
                     console.log('Buscando usuário no Supabase...');
-                    const { data: sbUser, error } = await window.supabaseClient
+                    const { data: sbUsers, error } = await window.supabaseClient
                         .from('users')
                         .select('*')
                         .eq('email', email)
-                        .single();
+                        .limit(1);
 
-                    if (!error && sbUser) {
+                    if (!error && sbUsers && sbUsers.length > 0) {
+                        const sbUser = sbUsers[0];
                         // Verificar senha no Supabase
                         const passOk = sbUser.password === passwordHash || sbUser.password === password;
                         if (passOk) {
@@ -1102,7 +1103,7 @@
 
             if (!Security.validateAge(age)) { alert('Você deve ter entre 18 e 80 anos.'); return; }
 
-            if (!Security.validatePhone(phone)) { alert('Telefone inválido. Use formato (67) 9 9999-9999'); return; }
+            if (!Security.validatePhone(phone)) { alert('Telefone inválido! Mínimo 8 dígitos. Ex: (67) 99999-9999 ou 67999001122'); return; }
 
             // Verificar duplicados
             let users = JSON.parse(localStorage.getItem('users') || '[]');
