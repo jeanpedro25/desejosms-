@@ -175,6 +175,35 @@ document.addEventListener('DOMContentLoaded', async function () {
         window.location.href = 'index.html?loginRequired=1';
         return;
     }
+
+    // Verificar se usuário está bloqueado
+    try {
+        const usersList = JSON.parse(localStorage.getItem('users') || '[]');
+        const currentUser = usersList.find(u => u.email === userEmail);
+        if (currentUser && currentUser.blocked) {
+            // Conta bloqueada: exibir mensagem e travar interações
+            document.body.innerHTML = `
+                <div style="background: linear-gradient(135deg, #8B0000 0%, #DC143C 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; color: white; text-align: center; padding: 20px;">
+                    <div style="background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(20px); border-radius: 20px; padding: 40px; max-width: 500px; box-shadow: 0 15px 35px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);">
+                        <i class="fas fa-user-slash" style="font-size: 64px; color: #FFD700; margin-bottom: 20px;"></i>
+                        <h2 style="font-size: 28px; font-family: 'Playfair Display', serif; margin-bottom: 15px;">Conta Bloqueada</h2>
+                        <p style="font-size: 16px; line-height: 1.6; color: rgba(255,255,255,0.9); margin-bottom: 25px;">
+                            Prezado anunciante, sua conta foi temporariamente suspensa por violação dos nossos Termos de Uso e Regras da Plataforma.
+                        </p>
+                        <div style="background: rgba(255,255,255,0.1); border-radius: 8px; padding: 15px; font-size: 14px; margin-bottom: 25px; text-align: left;">
+                            <strong>Como proceder?</strong><br>
+                            Se você acredita que houve um equívoco ou deseja esclarecimentos, entre em contato direto com a nossa equipe de Suporte Técnico. Seus dados e anúncios continuam preservados no sistema aguardando análise.
+                        </div>
+                        <a href="index.html" style="display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #8B0000; font-weight: bold; text-decoration: none; border-radius: 10px; box-shadow: 0 4px 15px rgba(255,215,0,0.3); transition: transform 0.2s;">
+                            <i class="fas fa-arrow-left"></i> Voltar ao Site
+                        </a>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+    } catch (e) { console.error('Erro ao verificar bloqueio:', e); }
+
     if (!localStorage.getItem('userName')) {
         localStorage.setItem('userName', '');
     }
