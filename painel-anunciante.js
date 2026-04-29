@@ -3401,6 +3401,9 @@ function loadAvailableStates() {
     const stateSelect = document.getElementById('adState');
     if (!stateSelect) return;
 
+    // Preservar estado selecionado atual se houver
+    const currentSelection = stateSelect.value;
+
     // Limpar opções existentes
     stateSelect.innerHTML = '<option value="">Selecione o estado</option>';
 
@@ -3425,6 +3428,14 @@ function loadAvailableStates() {
             });
 
             console.log('✅ Estados carregados no select:', Object.keys(activeStates).length);
+            
+            // Restaurar seleção se ela ainda estiver disponível
+            if (currentSelection) {
+                stateSelect.value = currentSelection;
+                console.log('🔄 Estado selecionado restaurado:', currentSelection);
+                // Carregar cidades correspondentes ao estado restaurado
+                loadCitiesForState();
+            }
         } else {
             // Nenhum estado disponível
             const option = document.createElement('option');
