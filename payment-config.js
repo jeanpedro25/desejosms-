@@ -16,7 +16,8 @@ async function saveGatewayToSupabase(gateway) {
     if (!window.supabaseClient) return;
     try {
         const key = gateway.type === 'mercadopago' ? 'mercadopago_config' : 
-                    gateway.type === 'cakto' ? 'cakto_config' : null;
+                    gateway.type === 'cakto' ? 'cakto_config' : 
+                    gateway.type === 'paghiper' ? 'paghiper_config' : null;
         if (!key) return true; // Não salva outros no supabase por enquanto
 
         // Salva/atualiza a config na tabela settings
@@ -1021,6 +1022,10 @@ function updateGatewayFields() {
         case 'cakto':
             publicKeyField.placeholder = 'Client ID';
             secretKeyField.placeholder = 'Client Secret';
+            break;
+        case 'paghiper':
+            publicKeyField.placeholder = 'ApiKey';
+            secretKeyField.placeholder = 'Token';
             break;
         case 'stripe':
             publicKeyField.placeholder = 'pk_test_... ou pk_live_...';
