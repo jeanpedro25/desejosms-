@@ -911,11 +911,9 @@ function loadUserAds() {
                 </td>
                 <td>
                     <div style="display: flex; gap: 5px;">
-                        ${ad.planType === 'supervip' ? `
                         <button class="action-btn" onclick="editAd(${ad.id})" title="Editar">
                             <i class="fas fa-edit"></i>
                         </button>
-                        ` : ''}
                         ${(ad.planType === 'top' || ad.planType === 'supervip') ? `
                         <button class="action-btn" onclick="pauseAd(${ad.id})" title="${ad.status === 'paused' ? 'Retomar' : 'Pausar'}">
                             <i class="fas ${ad.status === 'paused' ? 'fa-play' : 'fa-pause'}"></i>
@@ -1086,10 +1084,10 @@ function showCreateAdModal() {
             alert('Sua conta está bloqueada pelo administrador. Você não pode criar anúncios.');
             return;
         }
-        const modal = document.getElementById('createAdModal');
+        let modal = document.getElementById('createAdModal');
         if (!modal) {
-            console.error('❌ Modal não encontrado');
-            alert('Erro: Modal não encontrado. Recarregue a página.');
+            console.warn('❌ Modal não encontrado. Forçando atualização da página...');
+            window.location.reload();
             return;
         }
 
@@ -2515,6 +2513,94 @@ function generateThumbnail(dataUrl, maxW = 320, quality = 0.8) {
         img.src = dataUrl;
     });
 }
+
+// Função para editar anúncio
+function editAd(adId) {
+    console.log(`✏️ Iniciando edição do anúncio ID: ${adId}`);
+    const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
+    const ad = announcements.find(a => a.id === adId);
+    
+    if (!ad) {
+        alert('Anúncio não encontrado!');
+        return;
+    }
+
+    // Configurar dados do formulário
+    adData = {
+        isEditing: true,
+        originalId: ad.id,
+        title: ad.name || '',
+        state: ad.state || '',
+        city: ad.city || '',
+        age: String(ad.age || ''),
+        price: String(ad.price || '').replace('R$ ', '').trim(),
+        category: ad.category || '',
+        whatsapp: ad.whatsapp || ad.phone || '',
+        description: ad.description || '',
+        services: ad.services || [],
+        availability: ad.availability || '24h',
+        serviceType: ad.serviceType || 'motel',
+        photos: ad.photos || []
+    };
+
+    selectedPlan = ad.planType || 'basic';
+    currentStep = 2; // Pula a escolha do plano na edição
+
+    // Preencher campos do DOM
+    setTimeout(() => {
+        if (document.getElementById('adTitle')) document.getElementById('adTitle').value = adData.title;
+        if (document.getElementById('adState')) document.getElementById('adState').value = adData.state;
+        if (document.getElementById('adCity')) document.getElementById('adCity').value = adData.city;
+        if (document.getElementById('adAge')) document.getElementById('adAge').value = adData.age;
+        if (document.getElementById('adPrice')) document.getElementById('adPrice').value = adData.price;
+        if (document.getElementById('adCategory')) document.getElementById('adCategory').value = adData.category;
+        if (document.getElementById('adWhatsApp')) document.getElementById('adWhatsApp').value = adData.whatsapp;
+        if (document.getElementById('adDescription')) document.getElementById('adDescription').value = adData.description;
+
+        // Marcar checkboxes de serviços
+        const serviceCheckboxes = document.querySelectorAll('input[name="services"]');
+        serviceCheckboxes.forEach(cb => {
+            cb.checked = adData.services.includes(cb.value);
+        });
+
+        // Marcar disponibilidade
+        const availCheckboxes = document.querySelectorAll('input[name="availability"]');
+        availCheckboxes.forEach(cb => {
+            cb.checked = adData.availability.includes(cb.value);
+        });
+
+        // Marcar tipo de atendimento
+        const typeCheckboxes = document.querySelectorAll('input[name="serviceType"]');
+        typeCheckboxes.forEach(cb => {
+            cb.checked = adData.serviceType.includes(cb.value);
+        });
+
+        // Atualizar visualização das fotos
+        const photoPreview = document.getElementById('photoPreview');
+        if (photoPreview && adData.photos) {
+            photoPreview.innerHTML = adData.photos.map((p, index) => `
+                <div class="photo-item" style="position: relative;">
+                    <img src="${p}" style="width: 100%; height: 100px; object-fit: cover; border-radius: 8px;">
+                    <button type="button" onclick="removePhoto(${index})" class="remove-btn" style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer;">×</button>
+                </div>
+            `).join('');
+        }
+        
+        // Ativar navegação para o step 2
+        updateProgressBar();
+        showStep(2);
+        updateStepButtons();
+        
+    }, 200);
+
+    // Abrir o modal
+    showCreateAdModal();
+    
+    // Atualizar título do modal
+    const modalTitle = document.querySelector('#createAdModal .modal-header h2');
+    if (modalTitle) modalTitle.textContent = 'Editar Anúncio';
+}
+
 
 // Função para criar anúncio
 async function createAd(forceActive = false) {
