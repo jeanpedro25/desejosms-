@@ -14,12 +14,15 @@ let editingPlanId = null; // id do plano em modo edição
 // ============================================================
 async function saveGatewayToSupabase(gateway) {
     if (!window.supabaseClient) return;
-    try {
-        // Salva/atualiza a config do Mercado Pago na tabela settings
+        const key = gateway.type === 'mercadopago' ? 'mercadopago_config' : 
+                    gateway.type === 'cakto' ? 'cakto_config' : null;
+        if (!key) return true; // Não salva outros no supabase por enquanto
+
+        // Salva/atualiza a config na tabela settings
         const { error } = await window.supabaseClient
             .from('settings')
             .upsert({
-                key: 'mercadopago_config',
+                key: key,
                 value: {
                     publicKey: gateway.publicKey,
                     secretKey: gateway.secretKey,
@@ -33,10 +36,10 @@ async function saveGatewayToSupabase(gateway) {
             }, { onConflict: 'key' });
 
         if (error) throw error;
-        console.log('✅ Configuração MP salva no Supabase com sucesso!');
+        console.log(`✅ Configuração ${gateway.type} salva no Supabase com sucesso!`);
         return true;
     } catch (e) {
-        console.error('❌ Erro ao salvar MP no Supabase:', e);
+        console.error(`❌ Erro ao salvar ${gateway.type} no Supabase:`, e);
         return false;
     }
 }
@@ -46,11 +49,16 @@ async function loadGatewayFromSupabase() {
     try {
         const { data, error } = await window.supabaseClient
             .from('settings')
-            .select('value')
-            .eq('key', 'mercadopago_config')
-            .single();
+            .select('key, value');
         if (error || !data) return null;
-        return data.value;
+        
+        const mp = data.find(item => item.key === 'mercadopago_config');
+        const cakto = data.find(item => item.key === 'cakto_config');
+        
+        return {
+            mercadopago: mp ? mp.value : null,
+            cakto: cakto ? cakto.value : null
+        };
     } catch (e) {
         return null;
     }
@@ -84,25 +92,47 @@ async function loadTransactionsFromSupabase() {
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', async function() {
-    // Tentar carregar config do Supabase
-    const mpConfigFromDB = await loadGatewayFromSupabase();
-    if (mpConfigFromDB && mpConfigFromDB.publicKey) {
-        // Sincronizar Supabase → localStorage
+    // Tentar carregar configs do Supabase
+    const configsFromDB = await loadGatewayFromSupabase();
+    if (configsFromDB) {
         const existing = JSON.parse(localStorage.getItem('paymentGateways') || '[]');
-        const mpIdx = existing.findIndex(g => g.type === 'mercadopago');
-        const mpGateway = {
-            id: mpIdx !== -1 ? existing[mpIdx].id : Date.now(),
-            type: 'mercadopago',
-            name: 'Mercado Pago',
-            publicKey: mpConfigFromDB.publicKey,
-            secretKey: mpConfigFromDB.secretKey,
-            webhook: mpConfigFromDB.webhook || '',
-            environment: mpConfigFromDB.environment || 'sandbox',
-            status: mpConfigFromDB.status || 'active',
-            createdAt: new Date().toISOString()
-        };
-        if (mpIdx !== -1) existing[mpIdx] = mpGateway;
-        else existing.push(mpGateway);
+        
+        // Sincronizar Mercado Pago
+        if (configsFromDB.mercadopago && configsFromDB.mercadopago.publicKey) {
+            const mpIdx = existing.findIndex(g => g.type === 'mercadopago');
+            const mpGateway = {
+                id: mpIdx !== -1 ? existing[mpIdx].id : Date.now(),
+                type: 'mercadopago',
+                name: 'Mercado Pago',
+                publicKey: configsFromDB.mercadopago.publicKey,
+                secretKey: configsFromDB.mercadopago.secretKey,
+                webhook: configsFromDB.mercadopago.webhook || '',
+                environment: configsFromDB.mercadopago.environment || 'sandbox',
+                status: configsFromDB.mercadopago.status || 'active',
+                createdAt: new Date().toISOString()
+            };
+            if (mpIdx !== -1) existing[mpIdx] = mpGateway;
+            else existing.push(mpGateway);
+        }
+        
+        // Sincronizar Cakto
+        if (configsFromDB.cakto && configsFromDB.cakto.publicKey) {
+            const caktoIdx = existing.findIndex(g => g.type === 'cakto');
+            const caktoGateway = {
+                id: caktoIdx !== -1 ? existing[caktoIdx].id : Date.now() + 1,
+                type: 'cakto',
+                name: 'Cakto',
+                publicKey: configsFromDB.cakto.publicKey,
+                secretKey: configsFromDB.cakto.secretKey,
+                webhook: configsFromDB.cakto.webhook || '',
+                environment: configsFromDB.cakto.environment || 'production',
+                status: configsFromDB.cakto.status || 'active',
+                createdAt: new Date().toISOString()
+            };
+            if (caktoIdx !== -1) existing[caktoIdx] = caktoGateway;
+            else existing.push(caktoGateway);
+        }
+        
         localStorage.setItem('paymentGateways', JSON.stringify(existing));
     }
 
@@ -587,6 +617,7 @@ function updateStats() {
 function getGatewayTypeName(type) {
     const types = {
         'mercadopago': 'Mercado Pago',
+        'cakto': 'Cakto',
         'stripe': 'Stripe',
         'paypal': 'PayPal',
         'pix': 'PIX',
@@ -678,14 +709,13 @@ async function saveGateway() {
         createdAt: new Date().toISOString()
     };
     
-    // Se for Mercado Pago, salvar também no Supabase (para as Vercel Functions)
-    if (type === 'mercadopago') {
+    // Se for Mercado Pago ou Cakto, salvar também no Supabase (para o backend)
+    if (type === 'mercadopago' || type === 'cakto') {
         const savedInDB = await saveGatewayToSupabase(gateway);
         if (savedInDB) {
-            console.log('👍 Chaves MP salvas no banco de dados com sucesso!');
+            console.log(`👍 Chaves ${type} salvas no banco de dados com sucesso!`);
         } else {
-            // Alertar mas continuar (fallback para localStorage)
-            console.warn('⚠️ Não foi possível salvar no Supabase. Verifique a conexão.');
+            console.warn(`⚠️ Não foi possível salvar ${type} no Supabase. Verifique a conexão.`);
         }
     }
 
@@ -986,6 +1016,10 @@ function updateGatewayFields() {
         case 'mercadopago':
             publicKeyField.placeholder = 'pk_test_... ou pk_prod_...';
             secretKeyField.placeholder = 'sk_test_... ou sk_prod_...';
+            break;
+        case 'cakto':
+            publicKeyField.placeholder = 'Client ID';
+            secretKeyField.placeholder = 'Client Secret';
             break;
         case 'stripe':
             publicKeyField.placeholder = 'pk_test_... ou pk_live_...';
