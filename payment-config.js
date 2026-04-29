@@ -14,6 +14,7 @@ let editingPlanId = null; // id do plano em modo edição
 // ============================================================
 async function saveGatewayToSupabase(gateway) {
     if (!window.supabaseClient) return;
+    try {
         const key = gateway.type === 'mercadopago' ? 'mercadopago_config' : 
                     gateway.type === 'cakto' ? 'cakto_config' : null;
         if (!key) return true; // Não salva outros no supabase por enquanto
