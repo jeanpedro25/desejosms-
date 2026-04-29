@@ -2683,11 +2683,8 @@ async function createAd(forceActive = false) {
         return;
     }
 
-    // Miniaturas leves para persistência
-    let thumbs = [];
-    try {
-        thumbs = await Promise.all(adData.photos.map(p => generateThumbnail(p, 320, 0.8)));
-    } catch (e) { thumbs = adData.photos.slice(0, 1); }
+    // Usar as fotos carregadas diretamente (já otimizadas e com marca d'água)
+    const photosToSave = adData.photos || [];
 
     const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
     const userEmail = localStorage.getItem('userEmail') || 'teste@desejosms.com';
@@ -2710,7 +2707,7 @@ async function createAd(forceActive = false) {
             services: adData.services || [],
             availability: adData.availability || [],
             serviceType: adData.serviceType || [],
-            photos: thumbs,
+            photos: photosToSave,
             video: adData.video || null,
             updatedAt: new Date().toISOString()
         };
@@ -2765,7 +2762,7 @@ async function createAd(forceActive = false) {
         })() - (appliedCoupon?.discountValue || 0),
         views: 0,
         rating: 0,
-        photos: thumbs,
+        photos: photosToSave,
         video: adData.video || null
     };
     if (appliedCoupon) {
