@@ -3151,7 +3151,7 @@ function handleDrop(e) {
 }
 
 // Marca d'água nas imagens
-function applyWatermarkToDataUrl(dataUrl, watermarkText = 'DesejosMS', logoUrl = null) {
+function applyWatermarkToDataUrl(dataUrl, watermarkText = 'DESEJOS MS', logoUrl = null) {
     return new Promise((resolve) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
@@ -3171,28 +3171,21 @@ function applyWatermarkToDataUrl(dataUrl, watermarkText = 'DesejosMS', logoUrl =
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
 
-            // ── MARCA D'ÁGUA DIAGONAL REPETIDA ──────────────────────────
-            const fontSize = Math.max(18, Math.round(width * 0.045));
+            // ── MARCA D'ÁGUA CENTRAL DISCRETA ──────────────────────────
+            const fontSize = Math.max(22, Math.round(width * 0.08)); 
             ctx.save();
             ctx.font = `bold ${fontSize}px 'Montserrat', Arial, sans-serif`;
-            ctx.fillStyle = 'rgba(255,255,255,0.30)';
-            ctx.strokeStyle = 'rgba(0,0,0,0.12)';
-            ctx.lineWidth = fontSize * 0.04;
+            ctx.fillStyle = 'rgba(255,255,255,0.22)';
+            ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+            ctx.lineWidth = fontSize * 0.03;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
-            // Repetir em grade diagonal
-            const stepX = width * 0.38;
-            const stepY = height * 0.20;
-            ctx.rotate(-Math.PI / 6); // -30 graus
-            const diagW = width * 1.5;
-            const diagH = height * 1.5;
-            for (let y = -diagH * 0.5; y < diagH; y += stepY) {
-                for (let x = -diagW * 0.5; x < diagW; x += stepX) {
-                    ctx.strokeText(watermarkText, x, y);
-                    ctx.fillText(watermarkText, x, y);
-                }
-            }
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            ctx.strokeText(watermarkText, centerX, centerY);
+            ctx.fillText(watermarkText, centerX, centerY);
             ctx.restore();
             // ────────────────────────────────────────────────────────────
 
@@ -3213,7 +3206,7 @@ function applyWatermarkToDataUrl(dataUrl, watermarkText = 'DesejosMS', logoUrl =
     });
 }
 
-// Mapeia sigla de estado para sufixo da marca d'água
+// Mapeia sigla de estado para sufixo da marca d'água em CAIXA ALTA
 function getWatermarkBrand() {
     // Tenta pegar estado selecionado no formulário
     const stateEl = document.getElementById('adState');
@@ -3227,7 +3220,7 @@ function getWatermarkBrand() {
         RO:'RO', RR:'RR', SC:'SC', SP:'SP', SE:'SE', TO:'TO'
     };
     const suffix = stateMap[stateVal.toUpperCase()] || 'MS';
-    return 'Desejos' + suffix;
+    return 'DESEJOS ' + suffix;
 }
 
 // Sobrescrever handleFiles para aplicar marca d'água e limitar
