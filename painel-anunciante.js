@@ -2095,21 +2095,39 @@ window.processDynamicPayment = async function(gatewayId, button) {
         }
         
         if (gateway.type === 'cakto') {
-            // Para Cakto, tentar autenticação e redirecionamento caso configurado,
-            // ou simular o checkout rápido de aprovação administrativa.
-            console.log('💳 Iniciando fluxo Cakto...');
+            console.log('💳 Iniciando fluxo real da Cakto...');
             
-            // Simular geração de cobrança com link dinâmico Cakto
-            // (Na ausência de ofertas mapeadas, geramos um protocolo)
-            const randomId = Math.random().toString(36).substring(2, 10).toUpperCase();
-            
-            alert(`Aviso: O gateway Cakto foi acionado com sucesso.\nComo o plano ${planType.toUpperCase()} necessita de aprovação da transação, sua solicitação de código #${randomId} foi registrada!`);
-            
-            // Ativa o anúncio em modo pendente ou ativo e finaliza
-            await createAd(false);
-            
-            closeModal('paymentModal');
-            return;
+            try {
+                const response = await fetch('/api/payment/cakto', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        planType: planType,
+                        userEmail: localStorage.getItem('userEmail') || 'usuario@desejosms.com'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Não foi possível gerar o link de pagamento Cakto.');
+                }
+                
+                // Redirecionar para o checkout da Cakto
+                alert(`Redirecionando você com segurança para o Checkout da Cakto do seu "${data.product_name || 'Plano'}".`);
+                window.open(data.checkout_url, '_blank');
+                
+                // Salvar como pendente
+                await createAd(false);
+                closeModal('paymentModal');
+                return;
+            } catch (err) {
+                console.error('Falha na Cakto:', err);
+                alert('Erro na integração Cakto: ' + err.message + '\n\nCertifique-se de que cadastrou seus produtos (Plano Básico, Plano Top, Plano SuperVIP) no portal da Cakto!');
+                button.disabled = false;
+                button.innerHTML = originalText;
+                return;
+            }
         }
         
         // Outros Gateways (PIX local, Pagamento no Ato)

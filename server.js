@@ -145,6 +145,42 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    // Processar rotas de API Vercel localmente (/api/...)
+    if (req.url.startsWith('/api/')) {
+        const parsedUrl = url.parse(req.url, true);
+        req.query = parsedUrl.query;
+
+        let body = '';
+        req.on('data', chunk => { body += chunk; });
+        req.on('end', async () => {
+            try {
+                if (body && req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
+                    req.body = JSON.parse(body);
+                }
+            } catch (e) {
+                req.body = {};
+            }
+
+            try {
+                const apiPath = path.join(__dirname, parsedUrl.pathname + '.js');
+                if (fs.existsSync(apiPath)) {
+                    // Remover do cache para permitir alterações sem reiniciar
+                    delete require.cache[require.resolve(apiPath)];
+                    const handler = require(apiPath);
+                    return handler(req, res);
+                } else {
+                    res.writeHead(404, { 'Content-Type': 'application/json' });
+                    return res.end(JSON.stringify({ error: 'Endpoint da API não encontrado.' }));
+                }
+            } catch (error) {
+                console.error('Erro ao executar API local:', error);
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                return res.end(JSON.stringify({ error: 'Erro interno na API local', details: error.message }));
+            }
+        });
+        return;
+    }
+
     // Apenas GET/HEAD permitidos para servidor de arquivos estáticos
     if (req.method !== 'GET' && req.method !== 'HEAD') {
         res.writeHead(405, { 'Content-Type': 'text/plain' });
