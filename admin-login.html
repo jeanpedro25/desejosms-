@@ -233,14 +233,17 @@
 
         <div id="alert" class="alert"></div>
 
-        <form onsubmit="handleAdminLogin(event)">
+        <form onsubmit="handleAdminLogin(event)" autocomplete="off">
             <div class="form-group">
-                <label for="adminEmail">Email Administrativo:</label>
-                <input type="email" id="adminEmail" placeholder="admin@desejosms.com" required>
+                <label for="adminEmail">Email:</label>
+                <!-- autocomplete desativado para não vazar credenciais -->
+                <input type="text" name="username" style="display:none" aria-hidden="true">
+                <input type="password" name="password" style="display:none" aria-hidden="true">
+                <input type="email" id="adminEmail" placeholder="Seu e-mail de acesso" autocomplete="off" required>
             </div>
             <div class="form-group">
                 <label for="adminPassword">Senha:</label>
-                <input type="password" id="adminPassword" placeholder="••••••••" required>
+                <input type="password" id="adminPassword" placeholder="Sua senha" autocomplete="new-password" required>
             </div>
             <button type="submit" class="btn btn-primary">
                 <i class="fas fa-sign-in-alt"></i> Acessar Painel
