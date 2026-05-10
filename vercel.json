@@ -14,6 +14,10 @@
       "dest": "/api/seo/sitemap"
     },
     {
+      "src": "/",
+      "dest": "/age-verification.html"
+    },
+    {
       "src": "/acompanhantes-([a-zA-Z-]+)/([a-zA-Z0-9-]+)",
       "dest": "/api/seo/render-city?state=$1&city=$2"
     },
