@@ -240,6 +240,13 @@
         localStorage.setItem('adminSession', JSON.stringify(session));
     }
 
+    // Destruir sessão de admin (chamado no logout)
+    function clearAdminSession() {
+        localStorage.removeItem('adminSession');
+        localStorage.removeItem('adminUser');
+        localStorage.removeItem('_adminSession');
+    }
+
     // ============================================================
     // 7. PROTEÇÃO CSRF (Token simples para formulários)
     // ============================================================
@@ -293,6 +300,7 @@
         isAdminLoggedIn,
         requireAdmin,
         createAdminSession,
+        clearAdminSession,
         generateCSRFToken,
         validateCSRFToken,
         isProduction,

@@ -619,8 +619,10 @@ function loadSettingsData() {
         }
     });
     
-    // Carregar cupons existentes
+    // Carregar cupons existentes e sincronizar com Supabase
     loadCoupons();
+    const existingCoupons = JSON.parse(localStorage.getItem('coupons')) || [];
+    if (existingCoupons.length > 0) syncCouponsToSupabase(existingCoupons);
 }
 
 // Função para carregar dados de relatórios
@@ -901,6 +903,13 @@ function verifyUser(userEmail) {
         users[userIndex].verified = true;
         users[userIndex].blocked = false;
         localStorage.setItem('users', JSON.stringify(users));
+        
+        // SINCRONIZAR COM BANCO DE DADOS
+        if (window.upsertUserInSupabase) {
+            window.upsertUserInSupabase(users[userIndex])
+                .catch(err => console.error('Erro ao sincronizar verificação:', err));
+        }
+        
         alert('Usuário verificado com sucesso!');
         closeModal('userDetailsModal');
         loadUsersData();
@@ -909,16 +918,30 @@ function verifyUser(userEmail) {
 }
 
 function blockUser(userEmail) {
-    if (confirm('Tem certeza que deseja bloquear este usuário?')) {
-        const users = JSON.parse(localStorage.getItem('users')) || [];
-        const userIndex = users.findIndex(u => u.email === userEmail);
-        
-        if (userIndex !== -1) {
-            users[userIndex].blocked = true;
-            users[userIndex].verified = false;
+    const users = JSON.parse(localStorage.getItem('users')) || [];
+    const userIndex = users.findIndex(u => u.email === userEmail);
+    
+    if (userIndex !== -1) {
+        const isBlocked = !!users[userIndex].blocked;
+        const confirmMsg = isBlocked 
+            ? 'Tem certeza que deseja DESBLOQUEAR este usuário?' 
+            : 'Tem certeza que deseja BLOQUEAR este usuário?';
+            
+        if (confirm(confirmMsg)) {
+            users[userIndex].blocked = !isBlocked;
+            if (users[userIndex].blocked) {
+                users[userIndex].verified = false; // Se bloquear, remove verificação
+            }
+            
             localStorage.setItem('users', JSON.stringify(users));
             
-            alert('Usuário bloqueado com sucesso!');
+            // SINCRONIZAR COM BANCO DE DADOS
+            if (window.upsertUserInSupabase) {
+                window.upsertUserInSupabase(users[userIndex])
+                    .catch(err => console.error('Erro ao sincronizar bloqueio:', err));
+            }
+            
+            alert(users[userIndex].blocked ? 'Usuário bloqueado com sucesso!' : 'Usuário desbloqueado com sucesso!');
             closeModal('userDetailsModal');
             loadUsersData();
             loadDashboardData();
@@ -996,6 +1019,7 @@ function createCoupon() {
     
     coupons.push(newCoupon);
     localStorage.setItem('coupons', JSON.stringify(coupons));
+    syncCouponsToSupabase(coupons);
     
     // Limpar formulário
     document.getElementById('couponCode').value = '';
@@ -1052,6 +1076,7 @@ function toggleCoupon(couponId) {
     if (couponIndex !== -1) {
         coupons[couponIndex].active = !coupons[couponIndex].active;
         localStorage.setItem('coupons', JSON.stringify(coupons));
+        syncCouponsToSupabase(coupons);
         loadCoupons();
     }
 }
@@ -1061,7 +1086,32 @@ function deleteCoupon(couponId) {
         const coupons = JSON.parse(localStorage.getItem('coupons')) || [];
         const filteredCoupons = coupons.filter(c => c.id !== couponId);
         localStorage.setItem('coupons', JSON.stringify(filteredCoupons));
+        syncCouponsToSupabase(filteredCoupons);
         loadCoupons();
+    }
+}
+
+// ✨ Sincronizar cupons com o Supabase para que o backend Stripe possa validá-los
+async function syncCouponsToSupabase(coupons) {
+    try {
+        if (!window.supabaseClient) {
+            console.warn('⚠️ supabaseClient não disponível para sincronizar cupons');
+            return;
+        }
+        const { error } = await window.supabaseClient
+            .from('settings')
+            .upsert({
+                key: 'coupons',
+                value: coupons,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'key' });
+        if (error) {
+            console.error('❌ Erro ao sincronizar cupons:', error.message);
+        } else {
+            console.log('✅ Cupons sincronizados com Supabase:', coupons.length, 'cupons');
+        }
+    } catch (e) {
+        console.warn('⚠️ Falha na sincronização de cupons:', e.message);
     }
 }
 

@@ -171,9 +171,24 @@ window.syncUsersFromSupabase = async function() {
 
 window.upsertUserInSupabase = async function(userData) {
     try {
+        // Mapear campos para o padrão snake_case do banco
+        const dbData = {
+            email: userData.email,
+            password: userData.password,
+            name: userData.name,
+            phone: userData.phone,
+            age: userData.age,
+            category: userData.category,
+            state: userData.state || 'MS',
+            verified: userData.verified ?? false,
+            blocked: userData.blocked ?? false,
+            created_at: userData.createdAt || new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        };
+
         const { data, error } = await window.supabaseClient
             .from('users')
-            .upsert([userData], { onConflict: 'email' })
+            .upsert([dbData], { onConflict: 'email' })
             .select();
         if (error) throw error;
         await window.syncUsersFromSupabase();
@@ -339,5 +354,75 @@ window.uploadVideoToStorage = async function(dataUrl, adState, userEmail, adId) 
     } catch (err) {
         console.warn('⚠️ Falha ao enviar vídeo:', err.message);
         return dataUrl;
+    }
+};
+
+// ==========================================
+// MÓDULO SUPABASE - CONFIGURAÇÕES (SETTINGS)
+// ==========================================
+
+window.syncSettingsFromSupabase = async function() {
+    if (!window.supabaseClient) return null;
+    console.log('🔄 Sincronizando configurações de pagamento do Supabase...');
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('settings')
+            .select('key, value');
+        
+        if (error) throw error;
+        if (!data) return null;
+
+        const existing = JSON.parse(localStorage.getItem('paymentGateways') || '[]');
+        
+        const mp = data.find(item => item.key === 'mercadopago_config');
+        const cakto = data.find(item => item.key === 'cakto_config');
+        const stripe = data.find(item => item.key === 'stripe_config');
+
+        // Sincronizar Mercado Pago
+        if (mp && mp.value && mp.value.publicKey) {
+            const idx = existing.findIndex(g => g.type === 'mercadopago');
+            const gateway = {
+                id: idx !== -1 ? existing[idx].id : Date.now(),
+                type: 'mercadopago',
+                name: 'Mercado Pago',
+                publicKey: mp.value.publicKey,
+                status: mp.value.status || 'active',
+                environment: mp.value.environment || 'production'
+            };
+            if (idx !== -1) existing[idx] = gateway; else existing.push(gateway);
+        }
+
+        // Sincronizar Cakto
+        if (cakto && cakto.value && cakto.value.publicKey) {
+            const idx = existing.findIndex(g => g.type === 'cakto');
+            const gateway = {
+                id: idx !== -1 ? existing[idx].id : Date.now() + 1,
+                type: 'cakto',
+                name: 'Cakto',
+                publicKey: cakto.value.publicKey,
+                status: cakto.value.status || 'active'
+            };
+            if (idx !== -1) existing[idx] = gateway; else existing.push(gateway);
+        }
+
+        // Sincronizar Stripe
+        if (stripe && stripe.value && (stripe.value.publicKey || stripe.value.secretKey)) {
+            const idx = existing.findIndex(g => g.type === 'stripe');
+            const gateway = {
+                id: idx !== -1 ? existing[idx].id : Date.now() + 2,
+                type: 'stripe',
+                name: 'Stripe (Pix/Cartão)',
+                publicKey: stripe.value.publicKey || '',
+                status: stripe.value.status || 'active'
+            };
+            if (idx !== -1) existing[idx] = gateway; else existing.push(gateway);
+        }
+
+        localStorage.setItem('paymentGateways', JSON.stringify(existing));
+        console.log('✅ Configurações de pagamento sincronizadas.');
+        return existing;
+    } catch (e) {
+        console.error('❌ Falha ao sincronizar configurações:', e);
+        return null;
     }
 };

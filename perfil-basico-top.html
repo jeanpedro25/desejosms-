@@ -288,11 +288,20 @@
     <script>
         // Função para carregar dados da anunciante específica
         function loadProfileData() {
-            const selectedProfileId = localStorage.getItem('selectedProfileId');
+            // Prioridade 1: URL ?id=... (fonte de verdade mais confiável)
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlId = urlParams.get('id');
+            // Prioridade 2: localStorage (fallback)
+            const localId = localStorage.getItem('selectedProfileId');
+            const selectedProfileId = urlId || localId;
             
             if (!selectedProfileId) {
-                // Se não há ID selecionado, usar dados padrão (Melissa)
                 return;
+            }
+
+            // Sincronizar localStorage com o ID correto da URL
+            if (urlId && urlId !== localId) {
+                localStorage.setItem('selectedProfileId', urlId);
             }
             
             // Buscar anúncios no localStorage
@@ -329,7 +338,7 @@
             if (profileStats) {
                 const formattedCity = (profile.city || '').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
                 profileStats.innerHTML = `
-                    <span>${profile.age || 25} Anos ${formattedCity}, MS</span>
+                    <span>${profile.age || 25} Anos ${formattedCity}, ${profile.state || 'MS'}</span>
                     <span>${profile.category === 'mulher' ? 'Mulher' : profile.category}</span>
                     <span style="letter-spacing: 0.5px;">Ref ${profile.advertiserRef || profile.id}</span>
                 `;
@@ -478,25 +487,9 @@
                          onerror="this.src='https://via.placeholder.com/300x300/FFB6C1/FFFFFF?text=Foto+${index + 1}'"
                          loading="lazy"
                          onclick="openImageModal(${index})">
-                    <div class="wm">${window.statesManager ? statesManager.getCurrentWatermark() : 'DesejosMS'}</div>
                 `;
                 
                 imageGrid.appendChild(imageItem);
-
-                // Ajuste automático da marca d'água branca conforme a dimensão da foto
-                const imgEl = imageItem.querySelector('img');
-                const wmEl = imageItem.querySelector('.wm');
-                const adjust = () => {
-                    try {
-                        const w = imgEl.naturalWidth || imgEl.width || 300;
-                        const h = imgEl.naturalHeight || imgEl.height || 300;
-                        const base = Math.min(w, h);
-                        const size = Math.max(18, Math.min(56, Math.round(base * 0.08)));
-                        wmEl.style.fontSize = size + 'px';
-                        wmEl.style.opacity = '0.08';
-                    } catch(_) {}
-                };
-                if (imgEl.complete) { adjust(); } else { imgEl.addEventListener('load', adjust, { once: true }); }
             });
             
             // Atualizar total de imagens para o modal
@@ -521,20 +514,24 @@
                  // Função para carregar anúncios SUPERVIP de forma aleatória e limitada
          function loadRandomSupervipAds() {
              const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
-             const selectedProfileId = localStorage.getItem('selectedProfileId');
+
+             // Prioridade 1: ID da URL; Prioridade 2: localStorage
+             const urlParams = new URLSearchParams(window.location.search);
+             const selectedProfileId = urlParams.get('id') || localStorage.getItem('selectedProfileId');
              
-             console.log('👑 Carregando anúncios SUPERVIP aleatórios...');
-             console.log('📊 Total de anúncios:', announcements.length);
+             console.log('👑 Carregando anúncios SUPERVIP aleatórios... Perfil ID:', selectedProfileId);
              
-             // Buscar informações da anunciante atual para pegar cidade E categoria
+             // Buscar informações da anunciante atual para pegar cidade, categoria e estado
              const currentProfile = announcements.find(ad => ad.id == selectedProfileId);
              const currentCity = currentProfile ? currentProfile.city : null;
              const currentCategory = currentProfile ? currentProfile.category : null;
+             // Definir o estado atual baseado no perfil, ou falhar para o global
+             const currentState = (currentProfile && currentProfile.state) ? currentProfile.state : (window.siteConfig ? window.siteConfig.currentState : 'MS');
+
+             console.log('📋 Perfil atual:', currentProfile ? currentProfile.name : 'NÃO ENCONTRADO', '| Categoria:', currentCategory, '| Cidade:', currentCity, '| Estado:', currentState);
              
-             console.log('🏙️ Cidade da anunciante atual:', currentCity);
-             console.log('👤 Categoria da anunciante atual:', currentCategory);
+             console.log('📍 Estado da anunciante atual:', currentState);
              
-             // Comparar sem diferenças de espaço ou maiúsculas/minúsculas
              const matchCity = (c1, c2) => {
                  if(!c1 || !c2) return false;
                  return c1.trim().toLowerCase() === c2.trim().toLowerCase();
@@ -543,59 +540,27 @@
                  if(!c1 || !c2) return false;
                  return c1.trim().toLowerCase() === c2.trim().toLowerCase();
              };
+             // Helper para garantir que nunca mostremos anúncios de fora do estado atual
+             const isSameState = (ad) => {
+                 if (!ad.state) return true; // Se não tem estado, assume que pode aparecer (legacy)
+                 return ad.state.trim().toUpperCase() === currentState.trim().toUpperCase();
+             };
 
-             // Filtrar anúncios SUPERVIP da MESMA CATEGORIA E MESMA CIDADE
-             let supervipAds = announcements.filter(ad => 
+             // Obter TODOS os anúncios SUPERVIP da MESMA CIDADE, MESMO ESTADO e MESMA CATEGORIA
+             const supervipAds = announcements.filter(ad => 
                  ad.planType === 'supervip' && 
                  ad.status === 'active' &&
-                 ad.id != selectedProfileId && // Excluir a anunciante atual
-                 matchCity(ad.city, currentCity) && // MESMA CIDADE!
-                 matchCategory(ad.category, currentCategory) // MESMA CATEGORIA!
+                 ad.id != selectedProfileId &&
+                 isSameState(ad) &&
+                 matchCity(ad.city, currentCity) &&
+                 matchCategory(ad.category, currentCategory)
              );
-             
-             console.log('👑 SUPERVIP da mesma categoria e cidade encontrados:', supervipAds.length);
-             
-             // Se não há SUPERVIP da mesma categoria na mesma cidade, buscar da mesma categoria em MS
-             if (supervipAds.length === 0 && currentCity && currentCategory) {
-                 console.log('🔄 Nenhum SUPERVIP da mesma categoria na cidade, buscando mesma categoria em MS...');
-                 supervipAds = announcements.filter(ad => 
-                     ad.planType === 'supervip' && 
-                     ad.status === 'active' &&
-                     ad.id != selectedProfileId &&
-                     matchCategory(ad.category, currentCategory) && // MESMA CATEGORIA!
-                     ad.city && ad.city.toLowerCase().includes('ms') // Qualquer cidade de MS
-                 );
-                 console.log('📍 SUPERVIP da mesma categoria em MS encontrados:', supervipAds.length);
-             }
-             
-             // Terceiro nível: mesma cidade, qualquer categoria
-             if (supervipAds.length === 0 && currentCity) {
-                 console.log('🔄 Nenhum SUPERVIP da mesma categoria, buscando qualquer categoria na mesma cidade...');
-                 supervipAds = announcements.filter(ad => 
-                     ad.planType === 'supervip' && 
-                     ad.status === 'active' &&
-                     ad.id != selectedProfileId &&
-                     matchCity(ad.city, currentCity) // MESMA CIDADE, qualquer categoria
-                 );
-                 console.log('🏙️ SUPERVIP da mesma cidade (qualquer categoria) encontrados:', supervipAds.length);
-             }
-             
-             // Último recurso: qualquer SUPERVIP ativo
-             if (supervipAds.length === 0) {
-                 console.log('🔄 Último recurso: qualquer SUPERVIP...');
-                 supervipAds = announcements.filter(ad => 
-                     ad.planType === 'supervip' && 
-                     ad.status === 'active' &&
-                     ad.id != selectedProfileId
-                 );
-                 console.log('🌐 Total SUPERVIP encontrados:', supervipAds.length);
-             }
 
-             // Embaralhar array para mostrar aleatoriamente
+             // Embaralhar array para mostrar aleatoriamente. Garante que visitantes diferentes vejam anúncios diferentes se houver muitos na mesma cidade.
              const shuffledAds = supervipAds.sort(() => Math.random() - 0.5);
              
-             // Limitar a 2 anúncios (não mostrar muitos)
-             const limitedAds = shuffledAds.slice(0, 2);
+             // Mostrar até 3 anúncios SUPERVIP (aumentado de 2 para 3 conforme solicitado)
+             const limitedAds = shuffledAds.slice(0, 3);
 
              const supervipGrid = document.getElementById('supervipAdsGrid');
              
@@ -645,7 +610,7 @@
                      </div>
                      <div class="supervip-ad-info">
                              <div class="supervip-ad-name">${cleanName}</div>
-                         <div class="supervip-ad-location">${ad.city}, MS</div>
+                         <div class="supervip-ad-location">${ad.city}${ad.state ? ', ' + ad.state : ''}</div>
                              <div class="supervip-ad-description">${ad.description ? ad.description.substring(0, 50) + '...' : ad.category === 'mulher' ? 'Mulher' : ad.category === 'homem' ? 'Homem' : ad.category === 'travesti' ? 'Travesti' : 'Massagista'}</div>
                          <button class="supervip-ad-contact" onclick="openSupervipProfile('${ad.id}')">
                                  <i class="fas fa-eye"></i>
@@ -707,46 +672,8 @@
              
              modal.style.display = 'block';
             
-            // Inserir overlay de marca d'água dentro do conteúdo do modal para caber na imagem
-            const content = modal.querySelector('.modal-content');
-            let overlay = content.querySelector('.wm-overlay');
-            if (!overlay) {
-                overlay = document.createElement('div');
-                overlay.className = 'wm-overlay';
-                overlay.textContent = window.statesManager ? statesManager.getCurrentWatermark() : 'DesejosMS';
-                content.appendChild(overlay);
-            }
-
-            // escala ajustável persistida
-            const getWmScale = () => {
-                const v = parseFloat(localStorage.getItem('wmScale') || '1');
-                return Math.min(1.6, Math.max(0.6, isNaN(v)?1:v));
-            };
-            const setWmScale = (s) => {
-                const c = Math.min(1.6, Math.max(0.6, s));
-                localStorage.setItem('wmScale', String(c));
-                adjustOverlay();
-            };
-
-            const adjustOverlay = () => {
-                try {
-                    const rect = modalImage.getBoundingClientRect();
-                    const base = Math.min(rect.width, rect.height);
-                    const fontPx = Math.max(22, Math.min(84, Math.round(base * 0.16 * getWmScale())));
-                    overlay.style.fontSize = fontPx + 'px';
-                } catch(_) {}
-            };
-            if (modalImage.complete) adjustOverlay(); else modalImage.addEventListener('load', adjustOverlay, { once: true });
-            window.addEventListener('resize', adjustOverlay, { once: true });
-
-            // atalhos: + aumenta, - diminui, 0 reseta
-            const keyHandler = (e) => {
-                if (modal.style.display !== 'block') return;
-                if (e.key === '+' || e.key === '=') setWmScale(getWmScale()+0.1);
-                if (e.key === '-' || e.key === '_') setWmScale(getWmScale()-0.1);
-                if (e.key === '0') setWmScale(1);
-            };
-            document.addEventListener('keydown', keyHandler);
+            // A marca d'água agora é fixada nativamente na imagem pelo painel do anunciante.
+            // Removemos o overlay em CSS para evitar múltiplas marcas d'água na mesma foto.
         }
 
          // Função para fechar modal

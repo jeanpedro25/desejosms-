@@ -40,3 +40,15 @@ backup-*/
 *.tmp
 *.temp
 .cache/
+
+# Scripts de desenvolvimento local (contém segredos)
+scratch/
+
+# Certificados e chaves
+*.p12
+*.pem
+*.key
+*.cert
+
+# Arquivos de teste temporários
+test-kiwify-iframe.html

@@ -132,12 +132,20 @@ document.addEventListener('DOMContentLoaded', async function () {
         await window.syncVerificationsFromSupabase();
     }
 
+    if (window.syncSettingsFromSupabase) {
+        await window.syncSettingsFromSupabase();
+    }
+
     // RESET INICIAL: não apagar rascunho; apenas normalizar se corrompido
     console.log('🧹 Executando reset inicial...');
     localStorage.removeItem('tempPlan');
     localStorage.removeItem('tempSelectedPlan');
     // preservar 'tempAdCreation' como rascunho para continuar depois
     sessionStorage.removeItem('formStep');
+
+    // Limpar cache de gateways antigos (remove LivePix, força apenas Stripe)
+    localStorage.removeItem('paymentGateways');
+    console.log('🔄 Cache de gateways limpo — será recarregado com Stripe.');
 
     // Resetar variáveis globais
     currentStep = 1;
@@ -169,8 +177,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     // Garantir que o usuário está logado (sem fallback inseguro)
     const userEmail = localStorage.getItem('userEmail');
-    if (!userEmail || userEmail === 'teste@desejosms.com') {
-        // Se não há email válido, redirecionar para login
+    if (!userEmail) {
+        // Se não há email, redirecionar para login
         localStorage.removeItem('currentUser');
         window.location.href = 'index.html?loginRequired=1';
         return;
@@ -257,10 +265,62 @@ document.addEventListener('DOMContentLoaded', async function () {
     // RENOVAÇÃO AUTOMÁTICA (Link do E-mail/WhatsApp)
     // -------------------------------------------------------------
     const urlParams = new URLSearchParams(window.location.search);
+
+    // ── Renovação via e-mail/WhatsApp ──
     const renewId = urlParams.get('renew');
     if (renewId) {
         console.log(`⏳ Link de renovação detectado para o ID: ${renewId}`);
         setTimeout(() => triggerRenewalProtocol(renewId), 1500);
+    }
+
+    // ── Retorno do Stripe: cancelado ou sucesso ──
+    const payStatus = urlParams.get('status');
+    if (payStatus) {
+        // Limpar a URL sem recarregar a página
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        if (payStatus === 'success') {
+            // Pagamento confirmado — anúncio deve ser ativado via webhook
+            // Mostrar mensagem de sucesso e recarregar anúncios
+            setTimeout(() => {
+                const msg = document.createElement('div');
+                msg.style.cssText = 'position:fixed; top:20px; right:20px; background:linear-gradient(135deg,#28a745,#20c997); color:white; padding:20px 28px; border-radius:14px; z-index:99999; font-size:16px; font-weight:600; box-shadow:0 8px 30px rgba(40,167,69,0.4); animation:slideIn 0.4s ease;';
+                msg.innerHTML = '<i class="fas fa-check-circle" style="margin-right:8px;"></i> Pagamento confirmado! Seu anúncio será ativado em breve.';
+                document.body.appendChild(msg);
+                setTimeout(() => msg.remove(), 6000);
+                loadUserAds();
+                loadDashboardStats();
+            }, 800);
+
+        } else if (payStatus === 'cancel') {
+            // Pagamento cancelado — verificar se é upgrade ou criação nova
+            const pendingUpgradeAdId = localStorage.getItem('upgradeAdId');
+            const pendingPlan = localStorage.getItem('upgradePlanType');
+
+            setTimeout(() => {
+                if (pendingUpgradeAdId && pendingPlan) {
+                    // Era um upgrade — reabrir modal de pagamento diretamente
+                    console.log('🔄 Retomando upgrade cancelado do anúncio:', pendingUpgradeAdId);
+                    selectedPlan = pendingPlan;
+                    showPaymentModal();
+                } else {
+                    // Era criação nova — abrir rascunho se existir
+                    const savedDraft = JSON.parse(localStorage.getItem('tempAdCreation') || 'null');
+                    if (savedDraft && savedDraft.adData && savedDraft.adData.title) {
+                        console.log('🔄 Retomando criação de anúncio cancelada...');
+                        // Mostrar opção de retomar
+                        const resumeBanner = document.createElement('div');
+                        resumeBanner.style.cssText = 'position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#1a1a2e; color:white; padding:16px 24px; border-radius:14px; z-index:99999; font-size:15px; box-shadow:0 8px 30px rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap:16px;';
+                        resumeBanner.innerHTML = `
+                            <span><i class="fas fa-file-alt" style="color:#ffc107;"></i> Você tem um anúncio incompleto: <strong>${savedDraft.adData.title || 'sem título'}</strong></span>
+                            <button onclick="showCreateAdModal(); this.closest('div').remove();" style="background:#dc3545; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:600;">Continuar</button>
+                            <button onclick="localStorage.removeItem('tempAdCreation'); this.closest('div').remove();" style="background:rgba(255,255,255,0.1); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;">Descartar</button>
+                        `;
+                        document.body.appendChild(resumeBanner);
+                    }
+                }
+            }, 800);
+        }
     }
 });
 
@@ -512,12 +572,12 @@ function setupCreateAdModal() {
         // Adicionar novo event listener
         newNextBtn.addEventListener('click', function (e) {
             e.preventDefault();
-            console.log('➡️ Botão próximo clicado');
-            nextStep();
+            console.log('➡️ Botão de navegação clicado');
+            handleNextClick();
         });
 
         // Garantir que o onclick seja preservado
-        newNextBtn.onclick = nextStep;
+        newNextBtn.onclick = handleNextClick;
 
         // Configurar estado inicial
         newNextBtn.disabled = true;
@@ -906,11 +966,32 @@ function loadUserAds() {
     } catch (e) { console.warn('Falha ao ler rascunho:', e); }
 
     userAds.forEach(ad => {
-        const daysRemaining = Math.max(0, 30 - Math.floor((Date.now() - new Date(ad.createdAt)) / (1000 * 60 * 60 * 24)));
+        // Só diminui os dias se o anúncio já foi ativado
+        let daysRemaining = 30;
+        let daysUsed = 0;
+        if (ad.status === 'active' || ad.status === 'paused') {
+            const startDate = ad.approvedAt ? new Date(ad.approvedAt) : new Date(ad.createdAt);
+            daysUsed = Math.floor((Date.now() - startDate) / (1000 * 60 * 60 * 24));
+            daysRemaining = Math.max(0, 30 - daysUsed);
+        }
+
         const performance = Math.floor((ad.views || 0) / 1000 * 100);
 
         // Usar primeira foto do anúncio ou placeholder
         const photoSrc = ad.photos && ad.photos.length > 0 ? ad.photos[0] : `https://via.placeholder.com/50x50/FFB6C1/FFFFFF?text=${encodeURIComponent(ad.name.charAt(0))}`;
+
+        let expInfo = '';
+        if (ad.status === 'pending' || ad.status === 'pending_payment') {
+            expInfo = `
+                <div style="color: #f59e0b; font-weight: 500;"><i class="fas fa-clock"></i> Aguardando</div>
+                <div style="font-size: 12px; color: #666;">Inicia após pgto</div>
+            `;
+        } else {
+            expInfo = `
+                <div>${daysRemaining} dias restantes</div>
+                <div style="font-size: 12px; color: #666;">${daysUsed}/30 dias usados</div>
+            `;
+        }
 
         tableHTML += `
             <tr>
@@ -932,32 +1013,49 @@ function loadUserAds() {
                     <div style="font-size: 12px; color: #666;">${performance}%</div>
                 </td>
                 <td>
-                    <div>${daysRemaining} dias</div>
-                    <div style="font-size: 12px; color: #666;">${30 - daysRemaining}/30</div>
+                    ${expInfo}
                 </td>
                 <td>
                     <span class="plan-badge ${ad.planType}">${ad.planType.toUpperCase()}</span>
                 </td>
                 <td>
-                    <div style="display: flex; gap: 5px;">
-                        <button class="action-btn" onclick="editAd(${ad.id})" title="Editar">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        ${(ad.planType === 'top' || ad.planType === 'supervip') ? `
-                        <button class="action-btn" onclick="pauseAd(${ad.id})" title="${ad.status === 'paused' ? 'Retomar' : 'Pausar'}">
-                            <i class="fas ${ad.status === 'paused' ? 'fa-play' : 'fa-pause'}"></i>
-                        </button>
+                    <div style="display:flex; gap:5px; flex-wrap:wrap;">
+
+                        ${(ad.status === 'pending' || ad.status === 'pending_payment') ? `
+                            <button class="action-btn" onclick="resumePayment(${ad.id})" title="Concluir Pagamento"
+                                style="background:linear-gradient(135deg,#f59e0b,#ef4444);color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;">
+                                <i class="fas fa-credit-card"></i> Pagar
+                            </button>
+                        ` : `
+                            <button class="action-btn" onclick="editAd(${ad.id})" title="${(ad.planType||'').toLowerCase()==='supervip' ? 'Editar Anúncio' : 'Edição exclusiva SuperVIP'}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        `}
+
+                        ${(ad.status === 'active' || ad.status === 'paused') ? `
+                            <button class="action-btn" onclick="pauseAd(${ad.id})" title="${ad.status === 'paused' ? 'Retomar Anúncio' : 'Pausar Anúncio'}">
+                                <i class="fas ${ad.status === 'paused' ? 'fa-play' : 'fa-pause'}"></i>
+                            </button>
                         ` : ''}
-                        ${ad.planType !== 'supervip' ? `
-                        <button class="action-btn" onclick="promoteAd(${ad.id})" title="Fazer Upgrade">
-                            <i class="fas fa-arrow-up"></i>
-                        </button>
+
+                        ${(ad.planType || '').toLowerCase() !== 'supervip' ? `
+                            <button class="action-btn" onclick="promoteAd(${ad.id})" title="Fazer Upgrade de Plano"
+                                style="color:#f59e0b;">
+                                <i class="fas fa-arrow-up"></i>
+                            </button>
                         ` : ''}
+
+                        <button class="action-btn" onclick="deleteAd(${ad.id})" title="Excluir Anúncio"
+                            style="color:#dc3545;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+
                     </div>
                 </td>
             </tr>
         `;
     });
+
 
     tableHTML += `
             </tbody>
@@ -1412,9 +1510,15 @@ function handlePrevClick() {
 
 // Função para próximo step
 function nextStep() {
-    console.log('=== PRÓXIMO STEP === (De ' + currentStep + ' para ' + (currentStep + 1) + ')');
+    console.log('=== NAVEGANDO PARA O PRÓXIMO PASSO === (De ' + currentStep + ' para ' + (currentStep + 1) + ')');
 
     try {
+        if (currentStep >= 4) {
+            console.log('🏁 Já estamos no último passo, finalizando...');
+            finishAdCreation();
+            return;
+        }
+        
         if (currentStep < 4) {
             // Validação específica para cada step
             const validation = validateCurrentStep();
@@ -1437,10 +1541,51 @@ function nextStep() {
                 console.log('❌ Validação falhou:', validation.message);
                 showValidationError(validation.message);
             }
+        } else {
+            // Fallback para segurança
+            finishAdCreation();
         }
     } catch (error) {
         console.error('❌ Erro ao avançar step:', error);
     }
+}
+
+// Função para exibir erros de validação na tela (toast visual, nunca bloqueado)
+function showValidationError(message) {
+    // Remover toast anterior se existir
+    const existing = document.getElementById('validationToast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'validationToast';
+    toast.style.cssText = `
+        position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+        background: linear-gradient(135deg, #dc3545, #c0392b); color: white;
+        padding: 16px 28px; border-radius: 12px; z-index: 999999;
+        font-size: 15px; font-weight: 600; max-width: 90%; text-align: center;
+        box-shadow: 0 8px 32px rgba(220,53,69,0.4); animation: slideDown 0.3s ease;
+        white-space: pre-line; line-height: 1.5;
+    `;
+    toast.innerHTML = `<i class="fas fa-exclamation-triangle" style="margin-right:8px;"></i>${message.replace(/\n/g, '<br>')}`;
+
+    // Adicionar animação
+    const style = document.createElement('style');
+    style.textContent = '@keyframes slideDown { from { top: -60px; opacity: 0; } to { top: 20px; opacity: 1; } }';
+    if (!document.getElementById('toastAnimStyle')) { style.id = 'toastAnimStyle'; document.head.appendChild(style); }
+
+    document.body.appendChild(toast);
+
+    // Botão de fechar
+    const closeBtn = document.createElement('span');
+    closeBtn.innerHTML = ' ✕';
+    closeBtn.style.cssText = 'cursor:pointer; margin-left:12px; opacity:0.8;';
+    closeBtn.onclick = () => toast.remove();
+    toast.appendChild(closeBtn);
+
+    // Auto-dismiss após 5 segundos
+    setTimeout(() => { if (toast.parentNode) toast.remove(); }, 5000);
+
+    console.log('❌ Validação:', message);
 }
 
 // Função para atualizar botões do step
@@ -1640,7 +1785,11 @@ function validateCurrentStep() {
                     return { isValid: false, message: 'Plano não selecionado.' };
                 }
 
-                if (!adData.title || !adData.city || !adData.photos || adData.photos.length === 0) {
+                if (!adData.photos || adData.photos.length === 0) {
+                    return { isValid: false, message: 'Suas fotos foram perdidas (talvez você tenha recarregado a página). Por favor, clique em "Anterior" e adicione pelo menos uma foto novamente.' };
+                }
+
+                if (!adData.title || !adData.city) {
                     return { isValid: false, message: 'Dados incompletos para finalizar.' };
                 }
 
@@ -1867,13 +2016,13 @@ function validatePlanSelection() {
 // Função para obter preço do plano (fallback)
 function getPlanPrice(planType) {
     const prices = {
-        'basic': 99.99,
-        'top': 149.99,
-        'supervip': 199.99,
+        'basic': 5.00,
+        'top': 5.25,
+        'supervip': 5.50,
         'premium': 299.99,
         'vip': 399.99
     };
-    return prices[planType] || 99.99;
+    return prices[planType] || 5.00;
 }
 
 // Função para obter features do plano (fallback)
@@ -2005,6 +2154,11 @@ function showPaymentModal() {
     const modal = document.getElementById('paymentModal');
     modal.classList.add('active');
 
+    // Limpar estado do cupom anterior ao abrir o modal
+    localStorage.removeItem('appliedCoupon');
+    const couponInput = document.getElementById('couponInput');
+    if (couponInput) couponInput.value = '';
+
     // Atualizar detalhes do plano
     updatePlanDetails();
 
@@ -2024,20 +2178,51 @@ function showPaymentModal() {
     }
 }
 
-// Função para renderizar gateways configurados
+// Função para renderizar gateways configurados - VERSÃO CORRIGIDA
 function renderPaymentGateways() {
-    const gateways = JSON.parse(localStorage.getItem('paymentGateways')) || [];
-    const activeGateways = gateways.filter(g => g.status === 'active');
+    // Usar os novos IDs do HTML refatorado
+    const tabsContainer = document.getElementById('gatewayTabs') || document.querySelector('.payment-tabs');
+    const contentContainer = document.getElementById('gatewayContent') || document.querySelector('.payment-content');
 
-    const tabsContainer = document.querySelector('.payment-tabs');
-    const contentContainer = document.querySelector('.payment-content');
+    if (!tabsContainer || !contentContainer) {
+        console.error('❌ Containers de gateway não encontrados no DOM!');
+        return;
+    }
 
-    if (!tabsContainer || !contentContainer) return;
+    let gateways = JSON.parse(localStorage.getItem('paymentGateways') || '[]');
+    
+    // ───── APENAS STRIPE (CARTÃO) ─────
+    let stripeGateway = gateways.find(g => g.type === 'stripe');
+    if (!stripeGateway) {
+        gateways.push({
+            id: 'auto_stripe',
+            type: 'stripe',
+            name: 'Cartão de Crédito',
+            status: 'active',
+            publicKey: 'pk_live_51T722i2L1IcRtzrKowBa5Aky602z3c3wA2amAoN4egh0YFaJyumd534L1yPh1clz50c7y1mHPP5edTXYtBVHDoAz00JIBKKX6s',
+            environment: 'production'
+        });
+        localStorage.setItem('paymentGateways', JSON.stringify(gateways));
+    } else {
+        stripeGateway.status = 'active';
+        stripeGateway.name = 'Cartão de Crédito';
+        localStorage.setItem('paymentGateways', JSON.stringify(gateways));
+    }
 
-    // Usar gateways padrão se nenhum estiver configurado
+    // Exibir APENAS Stripe
+    const activeGateways = gateways.filter(g => g.type === 'stripe');
+
+    console.log('🔧 Gateway ativo:', activeGateways.map(g => `${g.name}(${g.type})`).join(', '));
+
+    // Fallback se não houver gateways configurados
     const gatewaysToShow = activeGateways.length > 0 ? activeGateways : [
-        { id: 'pix_default', type: 'pix', name: 'PIX', status: 'active', publicKey: 'Chave configurada pelo administrador' },
-        { id: 'local_default', type: 'local', name: 'Pagamento no Ato', status: 'active', publicKey: '' }
+        {
+            id: 'admin_contact_default',
+            type: 'local',
+            name: 'Contato com Admin',
+            status: 'active',
+            publicKey: ''
+        }
     ];
 
     tabsContainer.innerHTML = '';
@@ -2045,49 +2230,247 @@ function renderPaymentGateways() {
 
     gatewaysToShow.forEach((gateway, index) => {
         const isActive = index === 0;
+        const gwId = String(gateway.id);
 
+        // ── CRIAR TAB ──────────────────────────────────────────
         const tab = document.createElement('button');
-        tab.className = `tab-btn ${isActive ? 'active' : ''}`;
-        tab.setAttribute('data-method', gateway.id);
-        tab.setAttribute('onclick', `switchPaymentMethod(this)`);
+        tab.className = `tab-btn${isActive ? ' active' : ''}`;
+        tab.setAttribute('data-gateway-id', gwId);
+        tab.setAttribute('data-gateway-type', gateway.type);
 
         let icon = 'fa-credit-card';
-        if (gateway.type === 'pix') icon = 'fa-qrcode';
+        if (gateway.type === 'cakto')      icon = 'fa-shopping-cart';
+        if (gateway.type === 'stripe')     icon = 'fa-stripe-s';
         if (gateway.type === 'mercadopago') icon = 'fa-handshake';
-        if (gateway.type === 'local') icon = 'fa-money-bill-wave';
+        if (gateway.type === 'efi')        icon = 'fa-university';
+        if (gateway.type === 'pix')        icon = 'fa-qrcode';
+        if (gateway.type === 'abacatepay') icon = 'fa-leaf';
+        if (gateway.type === 'kiwify')     icon = 'fa-kiwi-bird';
+        if (gateway.type === 'local')      icon = 'fa-phone';
 
         tab.innerHTML = `<i class="fas ${icon}"></i> ${gateway.name}`;
+
+        tab.addEventListener('click', function () {
+            const clickedGwId = this.getAttribute('data-gateway-id');
+            // Desativar todas as tabs
+            tabsContainer.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+            // Esconder todos os painéis
+            contentContainer.querySelectorAll('.gateway-panel').forEach(p => {
+                p.style.display = 'none';
+                p.classList.remove('active');
+            });
+            // Ativar tab clicada
+            this.classList.add('active');
+            // Mostrar painel correspondente
+            const targetPanel = document.getElementById(`gw-panel-${clickedGwId}`);
+            if (targetPanel) {
+                targetPanel.style.display = 'block';
+                targetPanel.classList.add('active');
+            }
+
+        });
+
         tabsContainer.appendChild(tab);
 
-        const content = document.createElement('div');
-        content.className = `payment-method ${isActive ? 'active' : ''}`;
-        content.id = `${gateway.id}-method`;
+        // ── CRIAR PAINEL DE CONTEÚDO ────────────────────────────
+        const panel = document.createElement('div');
+        panel.className = `gateway-panel${isActive ? ' active' : ''}`;
+        panel.id = `gw-panel-${gwId}`;
+        panel.style.cssText = 'display:none; padding: 20px 0;';
+        if (isActive) panel.style.display = 'block';
 
-        let btnText = 'Finalizar e Aguardar Aprovação';
-        let subTitle = 'Finalize a criação do anúncio. Um administrador entrará em contato com instruções de pagamento.';
-        if (gateway.type === 'pix') {
-            btnText = 'Confirmar e Aguardar PIX';
-            subTitle = gateway.publicKey && gateway.publicKey !== 'Chave configurada pelo administrador'
-                ? `Chave PIX: ${gateway.publicKey}`
-                : 'O administrador irá informar a chave PIX para pagamento.';
+        // Montar conteúdo conforme o tipo de gateway
+        let panelHTML = '';
+
+        if (gateway.type === 'cakto') {
+            panelHTML = `
+                <div style="text-align:center; padding: 10px 0 20px;">
+                    <div style="width:64px; height:64px; background:linear-gradient(135deg,#6f42c1,#e83e8c); border-radius:50%; display:flex; align-items:center; justify-content:center; margin: 0 auto 16px;">
+                        <i class="fas fa-shopping-cart" style="color:white; font-size:28px;"></i>
+                    </div>
+                    <h4 style="margin:0 0 8px; color:#333;">Pagar via Cakto</h4>
+                    <p style="color:#666; font-size:14px; margin:0 0 20px;">
+                        Você será redirecionado para o checkout seguro da Cakto. Aceita PIX, cartão de crédito e boleto.
+                    </p>
+                    <button
+                        class="btn btn-primary"
+                        style="width:100%; padding:14px; font-size:16px; background:linear-gradient(135deg,#6f42c1,#e83e8c); color:white; border:none; border-radius:10px; cursor:pointer;"
+                        onclick="window.processDynamicPayment('${gwId}', this)">
+                        <i class="fas fa-shopping-cart"></i> Pagar com Cakto — <span id="cakto-price-${gwId}">carregando...</span>
+                    </button>
+                </div>`;
+        } else if (gateway.type === 'stripe') {
+            panelHTML = `
+                <div style="text-align:center; padding:10px 0 10px;">
+                    <div style="width:72px; height:72px; background:linear-gradient(135deg,#635bff,#4f46e5); border-radius:50%; display:flex; align-items:center; justify-content:center; margin: 0 auto 16px; box-shadow: 0 8px 24px rgba(99,91,255,0.4);">
+                        <i class="fas fa-credit-card" style="color:white; font-size:30px;"></i>
+                    </div>
+                    <h4 style="margin:0 0 6px; color:#333; font-size:18px;">Pagar com Cartão de Crédito</h4>
+                    <p style="color:#666; font-size:13px; margin:0 0 20px;">Pagamento 100% seguro via Stripe. Seus dados são protegidos.</p>
+                    <button
+                        class="btn btn-primary"
+                        style="width:100%; padding:15px; font-size:16px; background:linear-gradient(135deg,#635bff,#4f46e5); color:white; border:none; border-radius:10px; cursor:pointer; font-weight:700; letter-spacing:0.5px;"
+                        onclick="window.processStripePayment('${gwId}', this)">
+                        <i class="fas fa-lock"></i> Pagar com Cartão
+                    </button>
+                    <p style="font-size:11px; color:#aaa; margin-top:12px;"><i class="fas fa-shield-alt" style="color:#635bff;"></i> Criptografia SSL 256-bit · Powered by Stripe</p>
+                </div>`;
+        } else if (gateway.type === 'abacatepay') {
+            panelHTML = `
+                <div style="text-align:center; padding:10px 0 10px;">
+                    <div style="width:64px; height:64px; background:linear-gradient(135deg,#65a30d,#84cc16); border-radius:50%; display:flex; align-items:center; justify-content:center; margin: 0 auto 16px;">
+                        <i class="fas fa-leaf" style="color:white; font-size:28px;"></i>
+                    </div>
+                    <h4 style="margin:0 0 8px; color:#333;">Pagar via AbacatePay</h4>
+                    <p style="color:#666; font-size:14px; margin:0 0 16px;">
+                        Checkout super rápido. Escolha Pix ou Cartão:
+                    </p>
+                    <div style="display:flex; gap:10px; margin-bottom:16px;">
+                        <label style="flex:1; border:2px solid #65a30d; border-radius:8px; padding:12px; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:14px;">
+                            <input type="radio" name="abacate-method-${gwId}" value="PIX" checked style="accent-color:#65a30d;">
+                            <i class="fas fa-qrcode" style="color:#65a30d;"></i> PIX
+                        </label>
+                        <label style="flex:1; border:2px solid #65a30d; border-radius:8px; padding:12px; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:14px;">
+                            <input type="radio" name="abacate-method-${gwId}" value="CREDIT_CARD" style="accent-color:#65a30d;">
+                            <i class="fas fa-credit-card" style="color:#65a30d;"></i> Cartão
+                        </label>
+                    </div>
+                    <button
+                        class="btn btn-primary"
+                        style="width:100%; padding:14px; font-size:16px; background:linear-gradient(135deg,#65a30d,#84cc16); color:white; border:none; border-radius:10px; cursor:pointer;"
+                        onclick="window.processAbacatePayment('${gwId}', this)">
+                        <i class="fas fa-leaf"></i> Gerar Pagamento Seguro
+                    </button>
+                </div>`;
+        } else if (gateway.type === 'kiwify') {
+            panelHTML = `
+                <div style="text-align:center; padding:10px 0 10px;">
+                    <div style="width:64px; height:64px; background:linear-gradient(135deg,#1f2937,#4b5563); border-radius:50%; display:flex; align-items:center; justify-content:center; margin: 0 auto 16px;">
+                        <i class="fas fa-kiwi-bird" style="color:white; font-size:28px;"></i>
+                    </div>
+                    <h4 style="margin:0 0 8px; color:#333;">Pagar via Kiwify</h4>
+                    <p style="color:#666; font-size:14px; margin:0 0 20px;">
+                        Checkout seguro via Kiwify. Aceita PIX e Cartão de Crédito com aprovação imediata.
+                    </p>
+                    <button
+                        class="btn btn-primary"
+                        style="width:100%; padding:14px; font-size:16px; background:linear-gradient(135deg,#111827,#374151); color:white; border:none; border-radius:10px; cursor:pointer;"
+                        onclick="window.processKiwifyPayment('${gwId}', this)">
+                        <i class="fas fa-shopping-cart"></i> Pagar Agora na Kiwify
+                    </button>
+                </div>`;
+        } else if (gateway.type === 'efi') {
+            panelHTML = `
+                <div style="text-align:center; padding:10px 0 20px;">
+                    <div style="width:64px; height:64px; background:linear-gradient(135deg,#F37021,#FF8C00); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
+                        <i class="fas fa-university" style="color:white; font-size:28px;"></i>
+                    </div>
+                    <h4 style="margin:0 0 8px; color:#333;">Pagar via Efí Bank (PIX)</h4>
+                    <p style="color:#666; font-size:14px; margin:0 0 10px;">Gere um PIX dinâmico com compensação imediata via Efí Bank (Gerencianet).</p>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <input type="text" id="efi-cpf-${gwId}" placeholder="Digite seu CPF ou CNPJ" maxlength="18" 
+                            style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; text-align: center; font-size: 15px;"
+                            oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                    </div>
+
+                    <button
+                        class="btn btn-primary"
+                        style="width:100%; padding:14px; font-size:16px; background:linear-gradient(135deg,#F37021,#FF8C00); color:white; border:none; border-radius:10px; cursor:pointer;"
+                        onclick="window.processEfiPayment('${gwId}', this)">
+                        <i class="fas fa-qrcode"></i> Gerar PIX Agora
+                    </button>
+                    <!-- Área para o QR Code -->
+                    <div id="efi-qr-container-${gwId}" style="display:none; margin-top:20px; text-align:center;">
+                        <img id="efi-qr-image-${gwId}" src="" alt="QR Code PIX" style="width:200px; height:200px; margin:0 auto;">
+                        <input type="text" id="efi-pix-copy-${gwId}" readonly style="width:100%; padding:10px; margin-top:10px; text-align:center; font-size:12px; border:1px solid #ddd; border-radius:5px;" onclick="this.select(); document.execCommand('copy'); alert('Código PIX Copiado!');">
+                        <p style="font-size:13px; color:#666; margin-top:10px;">Aguardando pagamento... O anúncio será ativado automaticamente após o pagamento.</p>
+                    </div>
+                </div>`;
+        } else if (gateway.type === 'livepix') {
+            panelHTML = `
+                <div style="text-align:center; padding:10px 0 20px;">
+                    <div style="width:64px; height:64px; background:linear-gradient(135deg,#673ab7,#9c27b0); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
+                        <i class="fas fa-heart" style="color:white; font-size:28px;"></i>
+                    </div>
+                    <h4 style="margin:0 0 8px; color:#333;">Pagar via LivePix</h4>
+                    <p style="color:#666; font-size:14px; margin:0 0 20px;">Pagamento via LivePix (PIX). Ideal para manter o sigilo do seu nome.</p>
+                    <button
+                        class="btn btn-primary"
+                        style="width:100%; padding:14px; font-size:16px; background:linear-gradient(135deg,#673ab7,#9c27b0); color:white; border:none; border-radius:10px; cursor:pointer;"
+                        onclick="window.processLivePixPayment('${gwId}', this)">
+                        <i class="fas fa-external-link-alt"></i> Ir para o LivePix
+                    </button>
+                    <p style="font-size:12px; color:#999; margin-top:15px;">
+                        <i class="fas fa-info-circle"></i> Após o pagamento, envie o comprovante no chat para ativação rápida.
+                    </p>
+                </div>`;
         } else if (gateway.type === 'mercadopago') {
-            btnText = 'Pagar com Mercado Pago';
-            subTitle = 'Você será redirecionado para o Mercado Pago.';
+            panelHTML = `
+                <div style="text-align:center; padding:10px 0 20px;">
+                    <div style="width:64px; height:64px; background:linear-gradient(135deg,#00a650,#009ee3); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
+                        <i class="fas fa-handshake" style="color:white; font-size:28px;"></i>
+                    </div>
+                    <h4 style="margin:0 0 8px; color:#333;">Pagar via Mercado Pago</h4>
+                    <p style="color:#666; font-size:14px; margin:0 0 20px;">PIX, cartão ou boleto via Mercado Pago.</p>
+                    <button
+                        class="btn btn-primary"
+                        style="width:100%; padding:14px; font-size:16px; background:linear-gradient(135deg,#00a650,#009ee3); color:white; border:none; border-radius:10px; cursor:pointer;"
+                        onclick="window.processDynamicPayment('${gwId}', this)">
+                        <i class="fas fa-handshake"></i> Pagar com Mercado Pago
+                    </button>
+                </div>`;
+        } else {
+            // Gateway genérico / contato admin
+            panelHTML = `
+                <div style="text-align:center; padding:10px 0 20px;">
+                    <div style="width:64px; height:64px; background:linear-gradient(135deg,#6c757d,#495057); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
+                        <i class="fas fa-phone" style="color:white; font-size:28px;"></i>
+                    </div>
+                    <h4 style="margin:0 0 8px; color:#333;">${gateway.name}</h4>
+                    <p style="color:#666; font-size:14px; margin:0 0 20px;">
+                        Clique abaixo para registrar seu anúncio. Nossa equipe entrará em contato para concluir o pagamento.
+                    </p>
+                    <button
+                        class="btn btn-primary"
+                        style="width:100%; padding:14px; font-size:16px;"
+                        onclick="window.processDynamicPayment('${gwId}', this)">
+                        <i class="fas fa-check"></i> Finalizar e Aguardar Contato
+                    </button>
+                </div>`;
         }
 
-        content.innerHTML = `
-            <div class="pix-info">
-                <i class="fas ${icon}"></i>
-                <h4>${gateway.name}</h4>
-                <p>${subTitle}</p>
-            </div>
-            <button class="btn btn-primary" onclick="window.processDynamicPayment('${gateway.id}', this)" style="margin-top: 10px;">
-                <i class="fas fa-check"></i> ${btnText}
-            </button>
-        `;
-        contentContainer.appendChild(content);
+        panel.innerHTML = panelHTML;
+        contentContainer.appendChild(panel);
     });
+
+    // Atualizar preços nos botões Cakto após render
+    setTimeout(() => {
+        gatewaysToShow.forEach(gw => {
+            if (gw.type === 'cakto') {
+                const priceEl = document.getElementById(`cakto-price-${gw.id}`);
+                if (priceEl) {
+                    const planType = typeof selectedPlan === 'string' ? selectedPlan : (selectedPlan?.type || 'basic');
+                    const priceMap = { basic: 'R$ 79,90', top: 'R$ 249,90', supervip: 'R$ 499,90' };
+                    priceEl.textContent = priceMap[planType] || 'ver valor acima';
+                }
+            }
+        });
+    }, 100);
+
+    // Adicionar CSS de ativação para painéis se não existir
+    if (!document.getElementById('gateway-panel-style')) {
+        const style = document.createElement('style');
+        style.id = 'gateway-panel-style';
+        style.textContent = `
+            .gateway-panel { display: none; }
+            .gateway-panel.active { display: block; }
+            .tab-btn[data-gateway-id] { flex: 1; }
+        `;
+        document.head.appendChild(style);
+    }
 }
+
 
 // Processar pagamento dinâmico baseado no gateway
 window.processDynamicPayment = async function(gatewayId, button) {
@@ -2109,7 +2492,9 @@ window.processDynamicPayment = async function(gatewayId, button) {
             throw new Error('Gateway não encontrado.');
         }
         
-        if (gateway.type === 'mercadopago') {
+        const gatewayTypeLower = (gateway.type || '').toLowerCase();
+        
+        if (gatewayTypeLower === 'mercadopago') {
             // Chamar a função existente do mercado pago/pix
             if (typeof generatePIX === 'function') {
                 await generatePIX();
@@ -2121,7 +2506,7 @@ window.processDynamicPayment = async function(gatewayId, button) {
             return;
         }
         
-        if (gateway.type === 'paghiper') {
+        if (gatewayTypeLower === 'paghiper') {
             console.log('💳 Iniciando fluxo real da PagHiper...');
             if (typeof generatePagHiper === 'function') {
                 await generatePagHiper();
@@ -2133,7 +2518,7 @@ window.processDynamicPayment = async function(gatewayId, button) {
             return;
         }
         
-        if (gateway.type === 'cakto') {
+        if (gatewayTypeLower === 'cakto') {
             console.log('💳 Iniciando fluxo real da Cakto...');
             
             try {
@@ -2152,17 +2537,65 @@ window.processDynamicPayment = async function(gatewayId, button) {
                     throw new Error(data.error || 'Não foi possível gerar o link de pagamento Cakto.');
                 }
                 
-                // Redirecionar para o checkout da Cakto
-                alert(`Redirecionando você com segurança para o Checkout da Cakto do seu "${data.product_name || 'Plano'}".`);
-                window.open(data.checkout_url, '_blank');
+                // Salvar anúncio como PENDENTE DE PAGAMENTO (não ativa!)
+                await createAd(false, 'pending_payment');
                 
-                // Salvar como pendente
-                await createAd(false);
-                closeModal('paymentModal');
+                // Abrir checkout da Cakto dentro do site (iframe embutido)
+                showEmbeddedCheckout(data.checkout_url, data.product_name, 'Cakto');
+                
+                button.disabled = false;
+                button.innerHTML = originalText;
                 return;
             } catch (err) {
                 console.error('Falha na Cakto:', err);
-                alert('Erro na integração Cakto: ' + err.message + '\n\nCertifique-se de que cadastrou seus produtos (Plano Básico, Plano Top, Plano SuperVIP) no portal da Cakto!');
+                alert('Erro na integração Cakto: ' + err.message);
+                button.disabled = false;
+                button.innerHTML = originalText;
+                return;
+            }
+        }
+
+        if (gatewayTypeLower === 'stripe') {
+            console.log('💳 Iniciando fluxo Stripe...');
+            
+            // Verificar se o usuário quer PIX ou Cartão
+            const activeTab = document.querySelector('.tab-btn.active');
+            const selectedMethod = activeTab ? activeTab.getAttribute('data-method') : 'card';
+            
+            try {
+                const response = await fetch('/api/payment/stripe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        planType: planType,
+                        userEmail: localStorage.getItem('userEmail') || 'usuario@desejosms.com',
+                        method: selectedMethod
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Não foi possível gerar o pagamento Stripe.');
+                }
+                
+                // Salvar anúncio como PENDENTE DE PAGAMENTO
+                await createAd(false, 'pending_payment');
+                
+                if (selectedMethod === 'pix') {
+                    // Abrir Checkout Personalizado PIX (Manual)
+                    showStripePixCheckout(data);
+                } else {
+                    // Abrir checkout do Stripe embutido (Padrão)
+                    showEmbeddedCheckout(data.checkout_url, data.product_name, 'Stripe');
+                }
+                
+                button.disabled = false;
+                button.innerHTML = originalText;
+                return;
+            } catch (err) {
+                console.error('Falha no Stripe:', err);
+                alert('Erro na integração Stripe: ' + err.message + '\n\nCertifique-se de configurar as chaves API do Stripe!');
                 button.disabled = false;
                 button.innerHTML = originalText;
                 return;
@@ -2182,6 +2615,423 @@ window.processDynamicPayment = async function(gatewayId, button) {
     }
 };
 
+// ──────────────────────────────────────────────────────────────
+// ABACATEPAY — Processamento
+// ──────────────────────────────────────────────────────────────
+window.processAbacatePayment = async function(gwId, button) {
+    console.log('🥑 Iniciando pagamento AbacatePay, gwId:', gwId);
+
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+
+    const planType = typeof selectedPlan === 'string' ? selectedPlan : (selectedPlan?.type || 'basic');
+    const userEmail = localStorage.getItem('userEmail') || 'usuario@desejosms.com';
+
+    try {
+        const panel = document.getElementById(`gw-panel-${gwId}`);
+        const radioSelected = panel ? panel.querySelector(`input[name="abacate-method-${gwId}"]:checked`) : null;
+        const selectedMethod = radioSelected ? radioSelected.value : 'PIX';
+
+        console.log('🥑 AbacatePay método selecionado:', selectedMethod);
+
+        const response = await fetch('/api/payment/abacatepay', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ planType, userEmail, method: selectedMethod })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Erro ao gerar pagamento AbacatePay.');
+        }
+
+        // Salvar anúncio como PENDENTE DE PAGAMENTO
+        await createAd(false, 'pending_payment');
+
+        // Mostrar o link de pagamento
+        showEmbeddedCheckout(data.checkout_url, data.product_name, 'AbacatePay');
+
+        button.disabled = false;
+        button.innerHTML = originalText;
+
+    } catch (err) {
+        console.error('❌ Falha no AbacatePay:', err);
+        button.disabled = false;
+        button.innerHTML = originalText;
+        const panel = document.getElementById(`gw-panel-${gwId}`);
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = 'background:#fff3cd; border:1px solid #ffc107; border-radius:8px; padding:12px; margin-top:12px; color:#856404; font-size:14px; text-align:center;';
+        errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <strong>Erro AbacatePay:</strong> ${err.message}<br>
+            Verifique as chaves e configuração do AbacatePay no Painel Admin.`;
+        if (panel) {
+            const existing = panel.querySelector('.abacate-error-msg');
+            if (existing) existing.remove();
+            errorDiv.className = 'abacate-error-msg';
+            panel.appendChild(errorDiv);
+        }
+    }
+};
+
+// ──────────────────────────────────────────────────────────────
+// STRIPE — Processamento isolado (PIX ou Cartão)
+// Chamada pelo botão gerado em renderPaymentGateways() para o
+// gateway do tipo 'stripe'. Lê o radio do painel correto.
+// ──────────────────────────────────────────────────────────────
+window.processStripePayment = async function(gwId, button) {
+    console.log('⚡ Iniciando pagamento Stripe, gwId:', gwId);
+
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+
+    const planType = typeof selectedPlan === 'string' ? selectedPlan : (selectedPlan?.type || 'basic');
+    const userEmail = localStorage.getItem('userEmail') || 'usuario@desejosms.com';
+
+    try {
+        // Método FIXO: apenas cartão (segurança: não permitir alteração pelo frontend)
+        const selectedMethod = 'card';
+
+        // Verificar se tem cupom aplicado
+        let couponCode = null;
+        try {
+            const appliedCoupon = JSON.parse(localStorage.getItem('appliedCoupon') || 'null');
+            if (appliedCoupon && appliedCoupon.code && appliedCoupon.plan === planType) {
+                couponCode = appliedCoupon.code;
+            }
+        } catch(e) {}
+
+        console.log('⚡ Stripe método: cartão', couponCode ? `| Cupom: ${couponCode}` : '');
+
+        const response = await fetch('/api/payment/stripe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ planType, userEmail, method: selectedMethod, couponCode })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Erro ao gerar pagamento Stripe.');
+        }
+
+        // Salvar anúncio como PENDENTE DE PAGAMENTO
+        await createAd(false, 'pending_payment');
+
+        // ── Redirecionar direto para o Stripe Checkout (iframe é bloqueado pelo Stripe)
+        if (data.checkout_url) {
+            console.log('🔀 Redirecionando para Stripe Checkout:', data.checkout_url);
+            window.location.href = data.checkout_url;
+        } else {
+            throw new Error('URL de checkout não retornada pelo servidor.');
+        }
+
+        button.disabled = false;
+        button.innerHTML = originalText;
+
+    } catch (err) {
+        console.error('❌ Falha no Stripe:', err);
+        button.disabled = false;
+        button.innerHTML = originalText;
+        // Mostrar erro amigável
+        const panel = document.getElementById(`gw-panel-${gwId}`);
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = 'background:#fff3cd; border:1px solid #ffc107; border-radius:8px; padding:12px; margin-top:12px; color:#856404; font-size:14px; text-align:center;';
+        errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <strong>Stripe não configurado.</strong><br>
+            Configure as chaves da Stripe no <a href="/payment-config.html" style="color:#856404;">Painel Admin → Configuração de Pagamentos</a>.`;
+        if (panel) {
+            const existing = panel.querySelector('.stripe-error-msg');
+            if (existing) existing.remove();
+            errorDiv.className = 'stripe-error-msg';
+            panel.appendChild(errorDiv);
+        }
+    }
+};
+
+// ──────────────────────────────────────────────────────────────
+// ABACATE PAY — Processamento
+// ──────────────────────────────────────────────────────────────
+window.processAbacatePayment = async function(gwId, button) {
+    console.log('🥑 Iniciando pagamento AbacatePay, gwId:', gwId);
+
+    const methodRadio = document.querySelector(`input[name="abacate-method-${gwId}"]:checked`);
+    const selectedMethod = methodRadio ? methodRadio.value : 'PIX';
+
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Conectando...';
+
+    const planType = typeof selectedPlan === 'string' ? selectedPlan : (selectedPlan?.type || 'basic');
+    
+    // Buscar preço atualizado do pricingPlans ou fallback
+    const pricingPlans = JSON.parse(localStorage.getItem('pricingPlans') || '[]');
+    const currentPlan = pricingPlans.find(p => p.type === planType);
+    const planPrice = currentPlan ? currentPlan.price : (selectedPlan?.price || 1.50);
+    const userEmail = localStorage.getItem('userEmail') || 'usuario@desejosms.com';
+
+    try {
+        const response = await fetch('/api/payment/abacatepay', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                planType: planType, 
+                userEmail: userEmail, 
+                method: selectedMethod,
+                amount: planPrice
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Erro ao gerar pagamento AbacatePay.');
+        }
+
+        // Salvar anúncio como PENDENTE DE PAGAMENTO
+        await createAd(false, 'pending_payment');
+
+        // Redirecionar para o checkout gerado (que oculta os dados pessoais)
+        window.location.href = data.checkout_url;
+
+    } catch (err) {
+        console.error('❌ Falha no AbacatePay:', err);
+        button.disabled = false;
+        button.innerHTML = originalText;
+        alert("Erro no AbacatePay: " + err.message);
+    }
+};
+
+// ──────────────────────────────────────────────────────────────
+// KIWIFY — Processamento
+// ──────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────
+// PAGAMENTO — Retomada de Fluxo
+// ──────────────────────────────────────────────────────────────
+window.resumePayment = function(adId) {
+    console.log('🔄 Retomando pagamento para o anúncio:', adId);
+    const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
+    const ad = announcements.find(a => String(a.id) === String(adId));
+
+    if (!ad) {
+        alert('Anúncio não encontrado!');
+        return;
+    }
+
+    // Preencher adData com os dados do anúncio existente para evitar erros de validação
+    adData = {
+        ...ad,
+        id: ad.id,
+        isUpgrade: true,
+        upgradeAdId: String(adId)
+    };
+    
+    // Sincronizar título e outros campos para fallback
+    if (!adData.title && ad.name) adData.title = ad.name;
+    if (!adData.whatsapp && ad.phone) adData.whatsapp = ad.phone;
+
+    selectedPlan = ad.planType || ad.plan_type || 'basic';
+    
+    // Guardar contexto
+    localStorage.setItem('upgradeAdId', String(adId));
+    localStorage.setItem('upgradePlanType', selectedPlan);
+
+    showPaymentModal();
+};
+
+window.processKiwifyPayment = async function(gwId, button) {
+    console.log('🥝 Iniciando pagamento Kiwify, gwId:', gwId);
+
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirecionando...';
+
+    const planType = typeof selectedPlan === 'string' ? selectedPlan : (selectedPlan?.type || 'basic');
+    
+    // Mapeamento de links de checkout Kiwify criados dinamicamente pelo bot
+    const kiwifyLinks = {
+        'basic': 'https://pay.kiwify.com.br/gFfSerS',
+        'top': 'https://pay.kiwify.com.br/r0n2HLa',
+        'supervip': 'https://pay.kiwify.com.br/5SGKOuI'
+    };
+
+    const checkoutUrl = kiwifyLinks[planType.toLowerCase()] || kiwifyLinks['basic'];
+
+    try {
+        // Salvar anúncio como PENDENTE DE PAGAMENTO antes de sair
+        const adId = await createAd(false, 'pending_payment');
+
+        if (!adId) {
+            throw new Error('Falha ao salvar rascunho do anúncio.');
+        }
+
+        // Buscar dados do anunciante no localStorage para autopreencher a Kiwify
+        const storedEmail = localStorage.getItem('userEmail') || '';
+        const storedName = localStorage.getItem('userName') || '';
+        const storedPhone = localStorage.getItem('userPhone') || '';
+
+        // Adicionar o ID do anúncio e os dados do usuário como parâmetros na Kiwify
+        // O custom=adId permite que o Webhook saiba qual anúncio ativar!
+        let finalCheckoutUrl = `${checkoutUrl}?custom=${adId}`;
+        
+        if (storedEmail && storedEmail !== 'teste@desejosms.com') {
+            finalCheckoutUrl += `&email=${encodeURIComponent(storedEmail)}`;
+        }
+        if (storedName) {
+            finalCheckoutUrl += `&name=${encodeURIComponent(storedName)}`;
+        }
+        if (storedPhone) {
+            const cleanPhone = storedPhone.replace(/\D/g, ''); // apenas números
+            if (cleanPhone) finalCheckoutUrl += `&phone=${cleanPhone}`;
+        }
+
+        // Redirecionar diretamente para a Kiwify
+        window.location.href = finalCheckoutUrl;
+
+    } catch (err) {
+        console.error('❌ Falha ao processar Kiwify:', err);
+        button.disabled = false;
+        button.innerHTML = originalText;
+        alert("Erro ao preparar pagamento: " + err.message);
+    }
+};
+
+// ──────────────────────────────────────────────────────────────
+// EFÍ BANK — Processamento
+// ──────────────────────────────────────────────────────────────
+window.processEfiPayment = async function(gwId, button) {
+    console.log('🟠 Iniciando pagamento Efí Bank, gwId:', gwId);
+
+    const inputCpf = document.getElementById(`efi-cpf-${gwId}`);
+    const cpfOuCnpj = inputCpf ? inputCpf.value : '';
+    
+    // Limpa a string de não numéricos
+    const docLimpo = cpfOuCnpj.replace(/\D/g, '');
+
+    // Valida se tem 11 ou 14 digitos
+    if (!docLimpo || (docLimpo.length !== 11 && docLimpo.length !== 14)) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire('Atenção', 'Digite o CPF/CNPJ completo no campo acima para gerar o PIX.', 'warning');
+        } else {
+            alert("Digite o CPF/CNPJ completo no campo antes de clicar em Gerar PIX.");
+        }
+        if (inputCpf) inputCpf.focus();
+        return;
+    }
+
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando PIX...';
+
+    const planType = typeof selectedPlan === 'string' ? selectedPlan : (selectedPlan?.type || 'basic');
+    const planPrice = selectedPlan?.price || 1.50; // Pega o preço de R$ 1,50 ou o valor que estiver na tela
+    const userEmail = localStorage.getItem('userEmail') || 'usuario@desejosms.com';
+
+    try {
+        const response = await fetch('/api/payment/efi', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                planType: planType, 
+                userEmail: userEmail, 
+                cpf: docLimpo,
+                amount: planPrice
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Erro ao gerar PIX no Efí Bank.');
+        }
+
+        // Salvar anúncio como PENDENTE DE PAGAMENTO
+        await createAd(false, 'pending_payment');
+
+        // Mostrar o QR Code na tela
+        const qrContainer = document.getElementById(`efi-qr-container-${gwId}`);
+        const qrImg = document.getElementById(`efi-qr-image-${gwId}`);
+        const qrCopy = document.getElementById(`efi-pix-copy-${gwId}`);
+
+        if (qrContainer && qrImg && qrCopy) {
+            qrImg.src = data.qr_code_image;
+            qrCopy.value = data.pix_copy_paste;
+            qrContainer.style.display = 'block';
+            button.style.display = 'none'; // Esconde botão de gerar
+        }
+
+        button.disabled = false;
+        button.innerHTML = originalText;
+        
+        // Polling para verificar se foi pago (Opcional)
+        // setInterval(() => checkPaymentStatus(data.txid), 5000);
+
+    } catch (err) {
+        console.error('❌ Falha no Efí Bank:', err);
+        button.disabled = false;
+        button.innerHTML = originalText;
+        const panel = document.getElementById(`gw-panel-${gwId}`);
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = 'background:#fff3cd; border:1px solid #ffc107; border-radius:8px; padding:12px; margin-top:12px; color:#856404; font-size:14px; text-align:center;';
+        errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <strong>Erro Efí Bank:</strong> ${err.message}<br>
+            Verifique as configurações e o Certificado PIX no Painel Admin.`;
+        if (panel) {
+            const existing = panel.querySelector('.efi-error-msg');
+            if (existing) existing.remove();
+            errorDiv.className = 'efi-error-msg';
+            panel.appendChild(errorDiv);
+        }
+    }
+};
+
+// ──────────────────────────────────────────────────────────────
+// LIVEPIX — Integração via API ( Checkout Sigiloso )
+// ──────────────────────────────────────────────────────────────
+window.processLivePixPayment = async function(gwId, button) {
+    console.log('💜 Iniciando pagamento LivePix via API, gwId:', gwId);
+
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando link seguro...';
+
+    const planType = typeof selectedPlan === 'string' ? selectedPlan : (selectedPlan?.type || 'basic');
+    const userEmail = localStorage.getItem('userEmail') || 'usuario@desejosms.com';
+
+    try {
+        // 1. Salvar rascunho do anúncio se for novo, ou garantir que adData tem ID
+        if (!adData.id) {
+            const newId = await createAd(false, 'pending_payment');
+            if (!newId) return; // createAd já mostra o alert de erro
+            adData.id = newId;
+        }
+
+        // 2. Chamar nosso backend para criar o pagamento via API LivePix
+        const response = await fetch('/api/payment/livepix', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                planType: planType,
+                userEmail: userEmail,
+                adId: adData.id
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success && result.checkout_url) {
+            // 3. Redirecionar para o checkout oficial (transparente/sigiloso)
+            window.location.href = result.checkout_url;
+        } else {
+            throw new Error(result.error || 'Falha ao gerar link de pagamento.');
+        }
+
+    } catch (err) {
+        console.error('❌ Erro no LivePix API:', err);
+        button.disabled = false;
+        button.innerHTML = originalText;
+        alert("Erro ao iniciar pagamento LivePix: " + err.message);
+    }
+};
 
 // Função para atualizar detalhes do plano
 function updatePlanDetails() {
@@ -2545,16 +3395,42 @@ function generateThumbnail(dataUrl, maxW = 320, quality = 0.8) {
 
 // Função para editar anúncio
 function editAd(adId) {
-    console.log(`✏️ Iniciando edição do anúncio ID: ${adId}`);
+    console.log(`✏️ Tentativa de edição do anúncio ID: ${adId}`);
     const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
-    const ad = announcements.find(a => a.id === adId);
-    
+    const ad = announcements.find(a => String(a.id) === String(adId));
+
     if (!ad) {
         alert('Anúncio não encontrado!');
         return;
     }
 
-    // Configurar dados do formulário
+    // ── Apenas SuperVIP pode editar ──────────────────────────
+    const plan = (ad.planType || ad.plan_type || 'basic').toLowerCase();
+    if (plan !== 'supervip') {
+        // Mostrar bloqueio com opção de upgrade
+        const block = document.createElement('div');
+        block.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200000;display:flex;align-items:center;justify-content:center;';
+        block.innerHTML = `
+            <div style="background:#1a1a2e;border-radius:20px;padding:40px;max-width:440px;text-align:center;color:white;box-shadow:0 20px 60px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);">
+                <i class="fas fa-lock" style="font-size:48px;color:#f59e0b;margin-bottom:16px;"></i>
+                <h3 style="margin:0 0 12px;font-size:20px;">Edição Exclusiva SuperVIP</h3>
+                <p style="color:#adb5bd;font-size:14px;line-height:1.6;margin-bottom:24px;">
+                    Somente anunciantes com o plano <strong style="color:#8b5cf6;">SuperVIP</strong> podem editar título, fotos e informações do anúncio.<br><br>
+                    Seu plano atual: <strong style="color:#ffc107;text-transform:uppercase;">${plan}</strong>
+                </p>
+                <div style="display:flex;gap:12px;justify-content:center;">
+                    <button onclick="this.closest('div[style]').remove()" style="padding:10px 20px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:white;border-radius:8px;cursor:pointer;">Fechar</button>
+                    <button onclick="this.closest('div[style]').remove(); promoteAd(${ad.id});" style="padding:10px 20px;background:linear-gradient(135deg,#8b5cf6,#ec4899);border:none;color:white;border-radius:8px;cursor:pointer;font-weight:700;">
+                        <i class="fas fa-crown"></i> Fazer Upgrade para SuperVIP
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(block);
+        return;
+    }
+
+    // SuperVIP → abrir formulário de edição
     adData = {
         isEditing: true,
         originalId: ad.id,
@@ -2573,9 +3449,8 @@ function editAd(adId) {
     };
 
     selectedPlan = ad.planType || 'basic';
-    currentStep = 2; // Pula a escolha do plano na edição
+    currentStep = 2;
 
-    // Preencher campos do DOM
     setTimeout(() => {
         if (document.getElementById('adTitle')) document.getElementById('adTitle').value = adData.title;
         if (document.getElementById('adState')) document.getElementById('adState').value = adData.state;
@@ -2586,60 +3461,77 @@ function editAd(adId) {
         if (document.getElementById('adWhatsApp')) document.getElementById('adWhatsApp').value = adData.whatsapp;
         if (document.getElementById('adDescription')) document.getElementById('adDescription').value = adData.description;
 
-        // Marcar checkboxes de serviços
-        const serviceCheckboxes = document.querySelectorAll('input[name="services"]');
-        serviceCheckboxes.forEach(cb => {
-            cb.checked = adData.services.includes(cb.value);
-        });
+        document.querySelectorAll('input[name="services"]').forEach(cb => { cb.checked = adData.services.includes(cb.value); });
+        document.querySelectorAll('input[name="availability"]').forEach(cb => { cb.checked = adData.availability.includes(cb.value); });
+        document.querySelectorAll('input[name="serviceType"]').forEach(cb => { cb.checked = adData.serviceType.includes(cb.value); });
 
-        // Marcar disponibilidade
-        const availCheckboxes = document.querySelectorAll('input[name="availability"]');
-        availCheckboxes.forEach(cb => {
-            cb.checked = adData.availability.includes(cb.value);
-        });
-
-        // Marcar tipo de atendimento
-        const typeCheckboxes = document.querySelectorAll('input[name="serviceType"]');
-        typeCheckboxes.forEach(cb => {
-            cb.checked = adData.serviceType.includes(cb.value);
-        });
-
-        // Atualizar visualização das fotos
         const photoPreview = document.getElementById('photoPreview');
         if (photoPreview && adData.photos) {
-            photoPreview.innerHTML = adData.photos.map((p, index) => `
-                <div class="photo-item" style="position: relative;">
-                    <img src="${p}" style="width: 100%; height: 100px; object-fit: cover; border-radius: 8px;">
-                    <button type="button" onclick="removePhoto(${index})" class="remove-btn" style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer;">×</button>
+            photoPreview.innerHTML = adData.photos.map((p, i) => `
+                <div class="photo-item" style="position:relative;">
+                    <img src="${p}" style="width:100%;height:100px;object-fit:cover;border-radius:8px;">
+                    <button type="button" onclick="removePhoto(${i})" style="position:absolute;top:5px;right:5px;background:rgba(0,0,0,0.6);color:white;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;">×</button>
                 </div>
             `).join('');
         }
-        
-        // Ativar navegação para o step 2
         updateProgressBar();
         showStep(2);
         updateStepButtons();
-        
     }, 200);
 
-    // Abrir o modal
     showCreateAdModal();
-    
-    // Atualizar título do modal
     const modalTitle = document.querySelector('#createAdModal .modal-header h2');
     if (modalTitle) modalTitle.textContent = 'Editar Anúncio';
 }
 
 
 // Função para criar anúncio
-async function createAd(forceActive = false) {
-    console.log('=== CRIANDO ANÚNCIO ===');
-    console.log('Dados do anúncio:', adData);
-    console.log('Plano selecionado:', selectedPlan);
+async function createAd(forceActive = false, forceStatus = null) {
+    console.log('=== CRIANDO/ATUALIZANDO ANÚNCIO ===');
 
     if (!selectedPlan) {
         alert('Por favor, selecione um plano.');
         return;
+    }
+
+    // ────────────────────────────────────────────────────────
+    // FLUXO DE UPGRADE: anúncio já existe, apenas atualizar plano
+    // ────────────────────────────────────────────────────────
+    if (adData.isUpgrade && adData.upgradeAdId) {
+        const upgradeId = String(adData.upgradeAdId);
+        const planType = typeof selectedPlan === 'string' ? selectedPlan : (selectedPlan?.type || 'basic');
+        console.log(`🚀 Upgrade detectado: anúncio ${upgradeId} → plano ${planType}`);
+
+        const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
+        const idx = announcements.findIndex(a => String(a.id) === upgradeId);
+
+        if (idx !== -1) {
+            announcements[idx].planType = planType;
+            announcements[idx].isVip = planType === 'supervip';
+            announcements[idx].status = forceStatus || (forceActive ? 'active' : 'pending');
+            announcements[idx].updatedAt = new Date().toISOString();
+            localStorage.setItem('announcements', JSON.stringify(announcements));
+        }
+
+        // Atualizar no Supabase também
+        if (window.updateAdInSupabase) {
+            try {
+                await window.updateAdInSupabase(upgradeId, {
+                    plan_type: planType,
+                    is_vip: planType === 'supervip',
+                    status: forceStatus || (forceActive ? 'active' : 'pending')
+                });
+            } catch (e) {
+                console.warn('Supabase update falhou (upgrade):', e.message);
+            }
+        }
+
+        // Limpar intenção de upgrade depois de concluir
+        localStorage.removeItem('upgradeAdId');
+        localStorage.removeItem('upgradePlanType');
+
+        console.log('✅ Upgrade registrado.');
+        return upgradeId;
     }
 
     // Coletar dados diretamente dos campos do formulário
@@ -2724,11 +3616,16 @@ async function createAd(forceActive = false) {
         loadDashboardStats();
         loadUserAds();
         alert('Anúncio atualizado com sucesso!');
-        adData.isEditing = false; adData.originalId = null; return;
+        const editedId = adData.originalId;
+        adData.isEditing = false; adData.originalId = null; 
+        return editedId;
     }
 
     const isVerified = localStorage.getItem('userVerified') === 'true';
-    const adStatus = (isVerified || forceActive) ? 'active' : 'pending';
+    // Se forceStatus foi passado (ex: 'pending_payment'), usar ele
+    // Se não, usar lógica normal de verificação
+    const adStatus = forceStatus || ((isVerified || forceActive) ? 'active' : 'pending');
+    const isPendingPayment = forceStatus === 'pending_payment';
     const appliedCoupon = JSON.parse(localStorage.getItem('appliedCoupon') || 'null');
 
     const newAd = {
@@ -2751,7 +3648,7 @@ async function createAd(forceActive = false) {
         createdAt: new Date().toISOString(),
         isVip: selectedPlan !== 'basic',
         planType: typeof selectedPlan === 'object' ? selectedPlan.type : selectedPlan,
-        paymentRequired: false,
+        paymentRequired: isPendingPayment,
         needsVerification: !isVerified,
         paidAmount: (function () {
             const planType = typeof selectedPlan === 'string' ? selectedPlan : (selectedPlan?.type || 'basic');
@@ -2818,11 +3715,15 @@ async function createAd(forceActive = false) {
     loadDashboardStats();
     loadUserAds();
 
-    if (isVerified) {
-        alert('Anúncio criado com sucesso! Seu anúncio está ATIVO e visível para todos os visitantes.');
-    } else {
-        alert('Anúncio criado com sucesso! Para ativar seu anúncio, você precisa verificar sua conta primeiro. Acesse a aba "Perfil" para fazer a verificação.');
+    if (forceStatus !== 'pending_payment') {
+        if (isVerified) {
+            alert('Anúncio criado com sucesso! Seu anúncio está ATIVO e visível para todos os visitantes.');
+        } else {
+            alert('Anúncio criado com sucesso! Para ativar seu anúncio, você precisa verificar sua conta primeiro. Acesse a aba "Perfil" para fazer a verificação.');
+        }
     }
+
+    return insertedId;
 }
 
 // Função para mostrar modal de verificação
@@ -3168,21 +4069,33 @@ function applyWatermarkToDataUrl(dataUrl, watermarkText = 'DESEJOS MS', logoUrl 
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
 
-            // ── MARCA D'ÁGUA CENTRAL DISCRETA ──────────────────────────
-            const fontSize = Math.max(22, Math.round(width * 0.08)); 
+            // ── MARCA D'ÁGUA DIAGONAL ELEGANTE (FRACA E INCLINADA) ───────────
+            // Tamanho proporcional à imagem
+            const fontSize = Math.max(28, Math.round(width * 0.085)); 
             ctx.save();
-            ctx.font = `bold ${fontSize}px 'Montserrat', Arial, sans-serif`;
-            ctx.fillStyle = 'rgba(255,255,255,0.22)';
-            ctx.strokeStyle = 'rgba(0,0,0,0.15)';
-            ctx.lineWidth = fontSize * 0.03;
+            // Fonte moderna e menos espessa (peso 400 ou 500)
+            ctx.font = `500 ${fontSize}px 'Montserrat', 'Helvetica Neue', Arial, sans-serif`;
+            
+            // Cores sutis, fracas e translúcidas (branco com 18% de opacidade)
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
+            
+            // Borda extremamente fina e fraca para dar um leve destaque elegante
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.lineWidth = 1;
+            
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
             const centerX = width / 2;
             const centerY = height / 2;
 
-            ctx.strokeText(watermarkText, centerX, centerY);
-            ctx.fillText(watermarkText, centerX, centerY);
+            // Inclinar "meio vertical" (ex: -35 graus)
+            ctx.translate(centerX, centerY);
+            ctx.rotate(-35 * Math.PI / 180);
+
+            // Adicionar um espalhamento para a fonte ficar elegante
+            ctx.strokeText(watermarkText, 0, 0);
+            ctx.fillText(watermarkText, 0, 0);
             ctx.restore();
             // ────────────────────────────────────────────────────────────
 
@@ -3295,119 +4208,114 @@ function removePhoto(index) {
 }
 
 // Funções para ações de anúncios
-function editAd(adId) {
-    const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
-    const ad = announcements.find(a => a.id === adId);
-
-    if (!ad) {
-        alert('Anúncio não encontrado!');
-        return;
-    }
-
-    // Preencher o formulário com os dados do anúncio
-    adData = { ...ad };
-
-    // Preencher campos do formulário
-    const titleEl = document.getElementById('adTitle') || document.getElementById('adName');
-    if (titleEl) titleEl.value = ad.name || '';
-    
-    document.getElementById('adAge').value = ad.age || '';
-    
-    // Configurar estado e aguardar cidades para selecionar a correta
-    const stateSelect = document.getElementById('adState');
-    if (stateSelect && ad.state) {
-        stateSelect.value = ad.state;
-        loadCitiesForState();
-    }
-    document.getElementById('adCity').value = ad.city || '';
-    
-    document.getElementById('adDescription').value = ad.description || '';
-    
-    // Tratamento de preço
-    const priceStr = String(ad.price || '').replace('R$', '').trim();
-    document.getElementById('adPrice').value = priceStr;
-    
-    const whatsappEl = document.getElementById('adWhatsApp') || document.getElementById('adWhatsapp');
-    if (whatsappEl) whatsappEl.value = ad.whatsapp || ad.phone || '';
-    
-    document.getElementById('adCategory').value = ad.category || '';
-
-    // Selecionar serviços, disponibilidade, e tipo de atendimento
-    const serviceCheckboxes = document.querySelectorAll('input[name="services"]');
-    serviceCheckboxes.forEach(checkbox => {
-        checkbox.checked = ad.services && ad.services.includes(checkbox.value);
-    });
-
-    const availabilityCheckboxes = document.querySelectorAll('input[name="availability"]');
-    availabilityCheckboxes.forEach(checkbox => {
-        checkbox.checked = ad.availability && ad.availability.includes(checkbox.value);
-    });
-
-    const serviceTypeCheckboxes = document.querySelectorAll('input[name="serviceType"]');
-    serviceTypeCheckboxes.forEach(checkbox => {
-        checkbox.checked = ad.serviceType && ad.serviceType.includes(checkbox.value);
-    });
-
-    // Carregar fotos
-    if (ad.photos) {
-        adData.photos = [...ad.photos];
-        updatePhotoPreview();
-    }
-    
-    // Carregar vídeo
-    if (ad.video) {
-        adData.video = ad.video;
-        const videoPreview = document.getElementById('videoPreview');
-        if (videoPreview) {
-            videoPreview.innerHTML = `
-                <video src="${ad.video}" controls style="width: 100%; max-height: 200px; border-radius: 8px; margin-top: 10px;"></video>
-                <button type="button" onclick="document.getElementById('videoInput').value=''; document.getElementById('videoPreview').innerHTML=''; delete adData.video;" style="margin-top: 5px; background: red; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
-                    <i class="fas fa-trash"></i> Remover Vídeo
-                </button>
-            `;
-        }
-    }
-
-    // Mostrar modal de edição
-    showCreateAdModal();
-
-    // Mudar título do modal
-    document.querySelector('.modal-title').textContent = 'Editar Anúncio';
-    document.getElementById('createAdBtn').textContent = 'Atualizar Anúncio';
-
-    // Marcar como modo edição
-    adData.isEditing = true;
-    adData.originalId = adId;
-}
+// editAd() unificada — segunda definição removida (usar a de linha ~2875)
 
 function pauseAd(adId) {
     const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
-    const adIndex = announcements.findIndex(a => a.id === adId);
+    const adIndex = announcements.findIndex(a => String(a.id) === String(adId));
 
-    if (adIndex === -1) {
-        alert('Anúncio não encontrado!');
+    if (adIndex === -1) { alert('Anúncio não encontrado!'); return; }
+
+    const currentStatus = announcements[adIndex].status;
+
+    // NUNCA aprovar um anúncio pendente pelo botão pausar/retomar
+    // Só alternar entre active ↔ paused
+    if (currentStatus === 'pending' || currentStatus === 'pending_payment') {
+        alert('⚠️ Este anúncio ainda está pendente de pagamento. Use o botão "Pagar" para concluir.');
         return;
     }
 
-    const newStatus = announcements[adIndex].status === 'active' ? 'paused' : 'active';
+    const newStatus = currentStatus === 'active' ? 'paused' : 'active';
     announcements[adIndex].status = newStatus;
-
     localStorage.setItem('announcements', JSON.stringify(announcements));
-    
-    // Sincronizar com Supabase
+
     if (window.updateAdInSupabase) {
-        window.updateAdInSupabase(adId, { status: newStatus }).catch(e => console.error("Erro ao sincronizar status:", e));
+        window.updateAdInSupabase(adId, { status: newStatus }).catch(e => console.error('Erro Supabase pauseAd:', e));
     }
 
     loadUserAds();
+    const txt = newStatus === 'active' ? '▶️ retomado' : '⏸️ pausado';
+    // Toast leve em vez de alert bloqueante
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#333;color:white;padding:12px 20px;border-radius:10px;z-index:99999;font-size:14px;box-shadow:0 4px 15px rgba(0,0,0,0.3);';
+    toast.textContent = `Anúncio ${txt} com sucesso!`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
 
-    const statusText = newStatus === 'active' ? 'ativado' : 'pausado';
-    alert(`Anúncio ${statusText} com sucesso!`);
+// ─── Excluir anúncio com dupla confirmação ───────────────────
+function deleteAd(adId) {
+    const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
+    const ad = announcements.find(a => String(a.id) === String(adId));
+    if (!ad) { alert('Anúncio não encontrado!'); return; }
+
+    const adName = ad.name || ad.title || 'este anúncio';
+
+    // Criação do Modal Customizado
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(5px);';
+    
+    overlay.innerHTML = `
+        <div style="background:#1a1a2e;border:1px solid #dc3545;border-radius:16px;padding:30px;max-width:450px;width:90%;text-align:center;box-shadow:0 15px 50px rgba(220,53,69,0.3);font-family:'Montserrat',sans-serif;">
+            <i class="fas fa-exclamation-triangle" style="font-size:50px;color:#dc3545;margin-bottom:15px;"></i>
+            <h3 style="color:#fff;font-size:22px;margin:0 0 10px;font-weight:800;">CONFIRMAÇÃO DE EXCLUSÃO</h3>
+            <p style="color:#bbb;font-size:15px;line-height:1.5;margin-bottom:20px;">
+                Você está prestes a excluir permanentemente o anúncio:<br>
+                <strong style="color:#fff;font-size:18px;">"${adName}"</strong><br><br>
+                Esta ação <span style="color:#dc3545;font-weight:bold;">NÃO PODE SER DESFEITA</span>.
+            </p>
+            <div style="display:flex;gap:15px;justify-content:center;">
+                <button id="btnCancelDelete" style="padding:12px 20px;background:rgba(255,255,255,0.1);border:none;color:#fff;border-radius:8px;font-weight:700;cursor:pointer;flex:1;transition:background 0.2s;">
+                    Cancelar
+                </button>
+                <button id="btnConfirmDelete" style="padding:12px 20px;background:#dc3545;border:none;color:#fff;border-radius:8px;font-weight:700;cursor:pointer;flex:1;box-shadow:0 4px 15px rgba(220,53,69,0.4);transition:background 0.2s;">
+                    <i class="fas fa-trash"></i> Sim, Excluir!
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    document.getElementById('btnCancelDelete').onclick = () => {
+        overlay.remove();
+    };
+
+    document.getElementById('btnConfirmDelete').onclick = () => {
+        overlay.remove();
+        
+        // Remover do localStorage
+        const updated = announcements.filter(a => String(a.id) !== String(adId));
+        localStorage.setItem('announcements', JSON.stringify(updated));
+
+        // Remover do Supabase
+        if (window.supabaseClient) {
+            window.supabaseClient.from('announcements').delete().eq('id', adId)
+                .then(({ error }) => { if (error) console.error('Erro Supabase deleteAd:', error.message); })
+                .catch(e => console.error('Exceção deleteAd:', e));
+        }
+
+        loadUserAds();
+        loadDashboardStats();
+
+        // Toast de Sucesso
+        const toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;top:20px;right:20px;background:linear-gradient(135deg,#dc3545,#c82333);color:white;padding:14px 22px;border-radius:12px;z-index:99999;font-size:14px;font-weight:600;box-shadow:0 6px 20px rgba(220,53,69,0.4);';
+        toast.innerHTML = '<i class="fas fa-trash" style="margin-right:8px;"></i>Anúncio excluído com sucesso.';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 4000);
+    };
+}
+
+// ─── Retomar pagamento de anúncio pendente (Redirecionado para o global acima) ───────────────────
+function resumePayment(adId) {
+    if (window.resumePayment) window.resumePayment(adId);
 }
 
 function promoteAd(adId) {
     const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
-    const adIndex = announcements.findIndex(a => a.id === adId);
+    // Aceitar id numérico ou string
+    const adIndex = announcements.findIndex(a => String(a.id) === String(adId));
 
     if (adIndex === -1) {
         alert('Anúncio não encontrado!');
@@ -3417,56 +4325,116 @@ function promoteAd(adId) {
     const ad = announcements[adIndex];
 
     // Verificar se já é SUPERVIP
-    if (ad.planType === 'supervip') {
-        alert('Este anúncio já está no plano máximo!');
+    const currentPlan = (ad.planType || ad.plan_type || '').toLowerCase();
+    if (currentPlan === 'supervip') {
+        alert('✅ Este anúncio já está no plano máximo (SuperVIP)!');
         return;
     }
 
-    // Mostrar modal de promoção
+    // Mostrar modal de escolha de plano upgrade
     showPromotionModal(ad);
 }
 
 function showPromotionModal(ad) {
-    const modal = document.createElement('div');
-    modal.className = 'modal active';
-    let topOptionHtml = '';
-    if (ad.planType !== 'top') {
-        topOptionHtml = `
-                    <div class="plan-card" onclick="selectPromotionPlan('top', ${ad.id})">
-                        <h4>Plano TOP</h4>
-                        <div class="price">R$ 149,99</div>
-                        <ul>
-                            <li>Destaque especial</li>
-                            <li>3x mais visualizações</li>
-                            <li>Suporte prioritário</li>
-                        </ul>
-                    </div>
-        `;
+    // Remover modal existente se houver
+    const existingModal = document.getElementById('upgradeModal');
+    if (existingModal) existingModal.remove();
+
+    const currentPlan = (ad.planType || ad.plan_type || 'basic').toLowerCase();
+
+    // ── Ler preços DINÂMICOS do localStorage (sincronizado com admin) ──
+    let storedPlans = [];
+    try { storedPlans = JSON.parse(localStorage.getItem('pricingPlans')) || []; } catch(e) {}
+
+    function getDynamicPrice(type) {
+        const found = storedPlans.find(p => p.type === type && p.status === 'active') || storedPlans.find(p => p.type === type);
+        return found ? Number(String(found.price).replace(',', '.')) || 0 : 0;
+    }
+    function getDynamicFeatures(type) {
+        const found = storedPlans.find(p => p.type === type);
+        return found?.features || [];
     }
 
+    const topPrice = getDynamicPrice('top') || 249.90;
+    const supervipPrice = getDynamicPrice('supervip') || 499.90;
+    const topFeatures = getDynamicFeatures('top');
+    const supervipFeatures = getDynamicFeatures('supervip');
+
+    const plans = [
+        {
+            id: 'top',
+            label: 'Plano TOP',
+            price: `R$ ${topPrice.toFixed(2).replace('.', ',')}`,
+            color: '#f59e0b',
+            gradient: 'linear-gradient(135deg, #f59e0b, #ef4444)',
+            icon: 'fa-star',
+            features: topFeatures.length > 0 ? topFeatures : ['Destaque especial na página', '3x mais visualizações', 'Suporte prioritário', 'Estatísticas avançadas']
+        },
+        {
+            id: 'supervip',
+            label: 'Plano SUPER VIP',
+            price: `R$ ${supervipPrice.toFixed(2).replace('.', ',')}`,
+            color: '#8b5cf6',
+            gradient: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
+            icon: 'fa-crown',
+            features: supervipFeatures.length > 0 ? supervipFeatures : ['Máximo destaque — topo da página', '10x mais visualizações', 'Suporte VIP 24/7', 'Foto de capa em destaque', 'Perfil verificado exclusivo']
+        }
+    ];
+
+    // Mostrar apenas planos superiores ao atual
+    const planOrder = ['basic', 'top', 'supervip'];
+    const currentIdx = planOrder.indexOf(currentPlan);
+    const availablePlans = plans.filter(p => planOrder.indexOf(p.id) > currentIdx);
+
+    if (availablePlans.length === 0) {
+        alert('✅ Este anúncio já está no plano máximo (SuperVIP)!');
+        return;
+    }
+
+    const modal = document.createElement('div');
+    modal.id = 'upgradeModal';
+    modal.className = 'modal active';
+    modal.style.cssText = 'z-index: 100001;';
+
+    const cardsHTML = availablePlans.map(plan => `
+        <div onclick="selectPromotionPlan('${plan.id}', '${ad.id}')" style="
+            background: ${plan.gradient};
+            border-radius: 16px;
+            padding: 24px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            color: white;
+            flex: 1;
+            min-width: 200px;
+        " onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 30px rgba(0,0,0,0.3)'"
+           onmouseout="this.style.transform=''; this.style.boxShadow=''">
+            <div style="text-align:center; margin-bottom:16px;">
+                <i class="fas ${plan.icon}" style="font-size:32px; margin-bottom:8px; display:block;"></i>
+                <h4 style="margin:0 0 4px; font-size:18px; font-weight:700;">${plan.label}</h4>
+                <div style="font-size:26px; font-weight:800; margin:8px 0;">${plan.price}</div>
+                <small style="opacity:0.85;">por 30 dias</small>
+            </div>
+            <ul style="list-style:none; padding:0; margin:0; font-size:13px;">
+                ${plan.features.map(f => `<li style="padding:4px 0;"><i class="fas fa-check" style="margin-right:6px; opacity:0.9;"></i>${f}</li>`).join('')}
+            </ul>
+            <button style="width:100%; margin-top:16px; padding:12px; background:rgba(255,255,255,0.2); border:2px solid rgba(255,255,255,0.5); color:white; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; backdrop-filter:blur(4px);">
+                <i class="fas fa-bolt"></i> Fazer Upgrade Agora
+            </button>
+        </div>
+    `).join('');
+
     modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Promover Anúncio</h3>
-                <button onclick="this.closest('.modal').remove()" class="close-btn">
-                    <i class="fas fa-times"></i>
-                </button>
+        <div class="modal-content" style="max-width:700px;">
+            <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                <h3 style="margin:0;"><i class="fas fa-rocket" style="color:#f59e0b; margin-right:8px;"></i> Upgrade do Anúncio: <em>${ad.title || ad.name || 'Seu Anúncio'}</em></h3>
+                <button onclick="this.closest('.modal').remove()" class="close-btn"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
-                <p>Escolha um plano para promover seu anúncio:</p>
-                
-                <div class="plan-options">
-                    ${topOptionHtml}
-                    <div class="plan-card" onclick="selectPromotionPlan('supervip', ${ad.id})">
-                        <h4>Plano SUPERVIP</h4>
-                        <div class="price">R$ 199,99</div>
-                        <ul>
-                            <li>Máximo destaque</li>
-                            <li>10x mais visualizações</li>
-                            <li>Suporte VIP 24/7</li>
-                            <li>Anúncio fixo no topo</li>
-                        </ul>
-                    </div>
+                <p style="color:#adb5bd; margin-bottom:20px; text-align:center;">
+                    Plano atual: <strong style="color:#ffc107; text-transform:uppercase;">${currentPlan}</strong> → Escolha um plano superior:
+                </p>
+                <div style="display:flex; gap:16px; flex-wrap:wrap;">
+                    ${cardsHTML}
                 </div>
             </div>
         </div>
@@ -3475,40 +4443,49 @@ function showPromotionModal(ad) {
     document.body.appendChild(modal);
 }
 
+
 function selectPromotionPlan(planType, adId) {
     const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
-    const adIndex = announcements.findIndex(a => a.id === adId);
+    const adIndex = announcements.findIndex(a => String(a.id) === String(adId));
 
     if (adIndex === -1) {
         alert('Anúncio não encontrado!');
         return;
     }
 
-    const price = planType === 'top' ? 149.99 : 199.99;
+    const ad = announcements[adIndex];
 
-    // Atualizar anúncio
-    announcements[adIndex].planType = planType;
-    announcements[adIndex].isVip = planType === 'supervip';
-    announcements[adIndex].paidAmount = price;
+    // Guardar intenção de upgrade no localStorage para retomar se cancelado
+    localStorage.setItem('upgradeAdId', String(adId));
+    localStorage.setItem('upgradePlanType', planType);
 
-    localStorage.setItem('announcements', JSON.stringify(announcements));
+    // Fechar modal de seleção de plano
+    const openModal = document.querySelector('.modal.active');
+    if (openModal) openModal.remove();
 
-    // Sincronizar com Supabase
-    if (window.updateAdInSupabase) {
-        window.updateAdInSupabase(adId, { 
-            plan_type: planType, 
-            is_vip: planType === 'supervip',
-            paid_amount: price
-        }).catch(e => console.error("Erro ao sincronizar promoção:", e));
-    }
+    // Definir o plano selecionado globalmente
+    selectedPlan = planType;
 
-    // Fechar modal
-    document.querySelector('.modal').remove();
+    // Preencher dados do anúncio existente (para não precisar recriar)
+    adData = {
+        id: ad.id,
+        title: ad.title || ad.name || '',
+        city: ad.city || '',
+        state: ad.state || 'MS',
+        age: ad.age || '',
+        price: ad.price || '',
+        category: ad.category || '',
+        whatsapp: ad.whatsapp || '',
+        description: ad.description || '',
+        photos: ad.photos || [],
+        isUpgrade: true,
+        upgradeAdId: String(adId)
+    };
 
-    // Recarregar anúncios
-    loadUserAds();
+    console.log(`🚀 Upgrade do anúncio ${adId} para plano ${planType} — abrindo pagamento diretamente`);
 
-    alert(`Anúncio promovido para ${planType.toUpperCase()} com sucesso!`);
+    // Abrir diretamente o modal de pagamento (SEM criar anúncio de novo)
+    showPaymentModal();
 }
 
 // Fechar modais ao clicar fora
@@ -3689,6 +4666,9 @@ function loadCitiesForState() {
     if (!stateSelect || !citySelect) return;
 
     const selectedState = stateSelect.value;
+    
+    // Sincronizar com adData imediatamente
+    adData.state = selectedState;
 
     // Limpar cidades
     citySelect.innerHTML = '<option value="">Selecione a cidade</option>';
@@ -3865,54 +4845,7 @@ window.checkAvailableCities = function () {
     }
 };
 
-// Função para processar pagamento dinâmico (configurado pelo painel admin)
-window.processDynamicPayment = async function (gatewayId, paymentBtn) {
-    console.log('=== PROCESSANDO PAGAMENTO ' + gatewayId + ' ===');
-
-    if (paymentBtn) {
-        paymentBtn.disabled = true;
-        const originalText = paymentBtn.innerHTML;
-        paymentBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
-    }
-
-    const gateways = JSON.parse(localStorage.getItem('paymentGateways')) || [];
-    const gateway = gateways.find(g => g.id === gatewayId);
-
-    // Simula uma resposta ou envia ao Webhook
-    if (gateway && gateway.webhook) {
-        try {
-            const priceVal = document.getElementById('total').textContent.replace('R$ ', '').replace(',', '.').trim();
-            const response = await fetch(gateway.webhook, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    type: 'payment_request',
-                    gateway: gateway.type,
-                    plan: selectedPlan,
-                    price: priceVal,
-                    userEmail: localStorage.getItem('userEmail')
-                })
-            });
-            const result = await response.json().catch(e => ({}));
-            if (result.paymentUrl) {
-                // Redirecionamento dinâmico se a API/Webhook responder com link
-                alert('Você será redirecionado para o pagamento.');
-                setTimeout(() => createAd(), 1000); // Já criamos e deixamos pendente caso o retorno do webhook atualize localstorage
-                window.location.href = result.paymentUrl;
-                return;
-            }
-        } catch (e) {
-            console.warn('Erro ao chamar webhook, caindo para fallback', e);
-        }
-    }
-
-    // Fallback: se não tiver webhook ou falhar, criamos em tela apenas informando o gateway (como mock para funcionamento final em modo manual)
-    setTimeout(() => {
-        alert(`Obrigado! Solicitação de pagamento via ${gateway ? gateway.name : 'Gateway'} recebida. O sistema processará o seu anúncio.`);
-        closeModal('paymentModal');
-        createAd();
-    }, 2000);
-};
+// A função redundante window.processDynamicPayment foi removida para evitar conflitos com a implementação principal de Gateways.
 
 
 // Função para testar verificação
@@ -4072,3 +5005,378 @@ function toggleNotifications() {
     }
 }
 window.addEventListener('storage', function (e) { if (e.key === 'userNotifications') { loadUserNotifications(); } });
+
+// ============================================================
+// MODAL DE CHECKOUT EMBUTIDO (IFRAME) - GENÉRICO
+// ============================================================
+function showEmbeddedCheckout(checkoutUrl, productName, gatewayName = 'Cakto') {
+    console.log(`💳 Abrindo checkout ${gatewayName} embutido:`, checkoutUrl);
+    
+    // Fechar modal de pagamento anterior
+    closeModal('paymentModal');
+    
+    // Remover modal antigo se existir
+    const existingModal = document.getElementById('embeddedCheckoutModal');
+    if (existingModal) existingModal.remove();
+    
+    // Criar modal overlay com iframe
+    const modal = document.createElement('div');
+    modal.id = 'embeddedCheckoutModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.85);
+        z-index: 100000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        box-sizing: border-box;
+    `;
+    
+    modal.innerHTML = `
+        <div style="
+            width: 100%;
+            max-width: 600px;
+            background: #1a1a2e;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            max-height: 95vh;
+        ">
+            <!-- Header -->
+            <div style="
+                padding: 16px 20px;
+                background: linear-gradient(135deg, #16213e, #0f3460);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+            ">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <i class="fas fa-lock" style="color:#28a745; font-size:16px;"></i>
+                    <span style="color:white; font-weight:bold; font-size:16px;">
+                        Pagamento Seguro via ${gatewayName} - ${productName || 'Plano'}
+                    </span>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button onclick="window.open('${checkoutUrl}', '_blank')" style="
+                        background: rgba(255,255,255,0.1);
+                        border: 1px solid rgba(255,255,255,0.2);
+                        color: white;
+                        padding: 6px 12px;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 12px;
+                    ">
+                        <i class="fas fa-external-link-alt"></i> Abrir em nova aba
+                    </button>
+                    <button onclick="closeEmbeddedCheckout()" style="
+                        background: rgba(255,45,85,0.2);
+                        border: 1px solid rgba(255,45,85,0.3);
+                        color: #ff2d55;
+                        padding: 6px 12px;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        font-weight: bold;
+                    ">
+                        ✕
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Loading -->
+            <div id="checkoutLoading" style="
+                padding: 40px;
+                text-align: center;
+                color: #aaa;
+            ">
+                <i class="fas fa-spinner fa-spin" style="font-size:32px; color:#28a745;"></i>
+                <p style="margin-top:12px;">Carregando checkout seguro...</p>
+            </div>
+            
+            <!-- Iframe -->
+            <iframe 
+                id="checkoutIframe"
+                src="${checkoutUrl}" 
+                style="
+                    width: 100%;
+                    height: 75vh;
+                    border: none;
+                    display: none;
+                "
+                onload="document.getElementById('checkoutLoading').style.display='none'; this.style.display='block';"
+                allow="payment"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation"
+            ></iframe>
+            
+            <!-- Footer -->
+            <div style="
+                padding: 10px 20px;
+                background: #0f0f23;
+                text-align: center;
+                border-top: 1px solid rgba(255,255,255,0.05);
+            ">
+                <span style="color:#666; font-size:11px;">
+                    <i class="fas fa-shield-alt" style="color:#28a745;"></i>
+                    Pagamento 100% seguro e criptografado via ${gatewayName}
+                </span>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Fechar com ESC
+    const escHandler = (e) => {
+        if (e.key === 'Escape') {
+            closeEmbeddedCheckout();
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+}
+
+function closeEmbeddedCheckout() {
+    const modal = document.getElementById('embeddedCheckoutModal');
+    if (modal) {
+        modal.remove();
+    }
+    // Recarregar anúncios para refletir o status atualizado
+    if (typeof loadUserAds === 'function') loadUserAds();
+    if (typeof loadDashboardStats === 'function') loadDashboardStats();
+}
+
+// ============================================================
+// CHECKOUT PERSONALIZADO STRIPE PIX (ESTILO NIVELX)
+// ============================================================
+function showStripePixCheckout(data) {
+    console.log('💳 Abrindo Checkout Personalizado Stripe PIX:', data);
+    
+    // Fechar modais anteriores
+    closeModal('paymentModal');
+    
+    // Remover se já existir
+    const existing = document.getElementById('customStripeCheckout');
+    if (existing) existing.remove();
+    
+    // Criar overlay principal
+    const overlay = document.createElement('div');
+    overlay.id = 'customStripeCheckout';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #0f0f1a;
+        z-index: 200000;
+        overflow-y: auto;
+        font-family: 'Inter', sans-serif;
+        color: #fff;
+    `;
+    
+    const userEmail = localStorage.getItem('userEmail') || 'usuario@exemplo.com';
+    const userName = localStorage.getItem('userName') || userEmail.split('@')[0];
+    const planName = data.product_name || 'Plano Premium';
+    const price = data.price || 0;
+    
+    overlay.innerHTML = `
+        <!-- Barra de Urgência -->
+        <div style="background: #a8cf45; color: #000; padding: 12px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 10;">
+            Finalize seu pagamento para garantir a oferta. 
+            <span id="pixTimer" style="margin-left: 10px;"><i class="far fa-clock"></i> 14:59</span>
+        </div>
+
+        <div style="max-width: 1200px; margin: 40px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+            
+            <!-- Coluna 1: Identificação -->
+            <div style="background: #161625; border-radius: 12px; padding: 25px; border: 1px solid rgba(255,255,255,0.05);">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px;">
+                    <div style="background: #a8cf45; color: #000; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">1</div>
+                    <h3 style="margin:0; font-size: 18px;">Identificação confirmada</h3>
+                </div>
+                <p style="color: #888; font-size: 13px; margin-bottom: 25px;">Confira os dados que usaremos para liberar seu acesso.</p>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="color: #666; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">NOME</label>
+                    <div style="font-weight: bold; margin-top: 5px; text-transform: uppercase;">${userName}</div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="color: #666; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">E-MAIL</label>
+                    <div style="font-weight: bold; margin-top: 5px;">${userEmail}</div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="color: #666; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">PEDIDO</label>
+                    <div style="font-weight: bold; margin-top: 5px; color: #a8cf45;">#${Math.floor(Math.random() * 10000)}</div>
+                </div>
+            </div>
+
+            <!-- Coluna 2: Pagamento PIX -->
+            <div style="background: #161625; border-radius: 12px; padding: 25px; border: 1px solid rgba(255,255,255,0.05); text-align: center;">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px; text-align: left;">
+                    <div style="background: #a8cf45; color: #000; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">2</div>
+                    <h3 style="margin:0; font-size: 18px;">Pagamento via PIX</h3>
+                </div>
+                <p style="color: #888; font-size: 13px; margin-bottom: 25px;">Escaneie o QR Code ou copie o código para pagar.</p>
+                
+                <div style="background: #fff; padding: 15px; border-radius: 12px; display: inline-block; margin-bottom: 20px;">
+                    <img src="${data.qr_code_url || 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=' + encodeURIComponent(data.qr_code)}" 
+                         style="width: 250px; height: 250px; display: block;" alt="QR Code PIX">
+                </div>
+
+                <div style="margin-top: 10px;">
+                    <p style="font-size: 12px; color: #888; margin-bottom: 10px;">Ou copie e cole:</p>
+                    <div style="position: relative; margin-bottom: 20px;">
+                        <textarea readonly id="pixCodeText" style="
+                            width: 100%;
+                            background: #0f0f1a;
+                            border: 1px solid #2a2a3a;
+                            border-radius: 8px;
+                            color: #fff;
+                            padding: 12px;
+                            font-size: 11px;
+                            height: 60px;
+                            resize: none;
+                        ">${data.qr_code}</textarea>
+                        <button onclick="copyPixCode()" style="
+                            width: 100%;
+                            background: #1e1e2f;
+                            border: none;
+                            color: #fff;
+                            padding: 12px;
+                            border-radius: 8px;
+                            margin-top: 10px;
+                            cursor: pointer;
+                            font-weight: bold;
+                            transition: background 0.2s;
+                        " onmouseover="this.style.background='#2a2a3a'" onmouseout="this.style.background='#1e1e2f'">
+                            Copiar código PIX
+                        </button>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: center; gap: 10px; color: #a8cf45; font-size: 13px;">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    Aguardando confirmação...
+                </div>
+            </div>
+
+            <!-- Coluna 3: Resumo -->
+            <div style="background: #161625; border-radius: 12px; padding: 25px; border: 1px solid rgba(255,255,255,0.05); height: fit-content;">
+                <h3 style="font-size: 18px; margin-bottom: 25px;">Resumo</h3>
+                
+                <div style="display: flex; gap: 15px; margin-bottom: 25px; align-items: center;">
+                    <div style="width: 60px; height: 60px; background: #0f0f1a; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-star" style="color: #a8cf45; font-size: 24px;"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: bold;">${planName}</div>
+                        <div style="color: #666; font-size: 12px;">Qtd: 1</div>
+                    </div>
+                    <div style="font-weight: bold;">R$ ${price.toFixed(2).replace('.', ',')}</div>
+                </div>
+
+                <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; display: flex; justify-content: space-between; align-items: center; font-size: 18px;">
+                    <span style="color: #a8cf45;">Total</span>
+                    <span style="font-weight: bold; color: #a8cf45;">R$ ${price.toFixed(2).replace('.', ',')}</span>
+                </div>
+
+                <div style="margin-top: 30px; text-align: center;">
+                    <button onclick="closeCustomStripeCheckout()" style="background: none; border: none; color: #666; cursor: pointer; font-size: 13px; text-decoration: underline;">
+                        Cancelar e voltar
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    // Iniciar Timer
+    startPixTimer(15 * 60);
+
+    // Iniciar Polling de Verificação de Pagamento
+    startPaymentStatusPolling(data.payment_intent_id);
+}
+
+function startPixTimer(duration) {
+    let timer = duration, minutes, seconds;
+    const display = document.getElementById('pixTimer');
+    
+    const interval = setInterval(function () {
+        minutes = parseInt(timer / 60, 10);
+        seconds = parseInt(timer % 60, 10);
+
+        minutes = minutes < 10 ? "0" + minutes : minutes;
+        seconds = seconds < 10 ? "0" + seconds : seconds;
+
+        if (display) display.innerHTML = `<i class="far fa-clock"></i> ${minutes}:${seconds}`;
+
+        if (--timer < 0) {
+            clearInterval(interval);
+            closeCustomStripeCheckout();
+            alert('Tempo expirado! Por favor, gere um novo PIX.');
+        }
+    }, 1000);
+    
+    window.pixTimerInterval = interval;
+}
+
+function copyPixCode() {
+    const text = document.getElementById('pixCodeText');
+    text.select();
+    document.execCommand('copy');
+    alert('Código PIX copiado!');
+}
+
+function closeCustomStripeCheckout() {
+    const el = document.getElementById('customStripeCheckout');
+    if (el) el.remove();
+    if (window.pixTimerInterval) clearInterval(window.pixTimerInterval);
+    if (window.paymentPollingInterval) clearInterval(window.paymentPollingInterval);
+}
+
+async function startPaymentStatusPolling(paymentIntentId) {
+    console.log('🔄 Iniciando polling para:', paymentIntentId);
+    
+    if (window.paymentPollingInterval) clearInterval(window.paymentPollingInterval);
+    
+    window.paymentPollingInterval = setInterval(async () => {
+        try {
+            // Aqui você chamaria um endpoint que verifica o status no banco ou na Stripe
+            // Para simplificar, vamos verificar na tabela 'payments' do Supabase
+            if (window.supabaseClient) {
+                const { data, error } = await window.supabaseClient
+                    .from('payments')
+                    .select('status')
+                    .eq('mp_payment_id', paymentIntentId)
+                    .single();
+                
+                if (data && data.status === 'approved') {
+                    clearInterval(window.paymentPollingInterval);
+                    alert('🎉 Pagamento confirmado com sucesso!');
+                    window.location.reload(); // Recarregar para mostrar anúncio ativo
+                }
+            }
+        } catch (e) {
+            console.warn('Erro no polling:', e);
+        }
+    }, 5000); // Verifica a cada 5 segundos
+}
+
+// Compatibilidade
+window.showCaktoCheckoutModal = function(url, name) {
+    showEmbeddedCheckout(url, name, 'Cakto');
+};
+window.closeCaktoCheckout = closeEmbeddedCheckout;

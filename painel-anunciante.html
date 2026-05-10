@@ -659,34 +659,32 @@
         </div>
     </div>
 
-    <!-- Payment Modal -->
+    <!-- Payment Modal - Conteúdo 100% gerado pelo JS (renderPaymentGateways) -->
     <div class="modal" id="paymentModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Finalizar Pagamento</h2>
+                <h2><i class="fas fa-lock" style="color:#28a745; margin-right:8px;"></i> Finalizar Pagamento</h2>
                 <button class="close-btn" onclick="closeModal('paymentModal')">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
 
             <div class="modal-body">
-                <p>Complete seu pagamento para ativar seu anúncio</p>
-
                 <div class="payment-container">
+                    <!-- Resumo do Plano -->
                     <div class="plan-summary">
                         <h3>Plano Selecionado</h3>
                         <div class="plan-details" id="selectedPlanDetails">
-                            <!-- Detalhes do plano serão exibidos aqui -->
+                            <!-- Preenchido pelo JS -->
                         </div>
+
                         <!-- Cupom de Desconto -->
-                        <div class="coupon-box"
-                            style="margin-top: 12px; padding: 10px; background: #0b132b14; border-radius: 8px;">
+                        <div class="coupon-box" style="margin-top:12px; padding:10px; background:#0b132b14; border-radius:8px;">
                             <div style="display:flex; gap:8px; align-items:center;">
                                 <input type="text" id="couponInput" placeholder="Código do cupom"
-                                    style="flex:1; padding:10px; border:1px solid #2a2f45; border-radius:6px; background:#0b132b; color:#fff;">
-                                <button class="btn btn-secondary" id="applyCouponBtn" title="Aplicar cupom">
-                                    <i class="fas fa-ticket-alt"></i>
-                                    Aplicar
+                                    style="flex:1; padding:10px; border:1px solid #dee2e6; border-radius:6px;">
+                                <button class="btn btn-secondary" id="applyCouponBtn">
+                                    <i class="fas fa-ticket-alt"></i> Aplicar
                                 </button>
                             </div>
                             <small id="couponMsg" style="display:block; margin-top:6px; color:#adb5bd;"></small>
@@ -697,89 +695,34 @@
                                 <span>Subtotal:</span>
                                 <span id="subtotal">R$ 0,00</span>
                             </div>
-                            <div class="total-item" id="discountRow" style="display:none; color:#49dd8e;">
+                            <div class="total-item" id="discountRow" style="display:none; color:#28a745;">
                                 <span>Desconto:</span>
                                 <span id="discountAmount">- R$ 0,00</span>
                             </div>
-                            <div class="total-item">
+                            <div class="total-item" style="font-weight:bold; font-size:1.1em; border-top:2px solid #eee; padding-top:8px; margin-top:8px;">
                                 <span>Total:</span>
                                 <span id="total">R$ 0,00</span>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Métodos de Pagamento - 100% gerado pelo renderPaymentGateways() -->
                     <div class="payment-methods">
-                        <h3>Pagamento Seguro</h3>
+                        <h3>Escolha como Pagar</h3>
 
-                        <div class="payment-tabs">
-                            <button class="tab-btn active" data-method="pix">
-                                <i class="fas fa-qrcode"></i>
-                                PIX
-                            </button>
-                            <button class="tab-btn" data-method="card">
-                                <i class="fas fa-credit-card"></i>
-                                Cartão
-                            </button>
+                        <!-- Tabs dos Gateways (ex: Cakto, Stripe) -->
+                        <div class="payment-tabs" id="gatewayTabs">
+                            <!-- Gerado pelo JS -->
                         </div>
 
-                        <div class="payment-content">
-                            <div class="payment-method active" id="pix-method">
-                                <div class="pix-info">
-                                    <i class="fas fa-mobile-alt"></i>
-                                    <h4>Pagamento via PIX</h4>
-                                    <p>Aprovação instantânea! Escaneie o QR Code ou copie o código PIX.</p>
-                                </div>
-
-                                <div class="pix-qr" id="pixQR">
-                                    <!-- QR Code será gerado aqui -->
-                                </div>
-
-                                <button class="btn btn-success" onclick="generatePIX()">
-                                    <i class="fas fa-qrcode"></i>
-                                    Gerar PIX
-                                </button>
-
-                                <button class="btn btn-primary" id="paymentBtn" onclick="processPayment()"
-                                    style="margin-top: 10px;">
-                                    <i class="fas fa-check"></i>
-                                    Finalizar Pagamento
-                                </button>
-                            </div>
-
-                            <div class="payment-method" id="card-method">
-                                <div class="card-form">
-                                    <div class="form-group">
-                                        <label>Número do Cartão</label>
-                                        <input type="text" placeholder="0000 0000 0000 0000">
-                                    </div>
-
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label>Validade</label>
-                                            <input type="text" placeholder="MM/AA">
-                                        </div>
-                                        <div class="form-group">
-                                            <label>CVV</label>
-                                            <input type="text" placeholder="123">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label>Nome no Cartão</label>
-                                        <input type="text" placeholder="Nome completo">
-                                    </div>
-
-                                    <button class="btn btn-success">
-                                        <i class="fas fa-lock"></i>
-                                        Pagar com Cartão
-                                    </button>
-                                </div>
-                            </div>
+                        <!-- Conteúdo de cada Gateway -->
+                        <div class="payment-content" id="gatewayContent">
+                            <!-- Gerado pelo JS -->
                         </div>
 
-                        <div class="payment-security-note">
-                            <i class="fas fa-shield-alt"></i>
-                            <span>Pagamento 100% seguro e criptografado</span>
+                        <div class="payment-security-note" style="margin-top:16px; text-align:center; color:#6c757d; font-size:13px;">
+                            <i class="fas fa-shield-alt" style="color:#28a745;"></i>
+                            <span> Pagamento 100% seguro e criptografado</span>
                         </div>
                     </div>
                 </div>
@@ -862,7 +805,7 @@
     <script src="config.js"></script>
     <script src="states-config.js"></script>
     <script src="notifications.js"></script>
-    <script src="painel-anunciante.js?v=2.1"></script>
+    <script src="painel-anunciante.js?v=3.1"></script>
 
     <script>
         // Inicializar sistema quando a página carregar

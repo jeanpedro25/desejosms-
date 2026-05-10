@@ -254,64 +254,100 @@
         </div>
     </div>
 
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Módulo de segurança -->
+    <script src="security.js"></script>
+
     <script>
-        // Verificação de idade
-        if (localStorage.getItem('ageVerified') !== 'true') {
-            window.location.href = 'age-verification.html';
-        }
-        
-        // Se já for admin, redirecionar para o painel
-        if (localStorage.getItem('adminUser')) {
+        // Se já tiver sessão admin válida, redirecionar direto para o painel
+        if (window.Security && window.Security.isAdminLoggedIn()) {
             window.location.href = 'admin-panel.html';
         }
 
-        function handleAdminLogin(event) {
+        // Inicializar Supabase (cliente mínimo para a página de login)
+        const _supaUrl = 'https://rhsserqlbyyjgglcrwva.supabase.co';
+        const _supaKey = 'sb_publishable_v83uLp_HYDgO9PXmjFl8eQ_kSzRGLNI';
+        const _supaClient = supabase.createClient(_supaUrl, _supaKey);
+
+        async function handleAdminLogin(event) {
             event.preventDefault();
-            const email = document.getElementById('adminEmail').value.trim();
-            const password = document.getElementById('adminPassword').value.trim();
-            
-            // Credenciais padrão do admin (em produção, usar sistema seguro)
-            const adminCredentials = [
-                { email: 'admin@desejosms.com.br', password: 'DesejosMS2025@Admin', name: 'Administrador' },
-                { email: 'admin@desejosms.com', password: 'admin123', name: 'Administrador' },
-                { email: 'admin', password: 'admin', name: 'Administrador' }
-            ];
-            
-            const admin = adminCredentials.find(cred => 
-                cred.email.toLowerCase() === email.toLowerCase() && cred.password === password
-            );
-            
-            if (!admin) {
-                showAlert('Email ou senha incorretos!', 'error');
+
+            const email    = document.getElementById('adminEmail').value.trim().toLowerCase();
+            const password = document.getElementById('adminPassword').value;
+
+            // ── Validação básica ─────────────────────────────────
+            if (!email || !password) {
+                showAlert('Preencha email e senha.', 'error');
                 return;
             }
-            
-            // Login bem-sucedido
-            localStorage.setItem('adminUser', JSON.stringify({
-                email: admin.email,
-                name: admin.name,
-                role: 'admin',
-                loginTime: new Date().toISOString()
-            }));
-            
-            showAlert('Login realizado com sucesso! Redirecionando...', 'success');
-            
-            setTimeout(() => {
-                window.location.href = 'admin-panel.html';
-            }, 1500);
+
+            // ── Rate Limit ───────────────────────────────────────
+            const rl = window.Security.checkRateLimit('login');
+            if (!rl.allowed) {
+                showAlert(rl.message, 'error');
+                return;
+            }
+
+            // ── Desabilitar botão durante verificação ─────────────
+            const btn = document.querySelector('.btn-primary');
+            btn.disabled = true;
+            btn.textContent = 'Verificando...';
+
+            try {
+                // ── Gerar hash SHA-256 da senha digitada ─────────
+                const passwordHash = await window.Security.hashPassword(password);
+
+                // ── Consultar tabela admin_users no Supabase ─────
+                const { data, error } = await _supaClient
+                    .from('admin_users')
+                    .select('id, email, password_hash')
+                    .eq('email', email)
+                    .single();
+
+                if (error || !data) {
+                    showAlert('Email ou senha incorretos.', 'error');
+                    return;
+                }
+
+                // ── Comparar hash ────────────────────────────────
+                if (data.password_hash !== passwordHash) {
+                    showAlert('Email ou senha incorretos.', 'error');
+                    return;
+                }
+
+                // ── Login bem-sucedido ────────────────────────────
+                window.Security.resetRateLimit('login');
+                window.Security.createAdminSession(email);
+
+                // Manter compatibilidade com código legado que usa adminUser
+                localStorage.setItem('adminUser', JSON.stringify({
+                    email: data.email,
+                    name: 'Administrador',
+                    role: 'admin',
+                    loginTime: new Date().toISOString()
+                }));
+
+                showAlert('Login realizado com sucesso! Redirecionando...', 'success');
+                setTimeout(() => { window.location.href = 'admin-panel.html'; }, 1200);
+
+            } catch (err) {
+                console.error('[AdminLogin] Erro inesperado:', err);
+                showAlert('Erro ao verificar credenciais. Tente novamente.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Acessar Painel';
+            }
         }
-        
+
         function showAlert(message, type) {
-            const alert = document.getElementById('alert');
-            alert.textContent = message;
-            alert.className = `alert alert-${type}`;
-            alert.style.display = 'block';
-            
-            setTimeout(() => {
-                alert.style.display = 'none';
-            }, 5000);
+            const alertEl = document.getElementById('alert');
+            alertEl.textContent = message;
+            alertEl.className = `alert alert-${type}`;
+            alertEl.style.display = 'block';
+            setTimeout(() => { alertEl.style.display = 'none'; }, 6000);
         }
-        
+
         // Auto-focus no primeiro campo
         document.getElementById('adminEmail').focus();
     </script>

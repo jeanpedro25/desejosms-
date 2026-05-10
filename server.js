@@ -3,6 +3,28 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 
+// Carregar variáveis de ambiente do arquivo .env manualmente (sem dependência externa)
+if (fs.existsSync('.env')) {
+    try {
+        const envContent = fs.readFileSync('.env', 'utf8');
+        envContent.split('\n').forEach(line => {
+            const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+            if (match) {
+                const key = match[1];
+                let value = match[2] || '';
+                // Remover aspas se existirem
+                if (value.length > 0 && value.charAt(0) === '"' && value.charAt(value.length - 1) === '"') {
+                    value = value.substring(1, value.length - 1);
+                }
+                process.env[key] = value;
+            }
+        });
+        console.log('✅ Variáveis de ambiente carregadas do arquivo .env');
+    } catch (e) {
+        console.error('⚠️ Erro ao carregar arquivo .env:', e.message);
+    }
+}
+
 const PORT = process.env.PORT || 3000;
 
 // ============================================================
@@ -84,6 +106,7 @@ function setSecurityHeaders(res, mimeType) {
     res.removeHeader('Server');
 
     // Content Security Policy (apenas para HTML)
+    /*
     if (mimeType && mimeType.startsWith('text/html')) {
         res.setHeader('Content-Security-Policy',
             "default-src 'self'; " +
@@ -95,6 +118,7 @@ function setSecurityHeaders(res, mimeType) {
             "frame-ancestors 'none';"
         );
     }
+    */
 }
 
 // ============================================================
@@ -167,7 +191,19 @@ const server = http.createServer((req, res) => {
                     // Remover do cache para permitir alterações sem reiniciar
                     delete require.cache[require.resolve(apiPath)];
                     const handler = require(apiPath);
-                    return handler(req, res);
+                    // Polyfill para req/res Vercel
+                    res.status = function(code) {
+                        res.statusCode = code;
+                        return res;
+                    };
+                    res.json = function(data) {
+                        res.setHeader('Content-Type', 'application/json');
+                        res.end(JSON.stringify(data));
+                    };
+                    res.send = function(data) {
+                        res.end(data);
+                    };
+                    return await handler(req, res);
                 } else {
                     res.writeHead(404, { 'Content-Type': 'application/json' });
                     return res.end(JSON.stringify({ error: 'Endpoint da API não encontrado.' }));
@@ -192,6 +228,14 @@ const server = http.createServer((req, res) => {
     const logPath = url.parse(req.url).pathname;
     if (process.env.NODE_ENV !== 'production') {
         console.log(`[${new Date().toISOString()}] ${req.method} ${logPath}`);
+    }
+
+    // Rota especial /admin → redireciona para a página de login admin
+    const pathname = url.parse(req.url).pathname;
+    if (pathname === '/admin' || pathname === '/admin/') {
+        res.writeHead(302, { 'Location': '/admin-login.html' });
+        res.end();
+        return;
     }
 
     // Resolver caminho seguro
@@ -234,7 +278,7 @@ server.listen(PORT, () => {
     console.log('🔗 Acesso rápido:');
     console.log(`   • Início:      http://localhost:${PORT}/index.html`);
     console.log(`   • Anunciante:  http://localhost:${PORT}/painel-anunciante.html`);
-    console.log(`   • Admin:       http://localhost:${PORT}/admin-panel.html`);
+    console.log(`   • Admin:       http://localhost:${PORT}/admin`);
     console.log(`   • Verificações: http://localhost:${PORT}/verificacoes.html`);
     console.log('');
     console.log('🛡️  Rate limiting: 100 req/min por IP');

@@ -325,7 +325,6 @@ function createTopCard(ad) {
     card.innerHTML = `
         <div class="top-card-image" onclick="openProfilePage('${safeId}')">
             <img src="${S(adImage)}" alt="Foto" oncontextmenu="return false;">
-            <div class="wm-card">${watermark}</div>
             <div class="plan-badge ${safePlan}">${safePlan.toUpperCase()}</div>
         </div>
         <div class="top-card-content">
@@ -455,7 +454,6 @@ function createProfileCard(profile) {
         <div class="profile-image" style="cursor: pointer;" onclick="openProfilePage('${safeId}')">
             ${planBadge}
             <img src="${S(mainImage)}" alt="Foto" oncontextmenu="return false;">
-            <div class="wm-card">${watermark}</div>
         </div>
         <div class="profile-info">
             <div class="profile-name" style="cursor: pointer; font-weight: 800; font-size: 1.05rem; margin-bottom: 2px;" onclick="openProfilePage('${safeId}')">${safeName}</div>

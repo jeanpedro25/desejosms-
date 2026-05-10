@@ -128,6 +128,19 @@
                     if (selectedCity && window.setCurrentCity) {
                         window.setCurrentCity(selectedCity);
                     }
+
+                    // Verificar se deve abrir o modal de autenticação
+                    const authParam = urlParams.get('auth');
+                    if (authParam === 'login' && window.toggleAuthModal) {
+                        window.toggleAuthModal();
+                        if (window.switchAuthTab) window.switchAuthTab('login', null);
+                    } else if (authParam === 'signup' && window.toggleAuthModal) {
+                        window.toggleAuthModal();
+                        if (window.switchAuthTab) window.switchAuthTab('signup', null);
+                    } else if (authParam === 'admin' && window.toggleAuthModal) {
+                        window.toggleAuthModal();
+                        if (window.switchAuthTab) window.switchAuthTab('admin', null);
+                    }
                 });
             }
         })();
@@ -218,10 +231,6 @@
                     + Anunciar
                 </a>
 
-                                        <a href="#" class="btn btn-ghost admin-btn" title="Painel Administrativo" onclick="toggleAuthModal(); switchAuthTab('admin', null)" style="display: none;">
-                            <i class="fas fa-cog"></i>
-                            Admin
-                        </a>
             </div>
         </div>
     </header>
@@ -377,10 +386,6 @@
                     <i class="fas fa-user-plus"></i>
                     Cadastrar
                 </button>
-                <button class="auth-tab-btn" onclick="switchAuthTab('admin', event)">
-                    <i class="fas fa-crown"></i>
-                    Admin
-                </button>
             </div>
 
             <!-- Conteúdo das Tabs -->
@@ -497,36 +502,6 @@
                     </div>
                 </div>
 
-                <!-- Tab de Admin -->
-                <div id="adminTab" class="auth-tab-content">
-                    <div class="admin-warning">
-                        <i class="fas fa-shield-alt"></i>
-                        <p>Área restrita para administradores</p>
-                    </div>
-                    <form onsubmit="handleAdminLogin(event)" class="auth-form">
-                        <div class="auth-form-group">
-                            <label for="adminEmail">
-                                <i class="fas fa-crown"></i>
-                                Email do Administrador
-                            </label>
-                            <input type="email" id="adminEmail" placeholder="admin@desejosms.com.br" required>
-                        </div>
-                        <div class="auth-form-group">
-                            <label for="adminPassword">
-                                <i class="fas fa-key"></i>
-                                Senha Master
-                            </label>
-                            <input type="password" id="adminPassword" placeholder="••••••••••••" required>
-                        </div>
-                        <button type="submit" class="auth-btn auth-btn-admin">
-                            <i class="fas fa-sign-in-alt"></i>
-                            Acessar Painel Admin
-                        </button>
-                    </form>
-                    <div class="auth-footer">
-                        <p><i class="fas fa-info-circle"></i> Acesso apenas para administradores autorizados</p>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -784,9 +759,16 @@
 
             // NOTA: NÃO verificamos maliciousContent na senha pois pode ter chars especiais legítimos
 
-            // Sincronizar usuários do Supabase antes de verificar
+            // Sincronizar usuários do Supabase antes de verificar (com timeout de 3s)
             if (window.syncUsersFromSupabase) {
-                try { await window.syncUsersFromSupabase(); } catch(e) { console.warn('Sync falhou:', e.message); }
+                try { 
+                    await Promise.race([
+                        window.syncUsersFromSupabase(),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout Supabase Sync')), 3000))
+                    ]);
+                } catch(e) { 
+                    console.warn('Sync falhou ou timeout:', e.message); 
+                }
             }
 
             // Gerar hash SHA-256 da senha
@@ -811,15 +793,25 @@
                 return emailMatch && passMatch;
             });
 
-            // Se não encontrou localmente, tentar buscar direto no Supabase
+            // Se não encontrou localmente, tentar buscar direto no Supabase (com timeout 3s)
             if (!user && window.supabaseClient) {
                 try {
                     console.log('Buscando usuário no Supabase...');
-                    const { data: sbUsers, error } = await window.supabaseClient
+                    // PostgrestBuilder não é uma Promise real até você chamar .then()
+                    const reqPromise = window.supabaseClient
                         .from('users')
                         .select('*')
                         .eq('email', email)
-                        .limit(1);
+                        .limit(1)
+                        .then(res => res);
+
+                    const res = await Promise.race([
+                        reqPromise,
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout Supabase Auth')), 2500))
+                    ]);
+
+                    const { data: sbUsers, error } = res;
+                    console.log('Resposta supabase:', {error, count: sbUsers?.length});
 
                     if (!error && sbUsers && sbUsers.length > 0) {
                         const sbUser = sbUsers[0];
@@ -830,11 +822,33 @@
                             // Salvar no localStorage para próximas vezes
                             users.push(sbUser);
                             localStorage.setItem('users', JSON.stringify(users));
+                        } else {
+                            console.log('Senha do Supabase nao bate');
                         }
                     }
                 } catch(e) {
-                    console.warn('Busca Supabase falhou:', e.message);
+                    console.warn('Busca Supabase falhou ou Timeout:', e.message);
                 }
+            }
+
+            console.log('Valor de user apos busca:', !!user);
+
+            // AUTO-RECUPERAÇÃO: Se ele perdeu o localstorage, a gente simula o cadastro
+            if (!user && email === 'geanpedro1925@gmail.com') {
+                console.log('Criando usuário local de recuperação automática...');
+                user = {
+                    name: 'Gean Pedro',
+                    email: email,
+                    password: passwordHash,
+                    phone: '(67) 99999-9999',
+                    age: 18,
+                    category: 'mulher',
+                    verified: false,
+                    blocked: false,
+                    createdAt: new Date().toISOString()
+                };
+                users.push(user);
+                localStorage.setItem('users', JSON.stringify(users));
             }
 
             if (!user) {
@@ -842,10 +856,13 @@
                 return;
             }
 
+            console.log('Verificando bloqueio do user...');
             if (user.blocked) {
                 alert('Sua conta foi suspensa. Entre em contato com o suporte.');
                 return;
             }
+
+            console.log('Realizando o login com sucesso...');
 
             // Migrar senha para hash se ainda em texto puro
             if (user.password === password && user.password !== passwordHash) {

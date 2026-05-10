@@ -453,21 +453,51 @@
                  // Função para carregar anúncios SUPERVIP de forma aleatória e limitada
          function loadRandomSupervipAds() {
              const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
-             const selectedProfileId = localStorage.getItem('selectedProfileId');
+
+             // Prioridade 1: ID da URL; Prioridade 2: localStorage
+             const urlParams = new URLSearchParams(window.location.search);
+             const selectedProfileId = urlParams.get('id') || localStorage.getItem('selectedProfileId');
              
-             // Filtrar anúncios SUPERVIP, excluindo a anunciante atual
+             // Sincronizar localStorage com o ID correto da URL
+             if (urlParams.get('id')) {
+                 localStorage.setItem('selectedProfileId', urlParams.get('id'));
+             }
+
+             // Buscar estado, cidade e categoria do perfil atual
+             const currentProfile = announcements.find(ad => ad.id == selectedProfileId);
+             const currentState = (currentProfile && currentProfile.state) ? currentProfile.state : (window.siteConfig ? window.siteConfig.currentState : 'MS');
+             const currentCity = (currentProfile && currentProfile.city) ? currentProfile.city : null;
+             const currentCategory = (currentProfile && currentProfile.category) ? currentProfile.category : null;
+             
+             // Helpers para estado, cidade e categoria
+             const isSameState = (ad) => {
+                 if (!ad.state) return true;
+                 return ad.state.trim().toUpperCase() === currentState.trim().toUpperCase();
+             };
+             const matchCity = (c1, c2) => {
+                 if(!c1 || !c2) return false;
+                 return c1.trim().toLowerCase() === c2.trim().toLowerCase();
+             };
+             const matchCategory = (cat1, cat2) => {
+                 if(!cat1 || !cat2) return false;
+                 return cat1.trim().toLowerCase() === cat2.trim().toLowerCase();
+             };
+             
+             // Filtrar anúncios SUPERVIP: mesma cidade, mesmo estado e MESMA CATEGORIA (Obrigatório)
              const supervipAds = announcements.filter(ad => 
                  ad.planType === 'supervip' && 
                  ad.status === 'active' &&
-                 ad.category === 'mulher' && // Filtrar apenas mulheres
-                 ad.id != selectedProfileId // Excluir a anunciante atual
+                 ad.id != selectedProfileId && // Excluir a anunciante atual
+                 isSameState(ad) &&
+                 matchCity(ad.city, currentCity) && // OBRIGATORIAMENTE mesma cidade
+                 matchCategory(ad.category, currentCategory) // OBRIGATORIAMENTE mesma categoria
              );
 
-             // Embaralhar array para mostrar aleatoriamente
+             // Embaralhar array para mostrar aleatoriamente. Garante variação para os visitantes.
              const shuffledAds = supervipAds.sort(() => Math.random() - 0.5);
              
-             // Limitar a 2 anúncios (não mostrar muitos)
-             const limitedAds = shuffledAds.slice(0, 2);
+             // Limitar a 3 anúncios (conforme solicitado pelo usuário)
+             const limitedAds = shuffledAds.slice(0, 3);
 
              const supervipGrid = document.getElementById('supervipAdsGrid');
              

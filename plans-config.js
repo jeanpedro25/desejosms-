@@ -8,7 +8,7 @@ const PLANS_CONFIG = {
         basic: {
             name: 'Plano Básico',
             type: 'basic',
-            defaultPrice: 149.90,
+            defaultPrice: 5.00,
             duration: 30,
             description: 'Anúncio básico com funcionalidades essenciais',
             features: ['Anúncio visível', 'Contatos diretos', 'Suporte básico'],
@@ -18,7 +18,7 @@ const PLANS_CONFIG = {
         top: {
             name: 'Plano Top',
             type: 'top',
-            defaultPrice: 249.90,
+            defaultPrice: 5.25,
             duration: 30,
             description: 'Destaque especial com mais visualizações',
             features: ['Destaque na página', 'Mais visualizações', 'Suporte prioritário', 'Estatísticas avançadas'],
@@ -28,7 +28,7 @@ const PLANS_CONFIG = {
         supervip: {
             name: 'Plano SuperVIP',
             type: 'supervip',
-            defaultPrice: 399.90,
+            defaultPrice: 5.50,
             duration: 30,
             description: 'Máximo destaque e funcionalidades premium',
             features: ['Destaque máximo', 'Visualizações ilimitadas', 'Suporte VIP', 'Relatórios completos', 'Chat integrado'],

@@ -342,6 +342,7 @@ function getCurrentCity() {
 function setCurrentCity(cityId) {
     console.log('🏙️ Definindo cidade atual:', cityId);
     localStorage.setItem('currentCity', cityId);
+    localStorage.setItem('selectedCity', cityId); // Sincronizar para index.html
 
     // Atualizar estatísticas (função existe apenas no index.html)
     if (typeof updateStatistics === 'function') updateStatistics();

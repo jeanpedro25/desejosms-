@@ -134,9 +134,12 @@
                     <select id="gatewayType" onchange="updateGatewayFields()">
                         <option value="">Selecione o Gateway</option>
                         <option value="mercadopago">Mercado Pago</option>
+                        <option value="efi">Efí Bank (Gerencianet) - PIX</option>
                         <option value="cakto">Cakto</option>
                         <option value="paghiper">PagHiper</option>
                         <option value="stripe">Stripe</option>
+                        <option value="abacatepay">AbacatePay</option>
+                        <option value="livepix">LivePix</option>
                         <option value="paypal">PayPal</option>
                         <option value="pix">PIX (Banco Central)</option>
                         <option value="pagseguro">PagSeguro</option>
@@ -159,9 +162,16 @@
                     <input type="password" id="gatewaySecretKey" placeholder="sk_test_...">
                 </div>
                 
-                <div class="form-group">
+                <div class="form-group" id="webhookUrlGroup">
                     <label>Webhook URL</label>
-                    <input type="url" id="gatewayWebhook" placeholder="https://seudominio.com/webhook">
+                    <input type="url" id="gatewayWebhook" placeholder="https://seudominio.com/api/payment/stripe-webhook">
+                    <small style="color: #888; font-size: 11px;">Copie este URL e cole no painel do gateway.</small>
+                </div>
+
+                <div class="form-group" id="webhookSecretGroup" style="display: none;">
+                    <label>Webhook Secret (Stripe Signing Secret)</label>
+                    <input type="password" id="gatewayWebhookSecret" placeholder="whsec_...">
+                    <small style="color: #888; font-size: 11px;">Necessário para validar pagamentos Stripe com segurança.</small>
                 </div>
                 
                 <div class="form-group">
@@ -326,6 +336,8 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
     <script src="notifications.js"></script>
     <script src="payment-config.js"></script>
 </body>

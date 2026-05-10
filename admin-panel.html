@@ -18,9 +18,6 @@
 <body>
     <!-- Verificação de acesso admin -->
     <script>
-        if (localStorage.getItem('ageVerified') !== 'true') {
-            window.location.href = 'age-verification.html';
-        }
         (function checkAdmin() {
             // 1) Novo sistema: Security.isAdminLoggedIn()
             try { if (typeof Security !== 'undefined' && Security.isAdminLoggedIn()) return; } catch(e) {}
@@ -40,8 +37,8 @@
                 }));
                 return;
             }
-            // Sem sessão válida → redirecionar
-            window.location.href = 'index.html';
+            // Sem sessão válida → redirecionar para login admin
+            window.location.href = 'admin-login.html';
         })();
     </script>
 
@@ -840,14 +837,19 @@
     <script src="config.js"></script>
     <script src="states-config.js"></script>
     <script src="notifications.js"></script>
-    <script:parameter name="admin-panel.js"></script>
+    <script src="admin-panel.js"></script>
     
     <script>
         // Função de logout do painel admin
         function logoutAdmin() {
             if (confirm('Tem certeza que deseja sair do painel administrativo?')) {
+                // Limpar TODAS as chaves de sessão admin
                 localStorage.removeItem('adminUser');
-                alert('Logout realizado com sucesso!');
+                localStorage.removeItem('adminSession');
+                localStorage.removeItem('_adminSession');
+                // Limpar via Security se disponível
+                try { if (window.Security && window.Security.clearAdminSession) window.Security.clearAdminSession(); } catch(e) {}
+                // Redirecionar para a página de login admin
                 window.location.href = 'admin-login.html';
             }
         }

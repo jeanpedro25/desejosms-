@@ -17,7 +17,9 @@ async function saveGatewayToSupabase(gateway) {
     try {
         const key = gateway.type === 'mercadopago' ? 'mercadopago_config' : 
                     gateway.type === 'cakto' ? 'cakto_config' : 
-                    gateway.type === 'paghiper' ? 'paghiper_config' : null;
+                    gateway.type === 'paghiper' ? 'paghiper_config' : 
+                    gateway.type === 'livepix' ? 'livepix_config' : 
+                    gateway.type === 'stripe' ? 'stripe_config' : null;
         if (!key) return true; // Não salva outros no supabase por enquanto
 
         // Salva/atualiza a config na tabela settings
@@ -28,6 +30,7 @@ async function saveGatewayToSupabase(gateway) {
                 value: {
                     publicKey: gateway.publicKey,
                     secretKey: gateway.secretKey,
+                    webhookSecret: gateway.webhookSecret,
                     environment: gateway.environment,
                     webhook: gateway.webhook,
                     status: gateway.status,
@@ -56,10 +59,14 @@ async function loadGatewayFromSupabase() {
         
         const mp = data.find(item => item.key === 'mercadopago_config');
         const cakto = data.find(item => item.key === 'cakto_config');
+        const stripe = data.find(item => item.key === 'stripe_config');
+        const livepix = data.find(item => item.key === 'livepix_config');
         
         return {
             mercadopago: mp ? mp.value : null,
-            cakto: cakto ? cakto.value : null
+            cakto: cakto ? cakto.value : null,
+            stripe: stripe ? stripe.value : null,
+            livepix: livepix ? livepix.value : null
         };
     } catch (e) {
         return null;
@@ -206,9 +213,9 @@ function loadPaymentData() {
 // Garante que Básico, Top e SuperVIP existam e insere os que faltarem
 function ensureDefaultPlansPresence() {
     const required = [
-        { type: 'basic', name: 'Plano Básico', price: 149.90, duration: 30 },
-        { type: 'top', name: 'Plano Top', price: 249.90, duration: 30 },
-        { type: 'supervip', name: 'Plano SuperVIP', price: 399.90, duration: 30 }
+        { type: 'basic', name: 'Plano Básico', price: 1.00, duration: 30 },
+        { type: 'top', name: 'Plano Top', price: 1.25, duration: 30 },
+        { type: 'supervip', name: 'Plano SuperVIP', price: 1.50, duration: 30 }
     ];
 
     let changed = false;
@@ -678,19 +685,67 @@ function showAddPlanModal() {
 }
 
 function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('active');
+    const el = document.getElementById(modalId);
+    if (el) el.classList.remove('active');
+    // Resetar campos do gateway apenas se for fechar o modal de gateway
+    if (modalId === 'addGatewayModal') {
+        document.getElementById('gatewayType').value = '';
+        document.getElementById('gatewayName').value = '';
+        document.getElementById('gatewayPublicKey').value = '';
+        document.getElementById('gatewaySecretKey').value = '';
+        document.getElementById('gatewayWebhook').value = '';
+        document.getElementById('gatewayWebhookSecret').value = '';
+        document.getElementById('gatewayEnvironment').value = 'sandbox';
+        document.getElementById('gatewayStatus').value = 'active';
+        document.getElementById('webhookSecretGroup').style.display = 'none';
+        // Resetar título do modal para modo adição
+        const modalTitle = document.querySelector('#addGatewayModal .modal-header h2');
+        if (modalTitle) modalTitle.textContent = 'Adicionar Gateway de Pagamento';
+        window._editingGatewayId = null;
+    }
     if (modalId === 'addPlanModal') {
         editingPlanId = null;
     }
 }
 
-// Salvar gateway
+// editGateway — Abre o modal preenchido com os dados do gateway para editar
+function editGateway(id) {
+    const gateway = paymentGateways.find(g => g.id === id);
+    if (!gateway) { alert('Gateway não encontrado.'); return; }
+
+    // Armazenar ID em edição
+    window._editingGatewayId = id;
+
+    // Preencher o formulário
+    document.getElementById('gatewayType').value = gateway.type || '';
+    document.getElementById('gatewayName').value = gateway.name || '';
+    document.getElementById('gatewayPublicKey').value = gateway.publicKey || '';
+    document.getElementById('gatewaySecretKey').value = gateway.secretKey || '';
+    document.getElementById('gatewayWebhook').value = gateway.webhook || '';
+    document.getElementById('gatewayWebhookSecret').value = gateway.webhookSecret || '';
+    document.getElementById('gatewayEnvironment').value = gateway.environment || 'production';
+    document.getElementById('gatewayStatus').value = gateway.status || 'active';
+
+    // Mostrar webhook secret se Stripe
+    const secretGroup = document.getElementById('webhookSecretGroup');
+    if (secretGroup) secretGroup.style.display = gateway.type === 'stripe' ? 'block' : 'none';
+
+    // Atualizar título do modal
+    const modalTitle = document.querySelector('#addGatewayModal .modal-header h2');
+    if (modalTitle) modalTitle.textContent = `Editar Gateway: ${gateway.name}`;
+
+    // Abrir modal
+    document.getElementById('addGatewayModal').classList.add('active');
+}
+
+// Salvar gateway (cria novo ou atualiza existente)
 async function saveGateway() {
     const type = document.getElementById('gatewayType').value;
     const name = document.getElementById('gatewayName').value;
     const publicKey = document.getElementById('gatewayPublicKey').value;
     const secretKey = document.getElementById('gatewaySecretKey').value;
     const webhook = document.getElementById('gatewayWebhook').value;
+    const webhookSecret = document.getElementById('gatewayWebhookSecret').value;
     const environment = document.getElementById('gatewayEnvironment').value;
     const status = document.getElementById('gatewayStatus').value;
     
@@ -698,50 +753,54 @@ async function saveGateway() {
         alert('Por favor, preencha todos os campos obrigatórios.');
         return;
     }
+
+    const editingId = window._editingGatewayId;
     
     const gateway = {
-        id: Date.now(),
+        id: editingId || Date.now(),
         type,
         name,
         publicKey,
         secretKey,
         webhook,
+        webhookSecret,
         environment,
         status,
         createdAt: new Date().toISOString()
     };
     
-    // Se for Mercado Pago ou Cakto, salvar também no Supabase (para o backend)
-    if (type === 'mercadopago' || type === 'cakto') {
+    // Salvar no Supabase para o backend
+    if (type === 'mercadopago' || type === 'cakto' || type === 'livepix' || type === 'stripe') {
         const savedInDB = await saveGatewayToSupabase(gateway);
         if (savedInDB) {
-            console.log(`👍 Chaves ${type} salvas no banco de dados com sucesso!`);
+            console.log(`✅ Chaves ${type} salvas no Supabase!`);
         } else {
-            console.warn(`⚠️ Não foi possível salvar ${type} no Supabase. Verifique a conexão.`);
+            console.warn(`⚠️ Não foi possível salvar no Supabase.`);
         }
     }
 
-    // Atualizar gateway existente do mesmo tipo ou adicionar novo
-    const existingIdx = paymentGateways.findIndex(g => g.type === type);
-    if (existingIdx !== -1) {
-        paymentGateways[existingIdx] = { ...paymentGateways[existingIdx], ...gateway, id: paymentGateways[existingIdx].id };
+    // Atualizar gateway existente (pelo ID ou pelo tipo) ou adicionar novo
+    if (editingId) {
+        const idx = paymentGateways.findIndex(g => g.id === editingId);
+        if (idx !== -1) {
+            paymentGateways[idx] = gateway;
+        } else {
+            paymentGateways.push(gateway);
+        }
     } else {
-        paymentGateways.push(gateway);
+        const existingIdx = paymentGateways.findIndex(g => g.type === type);
+        if (existingIdx !== -1) {
+            paymentGateways[existingIdx] = { ...paymentGateways[existingIdx], ...gateway, id: paymentGateways[existingIdx].id };
+        } else {
+            paymentGateways.push(gateway);
+        }
     }
+
     localStorage.setItem('paymentGateways', JSON.stringify(paymentGateways));
-    
     renderGateways();
     updateStats();
     closeModal('addGatewayModal');
-    
-    // Limpar formulário
-    document.getElementById('gatewayType').value = '';
-    document.getElementById('gatewayName').value = '';
-    document.getElementById('gatewayPublicKey').value = '';
-    document.getElementById('gatewaySecretKey').value = '';
-    document.getElementById('gatewayWebhook').value = '';
-
-    alert(`📦 Gateway "${name}" configurado com sucesso!${ type === 'mercadopago' ? '\n\u2705 Chaves salvas no banco de dados. O sistema está pronto para processar pagamentos reais.' : '' }`);
+    alert(`📦 Gateway "${name}" salvo com sucesso!`);
 }
 
 // Salvar método
@@ -781,8 +840,8 @@ function savePaymentMethod() {
     document.getElementById('methodFee').value = '';
 }
 
-// Salvar plano
-function savePricingPlan() {
+// Salvar plano e sincronizar preço com Stripe automaticamente
+async function savePricingPlan() {
     const name = document.getElementById('planName').value;
     const type = document.getElementById('planType').value;
     const price = parseFloat(document.getElementById('planPrice').value);
@@ -798,50 +857,55 @@ function savePricingPlan() {
     // Coletar recursos
     const features = [];
     document.querySelectorAll('.feature-input').forEach(input => {
-        if (input.value.trim()) {
-            features.push(input.value.trim());
-        }
+        if (input.value.trim()) features.push(input.value.trim());
     });
     
     if (editingPlanId) {
-        // Atualizar plano existente
         const idx = pricingPlans.findIndex(p => p.id === editingPlanId);
         if (idx !== -1) {
-            pricingPlans[idx] = {
-                ...pricingPlans[idx],
-                name,
-                type,
-                price,
-                duration,
-                description,
-                features,
-                status
-            };
+            pricingPlans[idx] = { ...pricingPlans[idx], name, type, price, duration, description, features, status };
         }
     } else {
-        // Criar novo plano
-        const plan = {
+        pricingPlans.push({
             id: Date.now(),
-            name,
-            type,
-            price,
-            duration,
-            description,
-            features,
-            status,
+            name, type, price, duration, description, features, status,
             createdAt: new Date().toISOString()
-        };
-        pricingPlans.push(plan);
+        });
     }
-    localStorage.setItem('pricingPlans', JSON.stringify(pricingPlans));
     
+    localStorage.setItem('pricingPlans', JSON.stringify(pricingPlans));
     renderPlans();
     updateStats();
-    syncPlansWithSystem(); // Sincronizar com todo o sistema
+    syncPlansWithSystem();
     closeModal('addPlanModal');
-    
-    // Limpar formulário
     resetPlanModal();
+
+    // ✨ Sincronizar preço com Stripe via Supabase
+    try {
+        if (window.supabaseClient) {
+            // Atualizar a pricing_config no Supabase para refletir no backend
+            const planPrices = {};
+            pricingPlans.forEach(p => { planPrices[p.type] = p.price; });
+
+            const { error } = await window.supabaseClient
+                .from('settings')
+                .upsert({
+                    key: 'pricing_config',
+                    value: planPrices,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'key' });
+
+            if (error) throw error;
+
+            console.log('✅ Preços sincronizados com Supabase:', planPrices);
+            alert(`✅ Plano "${name}" atualizado com sucesso!\nNovo preço R$ ${price.toFixed(2)} já está ativo no Stripe.`);
+        } else {
+            alert(`⚠️ Supabase não conectado. Plano salvo APENAS localmente.\nIsso significa que o Stripe NÃO usará o novo valor.`);
+        }
+    } catch (e) {
+        console.error('⚠️ Erro ao sincronizar preços com Supabase:', e);
+        alert(`❌ ERRO GRAVE: O plano foi salvo no seu navegador, mas NÃO sincronizou com o Stripe devido a um erro no Supabase: ${e.message}\nO Stripe continuará cobrando o valor antigo!`);
+    }
 }
 
 // Funções de recursos
@@ -1038,6 +1102,10 @@ function updateGatewayFields() {
         case 'pagseguro':
             publicKeyField.placeholder = 'email@exemplo.com';
             secretKeyField.placeholder = 'token_...';
+            break;
+        case 'livepix':
+            publicKeyField.placeholder = 'Client ID';
+            secretKeyField.placeholder = 'Client Secret';
             break;
         default:
             publicKeyField.placeholder = 'Chave pública';

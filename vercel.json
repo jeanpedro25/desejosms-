@@ -18,6 +18,14 @@
       "dest": "/api/seo/render-city?state=$1&city=$2"
     },
     {
+      "src": "/admin",
+      "dest": "/admin-login.html"
+    },
+    {
+      "src": "/admin/",
+      "dest": "/admin-login.html"
+    },
+    {
       "src": "/(.*\\.(html|css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|webp))",
       "dest": "/$1"
     },
