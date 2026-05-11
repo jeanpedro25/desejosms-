@@ -295,27 +295,23 @@
             // ── Desabilitar botão durante verificação ─────────────
             const btn = document.querySelector('.btn-primary');
             btn.disabled = true;
-            btn.textContent = 'Verificando...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
 
             try {
                 // ── Gerar hash SHA-256 da senha digitada ─────────
                 const passwordHash = await window.Security.hashPassword(password);
 
-                // ── Consultar tabela admin_users no Supabase ─────
-                const { data, error } = await _supaClient
-                    .from('admin_users')
-                    .select('id, email, password_hash')
-                    .eq('email', email)
-                    .single();
+                // ── Chamar API segura (usa service_role no servidor) ─
+                const response = await fetch('/api/auth/admin-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, passwordHash })
+                });
 
-                if (error || !data) {
-                    showAlert('Email ou senha incorretos.', 'error');
-                    return;
-                }
+                const result = await response.json();
 
-                // ── Comparar hash ────────────────────────────────
-                if (data.password_hash !== passwordHash) {
-                    showAlert('Email ou senha incorretos.', 'error');
+                if (!response.ok || !result.success) {
+                    showAlert(result.error || 'Email ou senha incorretos.', 'error');
                     return;
                 }
 
@@ -323,11 +319,11 @@
                 window.Security.resetRateLimit('login');
                 window.Security.createAdminSession(email);
 
-                // Manter compatibilidade com código legado que usa adminUser
+                // Manter compatibilidade com código legado
                 localStorage.setItem('adminUser', JSON.stringify({
-                    email: data.email,
-                    name: 'Administrador',
-                    role: 'admin',
+                    email: result.admin.email,
+                    name:  result.admin.name,
+                    role:  result.admin.role,
                     loginTime: new Date().toISOString()
                 }));
 
