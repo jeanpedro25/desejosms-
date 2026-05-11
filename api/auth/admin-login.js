@@ -1,9 +1,12 @@
-const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
 
-// Usar service_role key no servidor (nunca exposta ao cliente)
-const SUPABASE_URL      = process.env.SUPABASE_URL      || 'https://rhsserqlbyyjgglcrwva.supabase.co';
-const SUPABASE_SERV_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// ============================================================
+// Credenciais do admin via variáveis de ambiente (Vercel)
+// ADMIN_EMAIL         → email do administrador
+// ADMIN_PASSWORD_HASH → SHA-256 da senha (gerado localmente)
+// ============================================================
+const ADMIN_EMAIL         = (process.env.ADMIN_EMAIL         || '').trim().toLowerCase();
+const ADMIN_PASSWORD_HASH = (process.env.ADMIN_PASSWORD_HASH || '').trim().toLowerCase();
 
 module.exports = async function handler(req, res) {
     // CORS
@@ -14,9 +17,9 @@ module.exports = async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
 
-    // Verificar se service_role key está configurada
-    if (!SUPABASE_SERV_KEY || SUPABASE_SERV_KEY === 'COLOQUE_SUA_SERVICE_ROLE_KEY_AQUI') {
-        console.error('[AdminLogin] SUPABASE_SERVICE_ROLE_KEY não configurada!');
+    // Verificar se as credenciais de admin estão configuradas
+    if (!ADMIN_EMAIL || !ADMIN_PASSWORD_HASH) {
+        console.error('[AdminLogin] ADMIN_EMAIL ou ADMIN_PASSWORD_HASH não configurados nas variáveis de ambiente!');
         return res.status(500).json({ error: 'Servidor não configurado. Contate o administrador.' });
     }
 
@@ -27,64 +30,43 @@ module.exports = async function handler(req, res) {
             return res.status(400).json({ error: 'Email e senha são obrigatórios.' });
         }
 
-        // Sanitizar email
-        const cleanEmail = String(email).trim().toLowerCase().substring(0, 254);
+        // Sanitizar
+        const cleanEmail    = String(email).trim().toLowerCase().substring(0, 254);
+        const cleanHash     = String(passwordHash).trim().toLowerCase();
 
-        // Validar formato do hash (deve ser SHA-256 hex de 64 chars)
-        if (!/^[a-f0-9]{64}$/.test(passwordHash)) {
+        // Validar formato do hash (SHA-256 = 64 chars hex)
+        if (!/^[a-f0-9]{64}$/.test(cleanHash)) {
             return res.status(400).json({ error: 'Formato de credencial inválido.' });
         }
 
-        // Criar cliente Supabase com service_role (acesso total, seguro pois está no servidor)
-        const supabase = createClient(SUPABASE_URL, SUPABASE_SERV_KEY, {
-            auth: { persistSession: false }
-        });
-
-        // Consultar admin_users usando service_role (supera o RLS)
-        const { data, error } = await supabase
-            .from('admin_users')
-            .select('id, email, password_hash, name, role, active')
-            .eq('email', cleanEmail)
-            .single();
-
-        // Sempre retornar a mesma mensagem de erro (evita enumerar emails)
-        const ERRO_GENERICO = 'Email ou senha incorretos.';
-
-        if (error || !data) {
-            console.warn(`[AdminLogin] Tentativa falhou para: ${cleanEmail}`);
-            return res.status(401).json({ error: ERRO_GENERICO });
+        // Comparação de email (case-insensitive)
+        if (cleanEmail !== ADMIN_EMAIL) {
+            // Delay para evitar timing attack
+            await new Promise(r => setTimeout(r, 300));
+            return res.status(401).json({ error: 'Email ou senha incorretos.' });
         }
 
-        // Verificar se admin está ativo
-        if (!data.active) {
-            console.warn(`[AdminLogin] Admin inativo: ${cleanEmail}`);
-            return res.status(401).json({ error: ERRO_GENERICO });
+        // Comparação de hash em tempo constante (evita timing attacks)
+        const expectedBuf = Buffer.from(ADMIN_PASSWORD_HASH, 'hex');
+        const receivedBuf = Buffer.from(cleanHash, 'hex');
+
+        const hashMatch = expectedBuf.length === receivedBuf.length &&
+                          crypto.timingSafeEqual(expectedBuf, receivedBuf);
+
+        if (!hashMatch) {
+            await new Promise(r => setTimeout(r, 300));
+            return res.status(401).json({ error: 'Email ou senha incorretos.' });
         }
 
-        // Comparar hash (comparação de tempo constante para evitar timing attacks)
-        const expectedHash = Buffer.from(data.password_hash, 'hex');
-        const receivedHash = Buffer.from(passwordHash, 'hex');
-
-        if (expectedHash.length !== receivedHash.length ||
-            !crypto.timingSafeEqual(expectedHash, receivedHash)) {
-            console.warn(`[AdminLogin] Senha incorreta para: ${cleanEmail}`);
-            return res.status(401).json({ error: ERRO_GENERICO });
-        }
-
-        // Login bem-sucedido — registrar timestamp
-        await supabase
-            .from('admin_users')
-            .update({ updated_at: new Date().toISOString() })
-            .eq('id', data.id);
-
-        console.log(`[AdminLogin] ✅ Login bem-sucedido: ${cleanEmail}`);
+        // ✅ Login bem-sucedido
+        console.log(`[AdminLogin] ✅ Login admin: ${cleanEmail}`);
 
         return res.status(200).json({
             success: true,
             admin: {
-                email: data.email,
-                name:  data.name || 'Administrador',
-                role:  data.role
+                email: ADMIN_EMAIL,
+                name:  'Administrador',
+                role:  'admin'
             }
         });
 
