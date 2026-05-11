@@ -582,17 +582,370 @@ function loadAdsData() {
     });
 }
 
-// Função para carregar dados de pagamentos
-function loadPaymentsData() {
-    const announcements = JSON.parse(localStorage.getItem('announcements')) || [];
-    const activeAds = announcements.filter(ad => ad.status === 'active');
-    
-    const monthlyPayments = activeAds.length;
-    const monthlyRevenue = activeAds.reduce((sum, ad) => sum + (ad.paidAmount || 0), 0);
-    
-    document.getElementById('monthlyPayments').textContent = monthlyPayments;
-    document.getElementById('monthlyRevenue').textContent = `R$ ${monthlyRevenue.toFixed(2)}`;
+// ============================================================
+// GESTÃO FINANCEIRA COMPLETA
+// ============================================================
+
+const PLAN_PRICES = {
+    basic:    149.90,
+    top:      249.90,
+    supervip: 499.90,
+    vip:      399.90,
+    premium:  249.90
+};
+
+const PLAN_LABELS = {
+    basic:    { label: 'Básico',   color: '#3498db', bg: '#ebf5fb' },
+    top:      { label: 'Top',      color: '#e67e22', bg: '#fef9e7' },
+    supervip: { label: 'Super VIP',color: '#8B0000', bg: '#fdedec' },
+    vip:      { label: 'VIP',      color: '#9b59b6', bg: '#f5eef8' },
+    premium:  { label: 'Premium',  color: '#27ae60', bg: '#eafaf1' }
+};
+
+let _finAllAds = [];     // cache dos anúncios para busca/tabela
+let _finPage   = 1;
+const _finPerPage = 15;
+
+// ─── Entrada principal ────────────────────────────────────────
+function loadPaymentsData() { loadFinancialData(); }
+
+async function loadFinancialData() {
+    // spinner
+    const icon = document.getElementById('finRefreshIcon');
+    if (icon) { icon.classList.add('fa-spin'); }
+
+    try {
+        // Tentar buscar do Supabase primeiro
+        let ads = [];
+        if (window._supabaseClient) {
+            try {
+                const { data } = await window._supabaseClient
+                    .from('announcements')
+                    .select('id,name,user_email,plan_type,status,city,state,paid_amount,created_at,expires_at,payment_status,category')
+                    .order('created_at', { ascending: false });
+                if (data && data.length) ads = data;
+            } catch(e) { /* fallback localStorage */ }
+        }
+
+        // Fallback localStorage
+        if (!ads.length) {
+            ads = (JSON.parse(localStorage.getItem('announcements')) || []).map(a => ({
+                id:             a.id,
+                name:           a.name,
+                user_email:     a.userEmail || a.user_email,
+                plan_type:      a.planType  || a.plan_type || 'basic',
+                status:         a.status,
+                city:           a.city,
+                state:          a.state || 'MS',
+                paid_amount:    a.paidAmount || a.paid_amount || 0,
+                created_at:     a.createdAt  || a.created_at,
+                expires_at:     a.expiresAt  || a.expires_at,
+                payment_status: a.paymentStatus || a.payment_status || 'pending',
+                category:       a.category
+            }));
+        }
+
+        const days   = parseInt(document.getElementById('finPeriodSelect')?.value || '30');
+        const cutoff = new Date(Date.now() - days * 86400000);
+
+        const active   = ads.filter(a => a.status === 'active');
+        const pending  = ads.filter(a => a.status === 'pending');
+        const inPeriod = ads.filter(a => new Date(a.created_at) >= cutoff);
+
+        const now7d    = new Date(Date.now() + 7 * 86400000);
+        const expiring = active.filter(a => a.expires_at && new Date(a.expires_at) <= now7d && new Date(a.expires_at) >= new Date());
+
+        // Receita total do período
+        const totalRevenue = inPeriod
+            .filter(a => a.status === 'active' || a.payment_status === 'approved')
+            .reduce((s, a) => s + (parseFloat(a.paid_amount) || PLAN_PRICES[a.plan_type] || 0), 0);
+
+        // Ticket médio
+        const paidAds   = active.filter(a => (parseFloat(a.paid_amount)||0) > 0);
+        const avgTicket = paidAds.length ? paidAds.reduce((s,a) => s + (parseFloat(a.paid_amount)||0), 0) / paidAds.length : 0;
+
+        // Projeção: planos ativos × preço de renovação
+        const projection = active.reduce((s, a) => s + (PLAN_PRICES[a.plan_type] || 0), 0);
+
+        // ── KPI Cards ─────────────────────────────────────────────
+        _setEl('finTotalRevenue', _fmtBRL(totalRevenue));
+        _setEl('finRevenuePeriod', `nos últimos ${days} dias`);
+        _setEl('finActiveAds', active.length);
+        _setEl('finActiveAdsDetail', `${active.length} anúncios online agora`);
+        _setEl('finExpiring', expiring.length);
+        _setEl('finPendingAds', pending.length);
+        _setEl('finAvgTicket', _fmtBRL(avgTicket));
+        _setEl('finProjection', _fmtBRL(projection));
+
+        // ── Receita por Plano ──────────────────────────────────────
+        _renderPlanBreakdown(active, inPeriod);
+
+        // ── Alertas de Vencimento ──────────────────────────────────
+        _renderExpiringList(expiring, active);
+
+        // ── Pipeline ──────────────────────────────────────────────
+        _renderPipeline(ads);
+
+        // ── Mix de Planos ──────────────────────────────────────────
+        _renderPlanMix(active);
+
+        // ── Tabela completa ────────────────────────────────────────
+        _finAllAds = active;
+        _finPage   = 1;
+        _renderFinTable();
+
+    } catch(err) {
+        console.error('[FinDash] Erro:', err);
+    } finally {
+        if (icon) icon.classList.remove('fa-spin');
+    }
 }
+
+// ─── Receita por plano ────────────────────────────────────────
+function _renderPlanBreakdown(active, inPeriod) {
+    const el = document.getElementById('finPlanBreakdown');
+    if (!el) return;
+
+    const planTotals = {};
+    inPeriod.forEach(a => {
+        const p = (a.plan_type || 'basic').toLowerCase();
+        if (!planTotals[p]) planTotals[p] = { count: 0, revenue: 0 };
+        planTotals[p].count++;
+        planTotals[p].revenue += parseFloat(a.paid_amount) || PLAN_PRICES[p] || 0;
+    });
+
+    const maxRev = Math.max(...Object.values(planTotals).map(v => v.revenue), 1);
+
+    el.innerHTML = Object.entries(planTotals).sort((a,b) => b[1].revenue - a[1].revenue).map(([plan, data]) => {
+        const cfg  = PLAN_LABELS[plan] || { label: plan, color: '#666', bg: '#f8f9fa' };
+        const pct  = Math.round((data.revenue / maxRev) * 100);
+        return `
+        <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+                <span style="font-size:12px;font-weight:600;color:${cfg.color};background:${cfg.bg};padding:2px 10px;border-radius:20px;">${cfg.label}</span>
+                <span style="font-size:12px;color:#2c3e50;font-weight:700;">${_fmtBRL(data.revenue)} <span style="color:#888;font-weight:400;">(${data.count} ads)</span></span>
+            </div>
+            <div style="background:#f0f0f0;border-radius:6px;height:8px;overflow:hidden;">
+                <div style="width:${pct}%;height:100%;background:${cfg.color};border-radius:6px;transition:width .6s ease;"></div>
+            </div>
+        </div>`;
+    }).join('') || '<div style="color:#888;font-size:13px;text-align:center;padding:20px;">Nenhum dado no período</div>';
+}
+
+// ─── Lista de vencimentos ────────────────────────────────────
+function _renderExpiringList(expiring, active) {
+    const el = document.getElementById('finExpiringList');
+    if (!el) return;
+
+    // Incluir também os 5 que vencem nos próximos 30 dias
+    const now30 = new Date(Date.now() + 30 * 86400000);
+    const soon  = active
+        .filter(a => a.expires_at && new Date(a.expires_at) <= now30)
+        .sort((a,b) => new Date(a.expires_at) - new Date(b.expires_at))
+        .slice(0, 10);
+
+    if (!soon.length) {
+        el.innerHTML = '<div style="color:#888;font-size:13px;text-align:center;padding:20px;"><i class="fas fa-check-circle" style="color:#27ae60;"></i> Nenhum vencimento próximo!</div>';
+        return;
+    }
+
+    el.innerHTML = soon.map(a => {
+        const exp    = new Date(a.expires_at);
+        const diff   = Math.ceil((exp - Date.now()) / 86400000);
+        const urgent = diff <= 3;
+        const color  = diff <= 0 ? '#e74c3c' : diff <= 3 ? '#e67e22' : '#27ae60';
+        const cfg    = PLAN_LABELS[(a.plan_type||'basic').toLowerCase()] || {};
+        return `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:${urgent ? '#fff8f0' : '#f8f9fa'};border-radius:10px;border-left:3px solid ${color};">
+            <div>
+                <div style="font-size:13px;font-weight:600;color:#2c3e50;">${a.name||a.user_email}</div>
+                <div style="font-size:11px;color:#888;">${cfg.label||a.plan_type} · ${a.city||''}, ${a.state||'MS'}</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:12px;font-weight:700;color:${color};">${diff <= 0 ? 'VENCIDO' : `${diff}d`}</div>
+                <div style="font-size:10px;color:#aaa;">${exp.toLocaleDateString('pt-BR')}</div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ─── Pipeline ────────────────────────────────────────────────
+function _renderPipeline(ads) {
+    const el = document.getElementById('finPipeline');
+    if (!el) return;
+
+    const stages = [
+        { key: 'active',   label: 'Ativos',         color: '#27ae60', icon: 'fa-check-circle' },
+        { key: 'pending',  label: 'Pendentes',       color: '#e67e22', icon: 'fa-clock' },
+        { key: 'rejected', label: 'Rejeitados',      color: '#e74c3c', icon: 'fa-times-circle' },
+        { key: 'inactive', label: 'Inativos',        color: '#95a5a6', icon: 'fa-pause-circle' },
+        { key: 'blocked',  label: 'Bloqueados',      color: '#7f8c8d', icon: 'fa-ban' }
+    ];
+
+    const total = ads.length || 1;
+
+    el.innerHTML = stages.map(s => {
+        const count = ads.filter(a => a.status === s.key).length;
+        const pct   = Math.round((count / total) * 100);
+        const rev   = ads.filter(a => a.status === s.key)
+                         .reduce((sum,a) => sum + (parseFloat(a.paid_amount)||0), 0);
+        return `
+        <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <span style="display:flex;align-items:center;gap:6px;font-size:13px;color:#2c3e50;font-weight:500;">
+                    <i class="fas ${s.icon}" style="color:${s.color};font-size:12px;"></i>${s.label}
+                </span>
+                <span style="font-size:12px;color:#666;">${count} <span style="color:#888;">(${pct}%)</span>${rev > 0 ? ` · ${_fmtBRL(rev)}` : ''}</span>
+            </div>
+            <div style="background:#f0f0f0;border-radius:6px;height:6px;">
+                <div style="width:${pct}%;height:100%;background:${s.color};border-radius:6px;transition:width .6s;"></div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ─── Mix de planos ────────────────────────────────────────────
+function _renderPlanMix(active) {
+    const el = document.getElementById('finPlanMix');
+    if (!el) return;
+
+    const counts = {};
+    active.forEach(a => {
+        const p = (a.plan_type||'basic').toLowerCase();
+        counts[p] = (counts[p]||0) + 1;
+    });
+    const total = active.length || 1;
+
+    el.innerHTML = Object.entries(counts).sort((a,b) => b[1]-a[1]).map(([plan, count]) => {
+        const cfg = PLAN_LABELS[plan] || { label: plan, color: '#666' };
+        const pct = Math.round((count / total) * 100);
+        return `
+        <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:36px;height:36px;border-radius:10px;background:${cfg.color};color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;">${pct}%</div>
+            <div style="flex:1;">
+                <div style="font-size:13px;font-weight:600;color:#2c3e50;">${cfg.label}</div>
+                <div style="font-size:11px;color:#888;">${count} anunciante${count!==1?'s':''}</div>
+            </div>
+        </div>`;
+    }).join('') || '<div style="color:#888;font-size:13px;text-align:center;padding:20px;">Sem anunciantes ativos</div>';
+}
+
+// ─── Tabela principal ─────────────────────────────────────────
+function _renderFinTable() {
+    const tbody = document.getElementById('finTableBody');
+    const pager = document.getElementById('finTablePagination');
+    if (!tbody) return;
+
+    const search = (document.getElementById('finSearchInput')?.value || '').toLowerCase();
+    const filtered = _finAllAds.filter(a =>
+        !search ||
+        (a.name||'').toLowerCase().includes(search) ||
+        (a.user_email||'').toLowerCase().includes(search) ||
+        (a.city||'').toLowerCase().includes(search)
+    );
+
+    const start = (_finPage - 1) * _finPerPage;
+    const slice = filtered.slice(start, start + _finPerPage);
+
+    if (!slice.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#888;padding:30px;">Nenhum anunciante encontrado</td></tr>`;
+        if (pager) pager.innerHTML = '';
+        return;
+    }
+
+    tbody.innerHTML = slice.map(a => {
+        const cfg     = PLAN_LABELS[(a.plan_type||'basic').toLowerCase()] || { label: a.plan_type, color:'#666', bg:'#f8f9fa' };
+        const amt     = parseFloat(a.paid_amount) || PLAN_PRICES[(a.plan_type||'basic').toLowerCase()] || 0;
+        const expDate = a.expires_at ? new Date(a.expires_at) : null;
+        const diff    = expDate ? Math.ceil((expDate - Date.now()) / 86400000) : null;
+        const expStr  = expDate ? expDate.toLocaleDateString('pt-BR') : '—';
+        const expColor= diff === null ? '#888' : diff <= 3 ? '#e74c3c' : diff <= 7 ? '#e67e22' : '#27ae60';
+
+        return `
+        <tr style="border-bottom:1px solid #f0f0f0;transition:background .15s;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+            <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#2c3e50;font-size:13px;">${a.name||'—'}</div>
+                <div style="font-size:11px;color:#888;">${a.user_email||''}</div>
+            </td>
+            <td style="padding:10px 12px;">
+                <span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;color:${cfg.color};background:${cfg.bg};">${cfg.label}</span>
+            </td>
+            <td style="padding:10px 12px;font-size:13px;color:#495057;">${a.city||'—'}, ${a.state||'MS'}</td>
+            <td style="padding:10px 12px;font-size:13px;font-weight:700;color:#27ae60;">${_fmtBRL(amt)}</td>
+            <td style="padding:10px 12px;font-size:12px;font-weight:600;color:${expColor};">
+                ${expStr}${diff !== null ? ` <small>(${diff}d)</small>` : ''}
+            </td>
+            <td style="padding:10px 12px;">
+                <span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;color:#fff;background:#27ae60;">Ativo</span>
+            </td>
+            <td style="padding:10px 12px;">
+                <button onclick="viewAdDetails('${a.id}')" style="padding:5px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:11px;color:#495057;" title="Ver detalhes">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </td>
+        </tr>`;
+    }).join('');
+
+    // Paginação
+    if (pager) {
+        const totalPages = Math.ceil(filtered.length / _finPerPage);
+        pager.innerHTML = `
+            <span>${filtered.length} anunciante${filtered.length!==1?'s':''} ativos</span>
+            <div style="display:flex;gap:6px;align-items:center;">
+                <button onclick="_finChangePage(${_finPage - 1})" ${_finPage<=1?'disabled':''} style="padding:4px 10px;border:1px solid #ddd;border-radius:6px;background:${_finPage<=1?'#f8f9fa':'#fff'};cursor:${_finPage<=1?'default':'pointer'};font-size:12px;">‹</button>
+                <span style="font-size:12px;">Pág ${_finPage} de ${totalPages}</span>
+                <button onclick="_finChangePage(${_finPage + 1})" ${_finPage>=totalPages?'disabled':''} style="padding:4px 10px;border:1px solid #ddd;border-radius:6px;background:${_finPage>=totalPages?'#f8f9fa':'#fff'};cursor:${_finPage>=totalPages?'default':'pointer'};font-size:12px;">›</button>
+            </div>`;
+    }
+}
+
+function _finChangePage(p) {
+    const total = Math.ceil(_finAllAds.length / _finPerPage);
+    if (p < 1 || p > total) return;
+    _finPage = p;
+    _renderFinTable();
+}
+
+function filterFinTable() { _finPage = 1; _renderFinTable(); }
+
+// ─── Exportar CSV ─────────────────────────────────────────────
+function exportFinancialCSV() {
+    const rows = [['Nome','Email','Plano','Cidade','Estado','Valor Pago','Vencimento','Status']];
+    _finAllAds.forEach(a => {
+        rows.push([
+            a.name||'',
+            a.user_email||'',
+            a.plan_type||'',
+            a.city||'',
+            a.state||'MS',
+            (parseFloat(a.paid_amount)||0).toFixed(2),
+            a.expires_at ? new Date(a.expires_at).toLocaleDateString('pt-BR') : '',
+            a.status||''
+        ]);
+    });
+    const csv  = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href     = url;
+    link.download = `financeiro_${new Date().toISOString().slice(0,10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+}
+
+// ─── Helpers ──────────────────────────────────────────────────
+function _fmtBRL(v) {
+    return (v||0).toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
+}
+function _setEl(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+}
+
+// ─── Manter compatibilidade com a função legada ────────────────
+function generatePaymentReport() { exportFinancialCSV(); }
+
+
 
 // Função para carregar dados de configurações
 function loadSettingsData() {

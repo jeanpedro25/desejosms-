@@ -439,47 +439,165 @@
             </div>
 
             <!-- Payments Section -->
+            <!-- ===== FINANCIAL DASHBOARD ===== -->
             <div class="content-section" id="payments-section">
-                <div class="section-header">
-                    <h2>Gerenciamento de Pagamentos</h2>
-                    <div class="section-actions">
-                        <button class="btn btn-primary" onclick="generatePaymentReport()">
-                            <i class="fas fa-download"></i>
-                            Relatório
+
+                <!-- Header -->
+                <div class="section-header" style="margin-bottom:24px;">
+                    <div>
+                        <h2 style="margin:0;display:flex;align-items:center;gap:10px;">
+                            <span style="background:linear-gradient(135deg,#8B0000,#c0392b);color:#fff;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;">
+                                <i class="fas fa-chart-line"></i>
+                            </span>
+                            Gestão Financeira
+                        </h2>
+                        <p style="margin:4px 0 0;color:#666;font-size:13px;">Visão completa do seu negócio em tempo real</p>
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <select id="finPeriodSelect" onchange="loadFinancialData()" style="padding:8px 14px;border:1px solid #ddd;border-radius:8px;font-size:13px;cursor:pointer;">
+                            <option value="30">Últimos 30 dias</option>
+                            <option value="7">Últimos 7 dias</option>
+                            <option value="90">Últimos 90 dias</option>
+                            <option value="365">Este ano</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="exportFinancialCSV()" style="display:flex;align-items:center;gap:6px;font-size:13px;">
+                            <i class="fas fa-file-csv"></i> Exportar CSV
+                        </button>
+                        <button class="btn" onclick="loadFinancialData()" style="background:#f8f9fa;border:1px solid #ddd;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;">
+                            <i class="fas fa-sync-alt" id="finRefreshIcon"></i> Atualizar
                         </button>
                     </div>
                 </div>
-                
-                <div class="payments-grid">
-                    <div class="payment-card">
-                        <h3>Pagamentos do Mês</h3>
-                        <div class="payment-stats">
-                            <div class="payment-stat">
-                                <span class="stat-number" id="monthlyPayments">12</span>
-                                <span class="stat-label">Total</span>
-                            </div>
-                            <div class="payment-stat">
-                                <span class="stat-number" id="monthlyRevenue">R$ 2.998,80</span>
-                                <span class="stat-label">Receita</span>
-                            </div>
-                        </div>
+
+                <!-- KPI Cards Row -->
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;margin-bottom:24px;">
+
+                    <div class="fin-kpi-card" style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.07);border-left:4px solid #27ae60;position:relative;overflow:hidden;">
+                        <div style="font-size:11px;font-weight:700;color:#27ae60;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Receita Total</div>
+                        <div id="finTotalRevenue" style="font-size:26px;font-weight:800;color:#1a252f;">R$ 0,00</div>
+                        <div id="finRevenuePeriod" style="font-size:11px;color:#888;margin-top:4px;">no período</div>
+                        <i class="fas fa-dollar-sign" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:36px;opacity:.06;color:#27ae60;"></i>
                     </div>
-                    
-                    <div class="payment-card">
-                        <h3>Métodos de Pagamento</h3>
-                        <div class="payment-methods">
-                            <div class="method-item">
-                                <i class="fas fa-qrcode"></i>
-                                <span>PIX: 8 pagamentos</span>
-                            </div>
-                            <div class="method-item">
-                                <i class="fas fa-credit-card"></i>
-                                <span>Cartão: 4 pagamentos</span>
-                            </div>
-                        </div>
+
+                    <div class="fin-kpi-card" style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.07);border-left:4px solid #2980b9;position:relative;overflow:hidden;">
+                        <div style="font-size:11px;font-weight:700;color:#2980b9;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Anunciantes Ativos</div>
+                        <div id="finActiveAds" style="font-size:26px;font-weight:800;color:#1a252f;">0</div>
+                        <div id="finActiveAdsDetail" style="font-size:11px;color:#888;margin-top:4px;">anúncios online agora</div>
+                        <i class="fas fa-users" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:36px;opacity:.06;color:#2980b9;"></i>
                     </div>
+
+                    <div class="fin-kpi-card" style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.07);border-left:4px solid #e67e22;position:relative;overflow:hidden;">
+                        <div style="font-size:11px;font-weight:700;color:#e67e22;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Vencendo em Breve</div>
+                        <div id="finExpiring" style="font-size:26px;font-weight:800;color:#1a252f;">0</div>
+                        <div style="font-size:11px;color:#888;margin-top:4px;">próximos 7 dias</div>
+                        <i class="fas fa-clock" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:36px;opacity:.06;color:#e67e22;"></i>
+                    </div>
+
+                    <div class="fin-kpi-card" style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.07);border-left:4px solid #9b59b6;position:relative;overflow:hidden;">
+                        <div style="font-size:11px;font-weight:700;color:#9b59b6;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Pendentes de Pagto</div>
+                        <div id="finPendingAds" style="font-size:26px;font-weight:800;color:#1a252f;">0</div>
+                        <div style="font-size:11px;color:#888;margin-top:4px;">aguardando aprovação</div>
+                        <i class="fas fa-hourglass-half" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:36px;opacity:.06;color:#9b59b6;"></i>
+                    </div>
+
+                    <div class="fin-kpi-card" style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.07);border-left:4px solid #c0392b;position:relative;overflow:hidden;">
+                        <div style="font-size:11px;font-weight:700;color:#c0392b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Ticket Médio</div>
+                        <div id="finAvgTicket" style="font-size:26px;font-weight:800;color:#1a252f;">R$ 0</div>
+                        <div style="font-size:11px;color:#888;margin-top:4px;">por anunciante</div>
+                        <i class="fas fa-receipt" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:36px;opacity:.06;color:#c0392b;"></i>
+                    </div>
+
+                    <div class="fin-kpi-card" style="background:linear-gradient(135deg,#8B0000,#c0392b);border-radius:14px;padding:20px;box-shadow:0 4px 20px rgba(139,0,0,.3);position:relative;overflow:hidden;">
+                        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Projeção 30 dias</div>
+                        <div id="finProjection" style="font-size:26px;font-weight:800;color:#fff;">R$ 0,00</div>
+                        <div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:4px;">baseada nos planos ativos</div>
+                        <i class="fas fa-rocket" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:36px;opacity:.15;color:#fff;"></i>
+                    </div>
+
                 </div>
+
+                <!-- Middle Row: Plan Breakdown + Expiring Alerts -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+
+                    <!-- Breakdown por Plano -->
+                    <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.07);">
+                        <h4 style="margin:0 0 16px;color:#2c3e50;font-size:15px;display:flex;align-items:center;gap:8px;">
+                            <i class="fas fa-layer-group" style="color:#8B0000;"></i> Receita por Plano
+                        </h4>
+                        <div id="finPlanBreakdown" style="display:flex;flex-direction:column;gap:12px;">
+                            <div style="color:#888;font-size:13px;text-align:center;padding:20px;">Carregando...</div>
+                        </div>
+                    </div>
+
+                    <!-- Alertas de Vencimento -->
+                    <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.07);">
+                        <h4 style="margin:0 0 16px;color:#2c3e50;font-size:15px;display:flex;align-items:center;gap:8px;">
+                            <i class="fas fa-bell" style="color:#e67e22;"></i> Vencendo / Renovações
+                        </h4>
+                        <div id="finExpiringList" style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;">
+                            <div style="color:#888;font-size:13px;text-align:center;padding:20px;">Carregando...</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Bottom Row: Status Pipeline + Plan Mix -->
+                <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:24px;">
+
+                    <!-- Pipeline de Anunciantes -->
+                    <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.07);">
+                        <h4 style="margin:0 0 16px;color:#2c3e50;font-size:15px;display:flex;align-items:center;gap:8px;">
+                            <i class="fas fa-funnel-dollar" style="color:#2980b9;"></i> Pipeline de Anunciantes
+                        </h4>
+                        <div id="finPipeline" style="display:flex;flex-direction:column;gap:10px;">
+                            <div style="color:#888;font-size:13px;text-align:center;padding:20px;">Carregando...</div>
+                        </div>
+                    </div>
+
+                    <!-- Mix de Planos (visual) -->
+                    <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.07);">
+                        <h4 style="margin:0 0 16px;color:#2c3e50;font-size:15px;display:flex;align-items:center;gap:8px;">
+                            <i class="fas fa-chart-pie" style="color:#9b59b6;"></i> Mix de Planos
+                        </h4>
+                        <div id="finPlanMix" style="display:flex;flex-direction:column;gap:10px;">
+                            <div style="color:#888;font-size:13px;text-align:center;padding:20px;">Carregando...</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Full Transaction Table -->
+                <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.07);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+                        <h4 style="margin:0;color:#2c3e50;font-size:15px;display:flex;align-items:center;gap:8px;">
+                            <i class="fas fa-list-alt" style="color:#8B0000;"></i> Todos os Anunciantes Ativos
+                        </h4>
+                        <input type="text" id="finSearchInput" oninput="filterFinTable()" placeholder="🔍 Buscar anunciante..." style="padding:8px 14px;border:1px solid #ddd;border-radius:8px;font-size:13px;width:220px;">
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                            <thead>
+                                <tr style="background:#f8f9fa;border-bottom:2px solid #eee;">
+                                    <th style="padding:10px 12px;text-align:left;color:#495057;font-weight:600;">Anunciante</th>
+                                    <th style="padding:10px 12px;text-align:left;color:#495057;font-weight:600;">Plano</th>
+                                    <th style="padding:10px 12px;text-align:left;color:#495057;font-weight:600;">Cidade/Estado</th>
+                                    <th style="padding:10px 12px;text-align:left;color:#495057;font-weight:600;">Valor Pago</th>
+                                    <th style="padding:10px 12px;text-align:left;color:#495057;font-weight:600;">Vencimento</th>
+                                    <th style="padding:10px 12px;text-align:left;color:#495057;font-weight:600;">Status</th>
+                                    <th style="padding:10px 12px;text-align:left;color:#495057;font-weight:600;">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="finTableBody">
+                                <tr><td colspan="7" style="text-align:center;color:#888;padding:30px;">Carregando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="finTablePagination" style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:12px;color:#666;flex-wrap:wrap;gap:8px;"></div>
+                </div>
+
             </div>
+            <!-- ===== END FINANCIAL DASHBOARD ===== -->
+
 
             <!-- States Management Section -->
             <div class="content-section" id="states-section">
